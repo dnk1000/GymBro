@@ -2313,3 +2313,36 @@ test("derived evidence is not persisted and reproduces across complete backup re
   );
   assert.deepEqual(await backup(p), exported);
 });
+
+test("exercise library counts session identities and sessionless date groups", async (t) => {
+  const p = await app(t);
+  const result = await p.evaluate(() => {
+    db.sets = [
+      { exercise: "Bench Press", date: "2026-10-23", sessionId: "one" },
+      { exercise: "Bench Press", date: "2026-10-23", sessionId: "one" },
+      { exercise: "Bench Press", date: "2026-10-23", sessionId: "two" },
+      { exercise: "Bench Press", date: "2026-10-23" },
+      { exercise: "Bench Press", date: "2026-10-23" },
+      { exercise: "Bench Press", date: "2026-10-22", complete: false },
+    ];
+    const before = JSON.stringify(db);
+    renderExercises();
+    return {
+      unchanged: before === JSON.stringify(db),
+      empty: exerciseSessionCount([]),
+    };
+  });
+  await p.locator('[data-view="exercises"]').click();
+  const row = p
+    .locator("#exerciseTable .exercise-row")
+    .filter({ hasText: "Bench Press" });
+  assert.equal(await row.locator("td").nth(3).textContent(), "6");
+  assert.equal(await row.locator("td").nth(4).textContent(), "4");
+  assert.match(
+    await p.locator("#exerciseTable").textContent(),
+    /not inferred sessions/,
+  );
+  await row.click();
+  assert.match(await p.locator("#exerciseDetail").textContent(), /Sessions4/);
+  assert.deepEqual(result, { unchanged: true, empty: 0 });
+});

@@ -1,5 +1,9 @@
 # Changes
 
+## 2.5.1 — Exercise library counts (preview)
+
+- Add # Sessions beside Sets, counting explicit session IDs and legacy/sessionless dates separately before summing. Explain legacy date grouping and align exercise detail counts. No persistence changes.
+
 ## 2.5.0 — Milestone 5 (preview)
 
 - Add read-only trainer performance/workout context composed from existing guided state, with exact exercise/unit evidence, source/session references, pain, unparsed notes/preferences and explicit unknown classifications.
