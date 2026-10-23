@@ -1,5 +1,9 @@
 # Changes
 
+## 2.2.5
+
+- Limit acronym tooltips to Workout and ChatGPT import entry labels; remove them from History and other display-only content.
+
 ## 2.2.4
 
 - Explain RPE, RIR, JSON and CSV with native hover tooltips in labels, help, history, workout summaries and import review.

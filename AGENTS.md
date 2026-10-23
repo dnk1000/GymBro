@@ -136,4 +136,4 @@ The app has no runtime package installation or build step. Serve the repository 
 
 - Keep the application-wide Help dialog in `index.html` accurate when user-facing controls or workflows change. Help is a user guide, not preview acceptance instructions; its version label must use `APP_VERSION`.
 
-- Keep the acronym glossary in `ui-acronyms.js` current when introducing user-facing acronyms. Preserve explicit incompleteness; never silently clear it solely because weight/reps exist. The edit form must explain how to mark corrected records complete.
+- Keep the acronym glossary in `ui-acronyms.js` current for data-entry labels. Limit acronym tooltips to entry controls; do not add them to History or other display-only content. Preserve explicit incompleteness; never silently clear it solely because weight/reps exist. The edit form must explain how to mark corrected records complete.

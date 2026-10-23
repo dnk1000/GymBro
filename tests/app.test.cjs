@@ -1266,7 +1266,7 @@ test("History icon actions stay together, preserve accessible names and confirm 
   );
 });
 
-test("acronym hover explanations cover static controls and rerendered effort/import fields", async (t) => {
+test("acronym hover explanations are limited to workout and import entry labels", async (t) => {
   const p = await app(t);
   await p.evaluate(() => {
     workoutActions.logSet({
@@ -1287,27 +1287,15 @@ test("acronym hover explanations cover static controls and rerendered effort/imp
     await p.locator('label[for="fRir"] abbr').getAttribute("title"),
     /Repetitions in Reserve/,
   );
-  await p.locator('[data-view="data"]').click();
-  assert.match(
-    await p
-      .getByRole("button", { name: "Export JSON", exact: true })
-      .getAttribute("title"),
-    /JavaScript Object Notation/,
-  );
-  assert.match(
-    await p
-      .getByRole("button", { name: "Export sets CSV", exact: true })
-      .getAttribute("title"),
-    /Comma-Separated Values/,
-  );
   await p.locator('[data-view="history"]').click();
-  const effort = p
-    .locator("#historyTable abbr")
-    .filter({ hasText: /^RPE$/ })
-    .first();
-  assert.match(await effort.getAttribute("title"), /1–10/);
+  assert.equal(await p.locator("#historyTable abbr").count(), 0);
   await p.evaluate(() => renderHistory());
-  assert.match(await effort.getAttribute("title"), /Rating/);
+  assert.equal(await p.locator("#historyTable abbr").count(), 0);
+  assert.equal(
+    await p.locator("#todaySets abbr, #helpDialog abbr, #data abbr").count(),
+    0,
+  );
+  assert.equal(await p.locator("#data button[title]").count(), 0);
   await stage(p, workout([set({ rpe: 8, rir: 2 })]));
   assert.match(
     await p
