@@ -32,3 +32,7 @@ Checklist (leave unchecked until verified on the device):
 - [ ] Record any visible errors, blocked controls, lost values, layout issues or download failures. Record browser console errors if remote inspection is available.
 
 Pass requires all checks to complete without data loss, unusable controls, page overflow or unexplained errors. Test iPhone Safari and Android Chrome if both are supported; record untested platforms explicitly.
+
+## Milestone 3 — pending physical-device acceptance
+
+Main `14b12a8` contains accepted Milestone 2; production served 2.2.5 before branching. Milestone 3 is not physically tested by automated Chromium checks. Follow [the History and backup checklist](HISTORY_AND_BACKUPS.md), recording actual device/OS/browser, commit, results and failures. Export and verify production JSON before testing; keep synthetic data on the preview origin only.

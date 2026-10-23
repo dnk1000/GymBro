@@ -534,11 +534,36 @@ function renderToday() {
     : `<div class="sub">No sets logged for ${d}.</div>`;
 }
 
+function historySetTable(group) {
+  const rows = group.sets;
+  return `<table><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td>${s.date}</td><td><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : index + 1}.</span> ${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td>${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td>${esc(s.notes || "—")}<details class="set-record"><summary>Record details</summary><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+}
 function renderHistory() {
   const filter = historyFilter?.value || "all";
-  let rows = [...db.sets].sort((a, b) => b.date.localeCompare(a.date));
-  if (filter !== "all") rows = rows.filter((s) => s.source === filter);
-  historyTable.innerHTML = `<table><thead><tr><th>Date</th><th>Exercise</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s) => `<tr><td>${s.date}</td><td>${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${s.rpe != null ? "RPE " + s.rpe : s.rir != null ? s.rir + " RIR" : "—"}</td><td>${s.pain ? `${s.pain}/10 ${esc(s.painArea)}` : "—"}</td><td>${esc(s.notes || "")}</td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+  const groups = getHistoryGroups(getWorkoutState(), filter);
+  historyTable.innerHTML =
+    groups
+      .map((group) => {
+        const session = group.session;
+        const name = session?.planSnapshot?.name || "Unplanned workout";
+        const exercises = unique(group.sets.map((set) => set.exercise));
+        const heading =
+          group.kind === "session"
+            ? `<h3>${esc(group.date)} · ${esc(name)}</h3><div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>`
+            : `<h3>${esc(group.date)} · Legacy / sessionless</h3><p class="sub">Grouped by date for display only. These records have no saved session identity.</p>`;
+        const count = (n) => `${n} ${n === 1 ? "set" : "sets"}`;
+        const countText =
+          session && filter !== "all"
+            ? `${group.sets.length} matching ${group.sets.length === 1 ? "set" : "sets"} · ${count(group.totalSetCount)} in session`
+            : count(group.sets.length);
+        return `<article class="history-group" ${session ? `data-session-id="${esc(session.id)}"` : `data-legacy-date="${esc(group.date)}"`}>
+      ${heading}
+      <p class="sub">${countText}</p>
+      <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
+      ${group.sets.length ? `<p class="sub">Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
+    </article>`;
+      })
+      .join("") || '<p class="sub">No history matches this source filter.</p>';
 }
 function renderExercises() {
   const xs = allExercises();
@@ -835,6 +860,21 @@ function exportCSV() {
   );
   download(`gym-sets-${today()}.csv`, "text/csv", rows.join("\n"));
 }
+function renderBackupOperation() {
+  const restore = document.getElementById("backupMode").value === "restore";
+  document.getElementById("backupEffect").textContent = restore
+    ? "Complete restore replaces ALL current sets, sessions, active workout, bodyweights, program/templates, exercise library, preferences and import records with the validated backup. Export a complete JSON backup first. You will confirm before anything is saved."
+    : "History merge adds compatible sets, sessions, bodyweights and import records. Current program, exercise definitions, preferences and existing set IDs win; missing exercises are added. The active session is kept, or adopted from the backup if none is active. Conflicting sessions or two different active workouts reject the entire merge. You will confirm before anything is saved.";
+}
+function backupConfirmation(mode, restored, next, filename) {
+  const identity = `File: ${filename}\nData schema: ${restored.version} · Exporting application: ${typeof restored.appVersion === "string" ? restored.appVersion : "not recorded (older backup)"}`;
+  const contents = `Backup contains ${restored.sets.length} sets, ${restored.sessions.length} sessions, ${restored.bodyweights.length} bodyweights and ${restored.imports.length} import records. Active session: ${restored.activeSessionId ? "present" : "none"}.`;
+  const effect =
+    mode === "restore"
+      ? "COMPLETE RESTORE replaces ALL current sets, sessions, active workout, bodyweights, program/templates, exercise library, preferences and import records."
+      : `HISTORY MERGE adds ${next.sets.length - db.sets.length} sets, ${next.sessions.length - db.sessions.length} sessions and ${next.bodyweights.length - db.bodyweights.length} bodyweights. Current program/settings and existing set IDs are preserved. Missing exercises and import records may be added. Active session: ${next.activeSessionId ? (next.activeSessionId === db.activeSessionId ? "kept" : "adopted from backup") : "none"}.`;
+  return `${identity}\n\n${contents}\n\n${effect}\n\nExport and verify a complete JSON backup first. Continue?`;
+}
 function importJSON() {
   const file = importFile.files[0];
   if (!file) return;
@@ -844,14 +884,6 @@ function importJSON() {
   reader.onload = () => {
     try {
       const restored = migrateData(JSON.parse(reader.result));
-      if (
-        !confirm(
-          mode === "restore"
-            ? "Replace ALL current data with this backup, including program and preferences? Export your current backup first."
-            : "Merge history from this backup? Current program and preferences will be kept.",
-        )
-      )
-        return;
       let next = restored;
       if (mode === "merge") {
         if (storageState.blocked)
@@ -860,6 +892,7 @@ function importJSON() {
           );
         next = mergeHistoryData(db, restored);
       }
+      if (!confirm(backupConfirmation(mode, restored, next, file.name))) return;
       if (save(next, mode === "restore")) {
         db = next;
         clearForm();
@@ -921,3 +954,5 @@ document.getElementById("appVersion").textContent =
 
 document.getElementById("helpVersion").textContent =
   `GymBro ${APP_VERSION.version}`;
+
+renderBackupOperation();

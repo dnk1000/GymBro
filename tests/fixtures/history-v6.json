@@ -1,0 +1,162 @@
+{
+  "version": 6,
+  "sets": [
+    {
+      "id": "history-demo-2",
+      "date": "2026-10-23",
+      "exercise": "Bench Press",
+      "weight": 50,
+      "unit": "lb",
+      "reps": null,
+      "rpe": 7,
+      "rir": 3,
+      "pain": 0,
+      "painArea": "",
+      "notes": "Synthetic imported incomplete set; correct explicitly.",
+      "complete": false,
+      "source": "chatgpt",
+      "sessionId": "ws_history_demo_first",
+      "importBatch": "history-demo-import-batch"
+    },
+    {
+      "id": "history-demo-legacy",
+      "date": "2026-10-23",
+      "exercise": "Bench Press",
+      "weight": 50,
+      "unit": "lb",
+      "reps": 8,
+      "rpe": 7,
+      "rir": 3,
+      "pain": 2,
+      "painArea": "elbow",
+      "notes": "Synthetic legacy/sessionless record; no session identity.",
+      "complete": true,
+      "source": "imported"
+    },
+    {
+      "id": "history-demo-3",
+      "date": "2026-10-23",
+      "exercise": "Bench Press",
+      "weight": 50,
+      "unit": "lb",
+      "reps": 8,
+      "rpe": 7,
+      "rir": 3,
+      "pain": 0,
+      "painArea": "",
+      "notes": "A different workout on the same date.",
+      "complete": true,
+      "source": "manual",
+      "sessionId": "ws_history_demo_second"
+    },
+    {
+      "id": "history-demo-1",
+      "date": "2026-10-23",
+      "exercise": "Bench Press",
+      "weight": 50,
+      "unit": "lb",
+      "reps": 8,
+      "rpe": 7,
+      "rir": 3,
+      "pain": 0,
+      "painArea": "",
+      "notes": "First set by session order, even though stored later in the sets array.",
+      "complete": true,
+      "source": "manual",
+      "sessionId": "ws_history_demo_first",
+      "planSlotId": "slot-1"
+    }
+  ],
+  "bodyweights": [
+    {
+      "date": "2026-10-23",
+      "value": 200
+    }
+  ],
+  "imports": [
+    {
+      "importId": "history-demo-import",
+      "date": "2026-10-23",
+      "setCount": 1,
+      "batch": "history-demo-import-batch",
+      "template": "Synthetic demo",
+      "notes": "Disposable acceptance data",
+      "committedAt": "2026-10-23T12:10:00.000Z"
+    }
+  ],
+  "preferences": {
+    "Bench Press": "Synthetic preference: acceptance only"
+  },
+  "exerciseLibrary": {
+    "Bench Press": {
+      "primary": "Chest",
+      "secondary": ["Triceps"],
+      "pattern": "Horizontal Push",
+      "type": "Compound",
+      "status": "core"
+    }
+  },
+  "program": {
+    "name": "Synthetic History acceptance fixture",
+    "activeTemplateId": "demo-plan",
+    "activeDuration": 30,
+    "templates": [
+      {
+        "id": "demo-plan",
+        "name": "Current editable demo plan",
+        "focus": "Test only",
+        "intensity": "Test only",
+        "slots": [
+          {
+            "exercise": "Bench Press",
+            "role": "core",
+            "short": true
+          }
+        ]
+      }
+    ]
+  },
+  "sessions": [
+    {
+      "id": "ws_history_demo_first",
+      "date": "2026-10-23",
+      "status": "completed",
+      "createdAt": "2026-10-23T12:00:00.000Z",
+      "completedAt": "2026-10-23T12:30:00.000Z",
+      "templateId": "demo-plan",
+      "duration": 60,
+      "planSnapshot": {
+        "name": "Saved demo workout",
+        "slots": [
+          {
+            "id": "slot-1",
+            "exercise": "Bench Press",
+            "role": "core"
+          }
+        ]
+      },
+      "setIds": ["history-demo-1", "history-demo-2"]
+    },
+    {
+      "id": "ws_history_demo_second",
+      "date": "2026-10-23",
+      "status": "active",
+      "createdAt": "2026-10-23T13:00:00.000Z",
+      "completedAt": null,
+      "templateId": "demo-plan",
+      "duration": 30,
+      "planSnapshot": {
+        "name": "Saved demo workout",
+        "slots": [
+          {
+            "id": "slot-1",
+            "exercise": "Bench Press",
+            "role": "core"
+          }
+        ]
+      },
+      "setIds": ["history-demo-3"]
+    }
+  ],
+  "activeSessionId": "ws_history_demo_second"
+}

@@ -1395,3 +1395,472 @@ test("marking an incomplete edit complete retains rollback on failed persistence
     true,
   );
 });
+
+async function sessionHistoryFixture(p) {
+  return p.evaluate(() => {
+    const requireOk = (result) => {
+      if (!result.ok) throw Error(JSON.stringify(result));
+      return result;
+    };
+    const date = "2026-10-23";
+    const first = requireOk(
+      workoutActions.createSession({ date, templateId: "push", duration: 60 }),
+    ).sessionId;
+    const a = requireOk(
+      workoutActions.logSet({
+        date,
+        exercise: "Seated Row",
+        weight: 100,
+        unit: "lb",
+        reps: 8,
+        rpe: 8,
+        rir: 2,
+        pain: 3,
+        painArea: "elbow",
+        notes: "session-first",
+      }),
+    ).setId;
+    const b = requireOk(
+      workoutActions.logSet({
+        date,
+        exercise: "Bench Press",
+        weight: 50,
+        unit: "lb",
+        reps: 10,
+        complete: false,
+        notes: "session-second",
+      }),
+    ).setId;
+    requireOk(workoutActions.completeSession(first));
+    const second = requireOk(
+      workoutActions.createSession({ date, templateId: "push", duration: 30 }),
+    ).sessionId;
+    const c = requireOk(
+      workoutActions.logSet({
+        date,
+        exercise: "Bench Press",
+        weight: 60,
+        unit: "lb",
+        reps: 6,
+        notes: "other-session",
+      }),
+    ).setId;
+    requireOk(
+      workoutActions.logSet({
+        date,
+        sessionId: null,
+        exercise: "Bench Press",
+        weight: 0,
+        unit: "bodyweight",
+        reps: 12,
+        notes: "manual-sessionless",
+      }),
+    );
+    requireOk(
+      workoutActions.commitImport(
+        normalizeInboxPayload({
+          date,
+          importId: "m3-legacy-import",
+          sets: [
+            {
+              exercise: "Bench Press",
+              weight: 25,
+              unit: "lb",
+              reps: null,
+              complete: false,
+              notes: "legacy-import-only",
+            },
+          ],
+        }),
+      ),
+    );
+    renderAll();
+    return { first, second, a, b, c };
+  });
+}
+
+test("History shows same-day sessions, saved intent, ordered sets and separate legacy records without writing", async (t) => {
+  const p = await app(t);
+  const ids = await sessionHistoryFixture(p);
+  const original = await backup(p),
+    raw = await stored(p);
+  await p.locator('[data-view="history"]').click();
+  const first = p.locator(`[data-session-id="${ids.first}"]`);
+  const second = p.locator(`[data-session-id="${ids.second}"]`);
+  assert.equal(await first.isVisible(), true);
+  assert.equal(await second.isVisible(), true);
+  assert.match(await first.innerText(), /60-minute mode/);
+  assert.match(await first.innerText(), /completed/);
+  assert.match(await second.innerText(), /30-minute mode/);
+  assert.match(await second.innerText(), /active/);
+  const savedName = original.sessions.find(
+    (session) => session.id === ids.first,
+  ).planSnapshot.name;
+  assert.equal(
+    await first.locator("h3").innerText(),
+    `2026-10-23 · ${savedName}`,
+  );
+  assert.deepEqual(
+    await first
+      .locator("tbody tr")
+      .evaluateAll((rows) => rows.map((row) => row.dataset.setId)),
+    [ids.a, ids.b],
+  );
+  const row = first.locator(`[data-set-id="${ids.a}"]`);
+  assert.match(await row.innerText(), /RPE 8 · 2 RIR/);
+  assert.match(await row.innerText(), /3\/10 elbow/);
+  assert.match(await row.innerText(), /session-first/);
+  assert.match(
+    await first.locator(`[data-set-id="${ids.b}"]`).innerText(),
+    /incomplete/,
+  );
+  const legacy = p.locator('[data-legacy-date="2026-10-23"]');
+  assert.match(await legacy.innerText(), /display only/);
+  assert.match(await legacy.innerText(), /manual-sessionless/);
+  assert.match(await legacy.innerText(), /legacy-import-only/);
+  const imported = legacy
+    .locator("tbody tr")
+    .filter({ hasText: "legacy-import-only" });
+  assert.match(await imported.innerText(), /chatgpt • incomplete/);
+  await imported.locator("summary").click();
+  const record = JSON.parse(await imported.locator("pre").textContent());
+  assert.deepEqual(
+    record,
+    original.sets.find((set) => set.id === record.id),
+  );
+  assert.ok(record.importBatch);
+  assert.equal(
+    await p.locator("#historyTable tbody tr").count(),
+    original.sets.length,
+  );
+  await p.evaluate(() => renderHistory());
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+});
+
+test("session and legacy source filters retain all existing options and matching session order", async (t) => {
+  const p = await app(t);
+  const ids = await sessionHistoryFixture(p);
+  await p.locator('[data-view="history"]').click();
+  const data = await backup(p);
+  for (const source of ["imported", "manual", "chatgpt", "all"]) {
+    await p.locator("#historyFilter").selectOption(source);
+    const expected = data.sets
+      .filter((set) => source === "all" || set.source === source)
+      .map((set) => set.id)
+      .sort();
+    assert.deepEqual(
+      (
+        await p
+          .locator("#historyTable tbody tr")
+          .evaluateAll((rows) => rows.map((row) => row.dataset.setId))
+      ).sort(),
+      expected,
+    );
+    assert.equal(await p.locator("#historyTable abbr").count(), 0);
+  }
+  await p.locator("#historyFilter").selectOption("manual");
+  assert.deepEqual(
+    await p
+      .locator(`[data-session-id="${ids.first}"] tbody tr`)
+      .evaluateAll((rows) => rows.map((row) => row.dataset.setId)),
+    [ids.a, ids.b],
+  );
+  await p.locator("#historyFilter").selectOption("chatgpt");
+  assert.equal(await p.locator("[data-session-id]").count(), 0);
+  assert.equal(await p.locator("[data-legacy-date]").count(), 1);
+});
+
+test("linked History edits/deletes preserve session identity, completion and authoritative ordering", async (t) => {
+  const p = await app(t);
+  const ids = await sessionHistoryFixture(p);
+  const original = (await backup(p)).sessions.find(
+    (session) => session.id === ids.first,
+  );
+  await p.locator('[data-view="history"]').click();
+  await p
+    .locator(`[data-set-id="${ids.a}"]`)
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  await p.locator("#fReps").fill("9");
+  await p.getByRole("button", { name: "Save changes", exact: true }).click();
+  assert.deepEqual(
+    (await backup(p)).sessions.find((session) => session.id === ids.first),
+    original,
+  );
+  await p.locator('[data-view="history"]').click();
+  assert.match(
+    await p.locator(`[data-set-id="${ids.a}"]`).innerText(),
+    /session-first/,
+  );
+  await p
+    .locator(`[data-set-id="${ids.a}"]`)
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  const saved = await backup(p);
+  assert.deepEqual(
+    saved.sessions.find((session) => session.id === ids.first),
+    { ...original, setIds: [ids.b] },
+  );
+  assert.equal(
+    saved.sets.some((set) => set.id === ids.a),
+    false,
+  );
+  assert.deepEqual(
+    await p
+      .locator(`[data-session-id="${ids.first}"] tbody tr`)
+      .evaluateAll((rows) => rows.map((row) => row.dataset.setId)),
+    [ids.b],
+  );
+  await p
+    .locator(`[data-set-id="${ids.b}"]`)
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  assert.match(
+    await p.locator(`[data-session-id="${ids.first}"]`).innerText(),
+    /No sets logged/,
+  );
+  assert.equal(
+    (await backup(p)).sessions.find((session) => session.id === ids.first)
+      .status,
+    "completed",
+  );
+  await p.reload();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(
+    await p.locator(`[data-session-id="${ids.first}"]`).isVisible(),
+    true,
+  );
+});
+
+test("History session cards and expanded record metadata fit narrow phones and desktop", async (t) => {
+  const p = await app(t);
+  await sessionHistoryFixture(p);
+  await p.locator('[data-view="history"]').click();
+  await p.locator(".set-record summary").first().click();
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    const regions = await p
+      .locator(".history-set-scroll")
+      .evaluateAll((items) =>
+        items.map((el) => ({
+          width: el.clientWidth,
+          overflow: getComputedStyle(el).overflowX,
+        })),
+      );
+    assert.ok(regions.length > 1);
+    assert.ok(
+      regions.every((item) => item.width <= width && item.overflow === "auto"),
+    );
+  }
+});
+
+test("backup presentation and confirmation distinguish complete replacement from history merge; cancellation writes nothing", async (t) => {
+  const p = await app(t);
+  await sessionHistoryFixture(p);
+  const original = await backup(p),
+    raw = await stored(p);
+  const incoming = structuredClone(original);
+  incoming.preferences = { "Bench Press": "incoming preference" };
+  incoming.program.name = "Replacement program";
+  incoming.appVersion = "99.0.0-20990101T000000Z";
+  await p.locator('[data-view="data"]').click();
+  assert.match(await p.locator("#data").innerText(), /CSV contains sets only/);
+  p.removeAllListeners("dialog");
+  for (const mode of ["restore", "merge"]) {
+    await p.locator("#backupMode").selectOption(mode);
+    const effect = await p.locator("#backupEffect").innerText();
+    assert.match(
+      effect,
+      mode === "restore" ? /replaces ALL/ : /Current program/,
+    );
+    assert.match(effect, /active|Active/);
+    await p.locator("#importFile").setInputFiles({
+      name: "review-backup.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(incoming)),
+    });
+    const pending = p.waitForEvent("dialog");
+    const clicking = p
+      .getByRole("button", { name: "Import JSON", exact: true })
+      .click();
+    const dialog = await pending;
+    assert.equal(dialog.type(), "confirm");
+    assert.match(dialog.message(), /review-backup.json/);
+    assert.match(dialog.message(), /Data schema: 6/);
+    assert.match(dialog.message(), /99.0.0-20990101T000000Z/);
+    assert.match(
+      dialog.message(),
+      mode === "restore"
+        ? /COMPLETE RESTORE replaces ALL/
+        : /HISTORY MERGE adds 0 sets/,
+    );
+    await dialog.dismiss();
+    await clicking;
+    assert.deepEqual(await backup(p), original);
+    assert.equal(await stored(p), raw);
+  }
+});
+
+test("complete export restore export preserves every supported section and metadata", async (t) => {
+  const p = await app(t);
+  await sessionHistoryFixture(p);
+  const incoming = await backup(p);
+  incoming.preferences = { "Bench Press": "custom preference" };
+  incoming.program.name = "Custom full program";
+  incoming.exerciseLibrary["Bench Press"].primary = "Custom muscle";
+  incoming.bodyweights.push({ date: "2026-10-23", value: 202.5 });
+  incoming.sets[0].customImportMetadata = {
+    originalLine: 17,
+    exporter: "legacy source",
+  };
+  incoming.additionalMetadata = { preserved: true };
+  incoming.appVersion = "2.2.5-20261023T194400Z";
+  await importBackup(p, incoming);
+  assert.deepEqual(await backup(p), incoming);
+  async function exportComplete() {
+    const pending = p.waitForEvent("download");
+    await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+    return JSON.parse(await fs.readFile(await (await pending).path(), "utf8"));
+  }
+  const first = await exportComplete();
+  assert.deepEqual(first, {
+    ...incoming,
+    appVersion: await p.evaluate(() => APP_VERSION.version),
+  });
+  await p
+    .getByRole("button", { name: "Erase all local data", exact: true })
+    .click();
+  assert.equal((await backup(p)).sets.length, 0);
+  await importBackup(p, first);
+  assert.deepEqual(await exportComplete(), first);
+  assert.deepEqual(await backup(p), first);
+  assert.equal(first.version, 6);
+  assert.equal(first.sessions.length, 2);
+  assert.ok(first.activeSessionId);
+  assert.ok(first.imports.length > 0);
+  assert.ok(first.bodyweights.length > 0);
+});
+
+test("history merge adds compatible records but preserves current program/library/preferences and existing IDs", async (t) => {
+  const p = await app(t);
+  await sessionHistoryFixture(p);
+  const current = await backup(p),
+    incoming = structuredClone(current);
+  incoming.preferences = { "Bench Press": "do not replace current" };
+  incoming.program.name = "Do not adopt incoming program";
+  incoming.exerciseLibrary["Bench Press"].primary =
+    "Do not adopt incoming definition";
+  incoming.sets[0].notes = "Incoming duplicate ID must not overwrite";
+  incoming.sets.push({
+    ...current.sets.find((set) => set.sessionId == null),
+    id: "m3-history-merge-new",
+    date: "2026-10-24",
+    exercise: "M3 new movement",
+    notes: "compatible merged legacy record",
+  });
+  incoming.bodyweights.push({ date: "2026-10-24", value: 203 });
+  await importBackup(p, incoming, "merge");
+  const saved = await backup(p);
+  assert.deepEqual(saved.program, current.program);
+  assert.deepEqual(saved.preferences, current.preferences);
+  assert.deepEqual(
+    saved.exerciseLibrary["Bench Press"],
+    current.exerciseLibrary["Bench Press"],
+  );
+  assert.ok(saved.exerciseLibrary["M3 new movement"]);
+  assert.deepEqual(
+    saved.sets.find((set) => set.id === current.sets[0].id),
+    current.sets[0],
+  );
+  assert.deepEqual(saved.sessions, current.sessions);
+  assert.equal(saved.activeSessionId, current.activeSessionId);
+  assert.equal(saved.sets.length, current.sets.length + 1);
+  assert.equal(saved.bodyweights.length, current.bodyweights.length + 1);
+  await p.locator('[data-view="history"]').click();
+  assert.match(
+    await p.locator('[data-legacy-date="2026-10-24"]').innerText(),
+    /compatible merged legacy record/,
+  );
+  await importBackup(p, incoming, "merge");
+  assert.deepEqual(await backup(p), saved);
+});
+
+test("filtering linked imports and deleting through History retains duplicate protection and session order", async (t) => {
+  const p = await app(t);
+  const ids = await sessionHistoryFixture(p);
+  const linked = await p.evaluate(({ second }) => {
+    const set = db.sets.find((row) => row.notes === "legacy-import-only");
+    const result = workoutActions.attachSetToSession({
+      setId: set.id,
+      sessionId: second,
+    });
+    if (!result.ok) throw Error(JSON.stringify(result));
+    renderAll();
+    return set.id;
+  }, ids);
+  await p.locator('[data-view="history"]').click();
+  await p.locator("#historyFilter").selectOption("chatgpt");
+  const group = p.locator(`[data-session-id="${ids.second}"]`);
+  assert.match(await group.innerText(), /1 matching set · 2 sets in session/);
+  assert.deepEqual(
+    await group
+      .locator("tbody tr")
+      .evaluateAll((rows) => rows.map((row) => row.dataset.setId)),
+    [linked],
+  );
+  assert.match(await group.locator("tbody td").nth(1).innerText(), /^2\./);
+  await group.getByRole("button", { name: "Delete", exact: true }).click();
+  const saved = await backup(p);
+  assert.deepEqual(
+    saved.sessions.find((session) => session.id === ids.second).setIds,
+    [ids.c],
+  );
+  assert.equal(
+    saved.imports.find((row) => row.importId === "m3-legacy-import").setCount,
+    0,
+  );
+  await stage(p, workout([set()], { importId: "m3-legacy-import" }));
+  assert.equal(await p.locator("#commitInboxBtn").isDisabled(), true);
+});
+
+test("published History fixture renders session order and legacy records on an iPhone-sized preview", async (t) => {
+  const p = await app(t, {
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const fixture = JSON.parse(
+    await fs.readFile(path.join(__dirname, "fixtures/history-v6.json"), "utf8"),
+  );
+  await importBackup(p, fixture);
+  assert.deepEqual(await backup(p), fixture);
+  const raw = await stored(p);
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator("[data-session-id]").count(), 2);
+  assert.equal(await p.locator("[data-legacy-date]").count(), 1);
+  const first = p.locator('[data-session-id="ws_history_demo_first"]');
+  assert.deepEqual(
+    await first
+      .locator("tbody tr")
+      .evaluateAll((rows) => rows.map((row) => row.dataset.setId)),
+    ["history-demo-1", "history-demo-2"],
+  );
+  assert.match(await first.locator("h3").innerText(), /Saved demo workout/);
+  assert.doesNotMatch(
+    await first.locator("h3").innerText(),
+    /Current editable demo plan/,
+  );
+  assert.equal(await p.locator("#historyTable tbody tr").count(), 4);
+  await p.locator("#historyFilter").selectOption("imported");
+  assert.equal(await p.locator("[data-session-id]").count(), 0);
+  assert.equal(await p.locator("#historyTable tbody tr").count(), 1);
+  assert.equal(await stored(p), raw);
+  assert.deepEqual(await backup(p), fixture);
+});
