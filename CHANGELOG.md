@@ -1,5 +1,10 @@
 # Changes
 
+## 2.2.2
+
+- Add application-wide Help covering all tabs, logging, program modes, imports and local backup/restore.
+- Replace History action text with accessible pencil/trash icons, keeping touch-sized actions on one line.
+
 ## 2.2.1
 
 - Widen the History date column and keep dates on one line, retaining horizontal scrolling inside the history card on narrow screens.

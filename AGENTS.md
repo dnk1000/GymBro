@@ -132,3 +132,5 @@ The app has no runtime package installation or build step. Serve the repository 
 - `app-version.js` is the only canonical application version source. UI, diagnostics and complete JSON exports consume `APP_VERSION`. Do not independently hard-code full versions or maintain another application version in private npm tooling metadata.
 - Keep `DATA_VERSION` independent: milestone/application updates do not imply schema migrations. Complete JSON backups use `appVersion` plus the existing `version` field for data schema; do not duplicate it as `dataVersion`.
 - Restore compatibility depends on schema, never application build. Old backups without `appVersion` and different-build backups remain supported when their data schema is supported.
+
+- Keep the application-wide Help dialog in `index.html` accurate when user-facing controls or workflows change. Help is a user guide, not preview acceptance instructions; its version label must use `APP_VERSION`.

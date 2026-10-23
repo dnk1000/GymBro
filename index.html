@@ -21,7 +21,15 @@
             <p>Your training log + program + ChatGPT inbox</p>
           </div>
         </div>
-        <div>
+        <div class="header-tools">
+          <button
+            class="btn small secondary"
+            id="helpButton"
+            aria-haspopup="dialog"
+            onclick="document.getElementById('helpDialog').showModal()"
+          >
+            Help
+          </button>
           <button class="btn small secondary" onclick="quickBackup()">
             Backup
           </button>
@@ -431,6 +439,90 @@
         aria-label="Application version"
       ></footer>
     </main>
+    <dialog id="helpDialog" aria-labelledby="helpTitle">
+      <div class="help-heading">
+        <h2 id="helpTitle">GymBro help</h2>
+        <form method="dialog">
+          <button class="btn secondary" autofocus>Close</button>
+        </form>
+      </div>
+      <p>
+        GymBro helps you plan, log and review your training. Use the tabs to
+        move between tools; logging a set saves it in this browser.
+      </p>
+      <h3>Dashboard</h3>
+      <p>
+        Review training activity, bodyweight and performance trends. Training
+        days count dates with logged sets. Performance comparisons use eligible
+        complete sets with matching load units.
+      </p>
+      <h3>Program</h3>
+      <p>
+        Choose a workout and a 60-minute or abbreviated 30-minute plan. The
+        shorter mode uses the template’s marked short-workout exercises.
+        Customize template slots and exercise roles here. A plan’s Log button
+        opens a new set in Workout; it does not mark the workout complete.
+      </p>
+      <h3>Workout</h3>
+      <p>
+        Check the local workout date and exercise, then enter weight, unit and
+        reps. Keep units consistent when comparing performances. RPE describes
+        perceived effort; RIR records estimated reps left in reserve. Notes
+        capture context, while pain and pain area record discomfort. Pain
+        tracking is a record, not a diagnosis; stop or modify an exercise that
+        causes pain.
+      </p>
+      <p>
+        Use the approximate/incomplete option when a record is uncertain.
+        Missing values are not treated as zero. Add set saves a new record; Save
+        changes updates the record you are editing.
+      </p>
+      <h3>History</h3>
+      <p>
+        Review and filter logged sets. The pencil edits a set; the trash icon
+        deletes it after confirmation. Swipe the table horizontally to reach
+        additional columns on a small screen. Incomplete records remain marked,
+        and imported records retain their source.
+      </p>
+      <h3>ChatGPT Inbox</h3>
+      <p>
+        Paste or load supported workout JSON, review the proposed rows and
+        warnings, and commit the rows you want. Reviewing alone does not save
+        sets. Previously imported workouts are protected against duplicate
+        imports.
+      </p>
+      <h3>Exercises</h3>
+      <p>
+        Browse the exercise library and select an exercise to review its
+        history, latest recorded set and performance trends. Latest and best
+        comparable performance can describe different sets.
+      </p>
+      <h3>Data and backups</h3>
+      <p>
+        Your database is stored locally for this browser and site address. It is
+        not automatically shared with another browser, device or address.
+        Clearing browser data can remove it.
+      </p>
+      <p>
+        Use Backup or Export JSON regularly and verify that the file is saved. A
+        complete JSON backup includes workout history, sessions, program
+        settings and preferences. Export CSV is a sets-only spreadsheet export,
+        not a complete backup.
+      </p>
+      <p>
+        Restore complete backup replaces the current database. Merge history
+        only keeps current settings and existing record IDs while adding
+        compatible history; conflicting session relationships are rejected.
+        Export a JSON backup before restoring, merging, erasing data or
+        restoring the original seed.
+      </p>
+      <p>
+        Application versions identify the build you are using. Backup
+        compatibility depends on the separate data schema; older applications
+        may not read newer-schema backups.
+      </p>
+      <p class="sub" id="helpVersion"></p>
+    </dialog>
     <script src="app-version.js"></script>
     <script src="seed.js"></script>
     <script src="workout-data.js"></script>

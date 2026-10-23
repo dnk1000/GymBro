@@ -517,7 +517,7 @@ function renderHistory() {
   const filter = historyFilter?.value || "all";
   let rows = [...db.sets].sort((a, b) => b.date.localeCompare(a.date));
   if (filter !== "all") rows = rows.filter((s) => s.source === filter);
-  historyTable.innerHTML = `<table><thead><tr><th>Date</th><th>Exercise</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s) => `<tr><td>${s.date}</td><td>${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${s.rpe != null ? "RPE " + s.rpe : s.rir != null ? s.rir + " RIR" : "—"}</td><td>${s.pain ? `${s.pain}/10 ${esc(s.painArea)}` : "—"}</td><td>${esc(s.notes || "")}</td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><button class="btn small secondary" onclick="editSet(${jsArg(s.id)})">Edit</button> <button class="btn small danger" onclick="deleteSet(${jsArg(s.id)})">Delete</button></td></tr>`).join("")}</tbody></table>`;
+  historyTable.innerHTML = `<table><thead><tr><th>Date</th><th>Exercise</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s) => `<tr><td>${s.date}</td><td>${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${s.rpe != null ? "RPE " + s.rpe : s.rir != null ? s.rir + " RIR" : "—"}</td><td>${s.pain ? `${s.pain}/10 ${esc(s.painArea)}` : "—"}</td><td>${esc(s.notes || "")}</td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
 }
 function renderExercises() {
   const xs = allExercises();
@@ -895,4 +895,7 @@ renderStorageNotice();
 // Version metadata is independent of workout state and the persistence schema.
 document.title = `GymBro ${APP_VERSION.version}`;
 document.getElementById("appVersion").textContent =
+  `GymBro ${APP_VERSION.version}`;
+
+document.getElementById("helpVersion").textContent =
   `GymBro ${APP_VERSION.version}`;

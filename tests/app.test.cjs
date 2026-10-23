@@ -1166,3 +1166,101 @@ test("history dates remain on one line at phone and desktop widths without page 
     );
   }
 });
+
+test("application Help opens, scrolls and closes without changing workout state", async (t) => {
+  const p = await app(t);
+  const original = await backup(p);
+  const raw = await stored(p);
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    await p.getByRole("button", { name: "Help", exact: true }).click();
+    const dialog = p.getByRole("dialog", { name: "GymBro help" });
+    assert.equal(await dialog.isVisible(), true);
+    for (const heading of [
+      "Dashboard",
+      "Program",
+      "Workout",
+      "History",
+      "ChatGPT Inbox",
+      "Exercises",
+      "Data and backups",
+    ]) {
+      assert.equal(
+        await dialog
+          .getByRole("heading", { name: heading, exact: true })
+          .count(),
+        1,
+      );
+    }
+    assert.equal(
+      await p.locator("#helpVersion").textContent(),
+      await p.evaluate(() => `GymBro ${APP_VERSION.version}`),
+    );
+    const box = await dialog.boundingBox();
+    assert.ok(box.x >= 0 && box.x + box.width <= width);
+    assert.ok(box.y >= 0 && box.height <= 844);
+    await p.locator("#helpVersion").scrollIntoViewIfNeeded();
+    assert.ok(await dialog.evaluate((el) => el.scrollTop > 0));
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    assert.equal(await dialog.isVisible(), false);
+    assert.equal(
+      await p
+        .getByRole("button", { name: "Help", exact: true })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+  }
+  await p.getByRole("button", { name: "Help", exact: true }).click();
+  await p.keyboard.press("Escape");
+  assert.equal(await p.locator("#helpDialog").isVisible(), false);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+});
+
+test("History icon actions stay together, preserve accessible names and confirm deletion", async (t) => {
+  const p = await app(t);
+  await p.locator('[data-view="history"]').click();
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    const row = p.locator("#historyTable tbody tr").first();
+    const edit = row.getByRole("button", { name: "Edit", exact: true });
+    const remove = row.getByRole("button", { name: "Delete", exact: true });
+    assert.equal(await edit.textContent(), "");
+    assert.equal(await remove.textContent(), "");
+    const a = await edit.boundingBox(),
+      b = await remove.boundingBox();
+    assert.equal(a.y, b.y);
+    assert.ok(
+      a.width >= 44 && a.height >= 44 && b.width >= 44 && b.height >= 44,
+    );
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+  }
+  const original = await backup(p);
+  // Cancel the existing confirmation: no set is removed.
+  p.removeAllListeners("dialog");
+  p.once("dialog", (dialog) => dialog.dismiss());
+  await p
+    .locator("#historyTable tbody tr")
+    .first()
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  assert.deepEqual(await backup(p), original);
+  p.on("dialog", (dialog) => dialog.accept());
+  // Existing edit/delete regression tests also exercise these labelled icons.
+  await p
+    .locator("#historyTable tbody tr")
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  assert.equal(
+    await p
+      .getByRole("button", { name: "Save changes", exact: true })
+      .isVisible(),
+    true,
+  );
+});
