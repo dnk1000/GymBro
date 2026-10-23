@@ -14,7 +14,7 @@ There is no backend, account, API key, or application build. Keep `index.html`, 
 
 ## Data and backups
 
-The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The Milestone 2 branch uses internal data version **6**, adding explicit sessions while retaining the current workout UI. Version-5 databases upgrade in memory with empty sessions and a null active pointer; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older version-5 applications cannot read version-6 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
+The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The application uses independent data version **6**, adding explicit sessions while retaining the current workout UI. Version-5 databases upgrade in memory with empty sessions and a null active pointer; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older version-5 applications cannot read version-6 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
 
 Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
 
@@ -81,3 +81,11 @@ Application releases and `DATA_VERSION` are independent. Complete JSON backups i
 The header Help button opens the application user guide, including logging, history icon actions, program modes, imports and local backup/restore. Update the relevant help text when user-facing workflows change. History uses labelled pencil/trash controls with compact 28px buttons; wide tables scroll within their cards.
 
 Hover over RPE and RIR in Workout and ChatGPT import entry labels for explanations. Display-only content, including History, has no acronym tooltips. Native hover tooltips do not require mobile interaction. When correcting an incomplete set, use Mark complete or uncheck Approximate / incomplete, then Save changes; correcting numbers alone intentionally preserves an explicit uncertainty flag. Mark complete requires recorded weight and reps and does not save until Save changes succeeds.
+
+## Session history and recovery (Milestone 3)
+
+History presents explicit sessions separately with saved plan name, mode, status, exercises and ordered sets. Multiple workouts on one date remain separate. Legacy/sessionless records remain fully visible in clearly labelled date groups used only for display. Source filters retain their existing meanings. Each set has compact edit/delete actions and expandable Record details for every saved field; History has no acronym tooltips.
+
+Data explains complete JSON backup versus sets-only CSV, complete restore versus history merge, and shows a file/content/effect summary before the final native confirmation. Recovery explains the difference between original saved bytes and the open tab’s in-memory export. No schema, storage or workout-action changes are introduced. See [History and backup behavior](HISTORY_AND_BACKUPS.md) for exact semantics and iPhone acceptance steps.
+
+See [release history](RELEASE_HISTORY.md) for accepted milestones, exact application builds, schema compatibility and preview lineage.

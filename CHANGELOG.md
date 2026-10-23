@@ -1,5 +1,12 @@
 # Changes
 
+## 2.3.0 — Milestone 3
+
+- Present separate explicit sessions with saved plan, mode/status, exercises and authoritative set order; retain legacy/sessionless records in labelled date groups for display only.
+- Preserve source filters, compact corrections, completeness/source/pain/notes, both RPE and RIR, and expandable full record details.
+- Explain complete backups, CSV limits, restore/merge effects and recovery downloads. Summarize selected file and contents before committing; validate conflicting merges before confirmation.
+- Keep schema 6, localStorage, migrations, action APIs and workout behavior unchanged.
+
 ## 2.2.5
 
 - Limit acronym tooltips to Workout and ChatGPT import entry labels; remove them from History and other display-only content.

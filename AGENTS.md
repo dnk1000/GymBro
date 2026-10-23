@@ -4,7 +4,7 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 ## Product and scope
 
-- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestone 2 uses independent data version **6**.
+- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestones 2 and 3 use independent data version **6**.
 - **iPhone usability is the primary UX target.** Prioritize readable screens, reachable controls, touch input, on-screen keyboard behavior, and Safari compatibility; retain working desktop behavior.
 - Preserve working functionality unless the task explicitly requires changing it. **Do not redesign the UI unless specifically requested.**
 - Retain the vanilla JavaScript, static-file, no-build application. Node dependencies are development tooling, not runtime requirements.
@@ -29,6 +29,8 @@ The app has no runtime package installation or build step. Serve the repository 
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `history-view.js`                   | Detached DOM-free History presentation selector: explicit sessions in setIds order, sessionless date groups for display only, source filters.               |
+| `HISTORY_AND_BACKUPS.md`            | History/recovery presentation contracts and Milestone 3 acceptance checklist.                                                                               |
 | `ui-acronyms.js`                    | Presentation-only shared acronym glossary and native hover tooltips; never changes stored data.                                                             |
 | `app-version.js`                    | Canonical immutable application version and export metadata helper; independent of data schema version.                                                     |
 | `index.html`                        | Application shell, seven views, form markup, and script loading.                                                                                            |
@@ -109,7 +111,7 @@ The app has no runtime package installation or build step. Serve the repository 
 
 ## Baseline and reporting
 
-- The user confirmed Milestone 1 acceptance and Vercel **Ready · Production · main · `6f10b49`** before authorizing Milestone 2. Milestone 2 device acceptance remains separate and pending; do not infer device details or mark its checklist complete from automated tests.
+- The user confirmed Milestone 1 acceptance and Vercel **Ready · Production · main · `6f10b49`** before authorizing Milestone 2. The user subsequently accepted merging Milestone 2 as main `14b12a8`; its regression suite passed and production served 2.2.5. Do not invent physical-device details. Milestone 3 acceptance remains pending.
 
 - V1.6 is **not yet frozen as the final stabilized baseline**. The physical-phone smoke test remains pending unless actual results have subsequently been recorded in `REAL_PHONE_SMOKE_TEST.md`.
 - Do not mark the phone checklist complete from desktop/mobile emulation. Record the actual device, OS, browser, code revision, results, and remaining failures. Do not claim iPhone Safari support was tested using Chromium.
@@ -137,3 +139,12 @@ The app has no runtime package installation or build step. Serve the repository 
 - Keep the application-wide Help dialog in `index.html` accurate when user-facing controls or workflows change. Help is a user guide, not preview acceptance instructions; its version label must use `APP_VERSION`.
 
 - Keep the acronym glossary in `ui-acronyms.js` current for data-entry labels. Limit acronym tooltips to entry controls; do not add them to History or other display-only content. Preserve explicit incompleteness; never silently clear it solely because weight/reps exist. The edit form must explain how to mark corrected records complete.
+
+## History and recovery presentation
+
+- Session history uses the saved snapshot name and authoritative `setIds` order. Never group distinct sessions by date or substitute a current template for historical intent.
+- Legacy/sessionless date groups are presentation only. Preserve every record and source filter; no inferred session identity or timestamps.
+- Keep per-set fields, corrections, compact icon controls and expandable raw record details available. Source filters may hide nonmatching sets but must not renumber session order or rewrite counts as full-session totals.
+- Complete restore replaces the validated database; history merge keeps the established merge semantics. Explain the operation and selected backup before confirmation. Cancellation and conflicts must leave storage unchanged.
+
+- Update `RELEASE_HISTORY.md` for accepted releases with exact canonical application version, independent schema, application revision, linked PR and meaningful changes. Distinguish preview lineage from accepted releases; do not invent past versions or physical-device results. Documentation-only updates do not bump the application build.

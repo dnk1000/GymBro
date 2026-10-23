@@ -48,6 +48,13 @@
     <main>
       <div id="storageNotice" class="notice status-bad" role="alert" hidden>
         <p id="storageMessage"></p>
+        <p class="sub">
+          Download original data preserves the exact saved file, even if it
+          cannot be read. Export this tab saves the database currently open in
+          this tab, which may be empty or older during recovery. Keep both files
+          when unsure. Reload reads the latest saved database; Start empty
+          replaces unreadable data only after confirmation.
+        </p>
         <div class="actions">
           <button onclick="downloadStoredData()">Download original data</button
           ><button onclick="exportJSON()">Export this tab</button
@@ -277,16 +284,18 @@
             <div>
               <h2>Workout history</h2>
               <div class="sub">
-                Imported historical records are tagged. Incomplete sets remain
-                explicitly incomplete.
+                Explicit sessions preserve their recorded workout and set order.
+                Legacy/sessionless records remain available below. Source
+                filters apply to sets; session counts show the full session.
               </div>
             </div>
             <select
+              aria-label="History source"
               id="historyFilter"
               onchange="renderHistory()"
               style="max-width: 220px"
             >
-              <option value="all">All sessions</option>
+              <option value="all">All history</option>
               <option value="imported">Imported only</option>
               <option value="manual">New/manual only</option>
               <option value="chatgpt">ChatGPT imports</option>
@@ -404,8 +413,11 @@
           <div class="card">
             <h2>Backup & export</h2>
             <p class="sub">
-              Your data lives in this browser. Export a JSON backup
-              periodically. CSV is useful for spreadsheets.
+              A complete JSON backup contains sets, sessions, the active
+              workout, bodyweights, program/templates, exercise library,
+              preferences and import records. It also identifies the exporting
+              application and data schema. Save and verify the file regularly.
+              CSV contains sets only and cannot restore your complete database.
             </p>
             <div class="actions">
               <button onclick="exportJSON()">Export JSON</button
@@ -417,15 +429,18 @@
           <div class="card">
             <h2>Restore or merge a backup</h2>
             <p class="sub">
-              Restore replaces all data, including your program, exercise
-              library and preferences. Merge adds history and keeps current
-              settings. Export a backup first.
+              Choose an operation before selecting a complete JSON backup. The
+              file is validated first; a summary and confirmation appear before
+              changes are saved. Older supported backups remain valid even
+              without application-version metadata.
             </p>
             <label for="backupMode">Backup operation</label
-            ><select id="backupMode">
+            ><select id="backupMode" onchange="renderBackupOperation()">
               <option value="restore">Restore complete backup</option>
-              <option value="merge">Merge history only</option></select
-            ><label for="importFile">Backup JSON file</label
+              <option value="merge">Merge history only</option>
+            </select>
+            <p id="backupEffect" class="notice" aria-live="polite"></p>
+            <label for="importFile">Backup JSON file</label
             ><input id="importFile" type="file" accept="application/json" />
             <div class="actions">
               <button onclick="importJSON()">Import JSON</button>
@@ -497,7 +512,13 @@
       </p>
       <h3>History</h3>
       <p>
-        Review and filter logged sets. The pencil edits a set; the trash icon
+        Review explicit sessions with their saved plan name, mode, status and
+        ordered sets. Multiple workouts on one date remain separate.
+        Legacy/sessionless records are grouped by date for display only, without
+        creating sessions. Source filters show matching sets and keep session
+        order; sessions without matching sets are omitted while a filter is
+        active. Empty sessions remain visible in All history. Expand Record
+        details for all saved fields. The pencil edits a set; the trash icon
         deletes it after confirmation. Swipe the table horizontally to reach
         additional columns on a small screen. Incomplete records remain marked,
         and imported records retain their source.
@@ -548,6 +569,7 @@
     <script src="storage.js"></script>
     <script src="workout-actions.js"></script>
     <script src="ui-acronyms.js"></script>
+    <script src="history-view.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
