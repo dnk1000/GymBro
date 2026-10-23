@@ -127,7 +127,7 @@ test("GymBro boots, navigates all tabs, saves a set, reloads and exports it", as
   const download = await downloading;
   const exported = JSON.parse(await fs.readFile(await download.path(), "utf8"));
   assert.equal(exported.sets.at(-1).notes, "persist me");
-  assert.equal(exported.version, 6);
+  assert.equal(exported.version, 7);
 });
 
 test("corrupt, malformed and future-version storage remains byte-for-byte intact", async (t) => {
@@ -205,7 +205,7 @@ test("V1.5 migration preserves customized program, history and preferences", asy
   await p.reload();
   assert.equal(await stored(p), raw, "startup does not rewrite data");
   const migrated = await backup(p);
-  assert.equal(migrated.version, 6);
+  assert.equal(migrated.version, 7);
   assert.deepEqual(migrated.program, legacy.program);
   assert.deepEqual(migrated.sets, legacy.sets);
   assert.equal(migrated.preferences.custom, "my preference");
@@ -763,7 +763,7 @@ test("v5 storage migrates without writing or changing old records; failed first 
   );
   await p.reload();
   const migrated = await backup(p);
-  assert.equal(migrated.version, 6);
+  assert.equal(migrated.version, 7);
   assert.deepEqual(migrated.sets, legacy.sets);
   assert.deepEqual(migrated.sessions, []);
   assert.equal(migrated.activeSessionId, null);
@@ -784,7 +784,7 @@ test("v5 storage migrates without writing or changing old records; failed first 
     workoutActions.createSession({ date: "2026-10-23", templateId: "push" }),
   );
   assert.equal(created.ok, true);
-  assert.equal(JSON.parse(await stored(p)).version, 6);
+  assert.equal(JSON.parse(await stored(p)).version, 7);
   assert.deepEqual((await backup(p)).sets, legacy.sets);
 });
 
@@ -887,7 +887,7 @@ test("JSON export/restore/export preserves sessions and active pointer exactly; 
   legacy.sets = legacy.sets.filter((set) => !set.sessionId);
   await importBackup(p, legacy);
   const restored = await backup(p);
-  assert.equal(restored.version, 6);
+  assert.equal(restored.version, 7);
   assert.deepEqual(restored.sessions, []);
   assert.equal(restored.activeSessionId, null);
   assert.deepEqual(restored.sets, legacy.sets);
@@ -950,13 +950,13 @@ test("session create, completion and attachment retain stale-tab and write-failu
   assert.equal(await p.evaluate(() => workoutActions.getActiveSession()), null);
 });
 
-test("malformed v6 sessions and future v7 storage remain untouched and block session writes", async (t) => {
+test("malformed v6 sessions and future v8 storage remain untouched and block session writes", async (t) => {
   const p = await app(t);
   const valid = await backup(p);
   const malformed = structuredClone(valid);
   malformed.activeSessionId = "missing";
   const future = structuredClone(valid);
-  future.version = 7;
+  future.version = 8;
   const missing = structuredClone(valid);
   delete missing.sessions;
   for (const data of [malformed, future, missing]) {
@@ -1040,7 +1040,7 @@ test("published synthetic iPhone fixture restores and logs through the existing 
     await fs.readFile(path.join(__dirname, "fixtures/session-v6.json"), "utf8"),
   );
   await importBackup(p, fixture);
-  assert.deepEqual(await backup(p), fixture);
+  assert.deepEqual(await backup(p), { ...fixture, version: 7 });
   await p.locator('[data-view="workout"]').click();
   await p.locator("#fDate").fill(fixture.sessions[0].date);
   await p.locator("#fExercise").fill("Bench Press");
@@ -1093,7 +1093,7 @@ test("canonical version is visible across phone/desktop views and complete expor
     await fs.readFile(await (await downloading).path(), "utf8"),
   );
   assert.equal(exported.appVersion, version);
-  assert.equal(exported.version, 6);
+  assert.equal(exported.version, 7);
   const { appVersion, ...content } = exported;
   assert.deepEqual(content, original);
   assert.deepEqual(await backup(p), original);
@@ -1113,7 +1113,7 @@ test("restore accepts missing and differing application metadata using schema on
   delete legacy.activeSessionId;
   delete legacy.appVersion;
   await importBackup(p, legacy);
-  assert.equal((await backup(p)).version, 6);
+  assert.equal((await backup(p)).version, 7);
   assert.deepEqual((await backup(p)).sets, legacy.sets);
   for (const appVersion of [
     undefined,
@@ -1693,7 +1693,7 @@ test("backup presentation and confirmation distinguish complete replacement from
     const dialog = await pending;
     assert.equal(dialog.type(), "confirm");
     assert.match(dialog.message(), /review-backup.json/);
-    assert.match(dialog.message(), /Data schema: 6/);
+    assert.match(dialog.message(), /Data schema: 7/);
     assert.match(dialog.message(), /99.0.0-20990101T000000Z/);
     assert.match(
       dialog.message(),
@@ -1741,7 +1741,7 @@ test("complete export restore export preserves every supported section and metad
   await importBackup(p, first);
   assert.deepEqual(await exportComplete(), first);
   assert.deepEqual(await backup(p), first);
-  assert.equal(first.version, 6);
+  assert.equal(first.version, 7);
   assert.equal(first.sessions.length, 2);
   assert.ok(first.activeSessionId);
   assert.ok(first.imports.length > 0);
@@ -1840,7 +1840,7 @@ test("published History fixture renders session order and legacy records on an i
     await fs.readFile(path.join(__dirname, "fixtures/history-v6.json"), "utf8"),
   );
   await importBackup(p, fixture);
-  assert.deepEqual(await backup(p), fixture);
+  assert.deepEqual(await backup(p), { ...fixture, version: 7 });
   const raw = await stored(p);
   await p.locator('[data-view="history"]').click();
   assert.equal(await p.locator("[data-session-id]").count(), 2);
@@ -1862,5 +1862,340 @@ test("published History fixture renders session order and legacy records on an i
   assert.equal(await p.locator("[data-session-id]").count(), 0);
   assert.equal(await p.locator("#historyTable tbody tr").count(), 1);
   assert.equal(await stored(p), raw);
-  assert.deepEqual(await backup(p), fixture);
+  assert.deepEqual(await backup(p), { ...fixture, version: 7 });
+});
+
+async function startGuide(p, duration = "30") {
+  await p.locator('[data-view="workout"]').click();
+  await p.locator("#guidedTemplate").selectOption("push");
+  await p.locator("#guidedDate").fill("2026-10-23");
+  await p.locator("#guidedDuration").selectOption(duration);
+  await p.getByRole("button", { name: "Start workout", exact: true }).click();
+}
+async function guideReady(p) {
+  await p.waitForFunction(() => Date.now() >= guidedActionUntil);
+}
+
+test("guided UI starts correct plans atomically, logs multiple sets and suppresses double taps", async (t) => {
+  for (const duration of ["60", "30"]) {
+    const p = await app(t, {
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    const before = await backup(p);
+    await startGuide(p, duration);
+    let state = await p.evaluate(() => workoutActions.getGuidedWorkoutState());
+    assert.equal(state.session.duration, Number(duration));
+    assert.equal(state.slots.length, duration === "60" ? 6 : 3);
+    assert.equal(state.currentExercise.actualExercise, "Smith Press");
+    assert.equal(state.session.guided.revision, 0);
+    await p.locator("#fWeight").fill("40");
+    await p.locator("#fUnit").selectOption("lb/side");
+    await p.locator("#fReps").fill("8");
+    await p
+      .getByRole("button", { name: "Log guided set", exact: true })
+      .click();
+    await p
+      .getByRole("button", { name: "Log guided set", exact: true })
+      .click();
+    assert.equal((await backup(p)).sets.length, before.sets.length + 1);
+    await p.locator("#fWeight").fill("40");
+    await p.locator("#fReps").fill("8");
+    await p
+      .getByRole("button", { name: "Log guided set", exact: true })
+      .click();
+    state = await p.evaluate(() => workoutActions.getGuidedWorkoutState());
+    assert.equal(state.currentExercise.sets.length, 2);
+    assert.equal(state.currentExercise.status, "pending");
+    assert.equal(
+      new Set(state.session.guided.requests.map((row) => row.id)).size,
+      2,
+    );
+    await p.evaluate(() => {
+      guidedCommand("move", "next");
+      guidedCommand("move", "next");
+    });
+    assert.equal(
+      (await p.evaluate(() => workoutActions.getGuidedWorkoutState()))
+        .currentExercise.actualExercise,
+      "Lateral Raise",
+    );
+    assert.ok(
+      (
+        await p.evaluate(() => workoutActions.getGuidedWorkoutState())
+      ).slots.every((slot) => slot.status === "pending"),
+    );
+  }
+});
+
+test("guide substitutions retain older sets and permanent plans, with factual unit-separated performance", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const plan = (await backup(p)).program;
+  await p.locator("#fWeight").fill("40");
+  await p.locator("#fUnit").selectOption("lb/side");
+  await p.locator("#fReps").fill("8");
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  const original = (await backup(p)).sets.at(-1);
+  await p.locator("#guidedSubstitute").selectOption("Bench Press");
+  await p.getByRole("button", { name: "Use substitute", exact: true }).click();
+  assert.equal(await p.locator("#fExercise").inputValue(), "Bench Press");
+  await p.locator("#fWeight").fill("90");
+  await p.locator("#fUnit").selectOption("lb");
+  await p.locator("#fReps").fill("10");
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  const saved = await backup(p),
+    current = await p.evaluate(() => workoutActions.getGuidedWorkoutState());
+  assert.deepEqual(saved.program, plan);
+  assert.deepEqual(
+    saved.sets.find((set) => set.id === original.id),
+    original,
+  );
+  assert.deepEqual(
+    current.currentExercise.sets.map((set) => set.exercise),
+    ["Smith Press", "Bench Press"],
+  );
+  assert.ok(
+    current.currentExercise.sets.every((set) => set.planSlotId === "slot-1"),
+  );
+  await p
+    .getByText("Previous performance · informational only", { exact: true })
+    .click();
+  assert.match(
+    await p.locator(".guided-previous").first().innerText(),
+    /external load/,
+  );
+  assert.equal(
+    await p
+      .locator("#guidedWorkout")
+      .getByText(/recommended weight|target reps/i)
+      .count(),
+    0,
+  );
+  await p.locator('[data-view="history"]').click();
+  await p.getByText("Guided exercise status", { exact: true }).click();
+  assert.match(
+    await p.locator(".guided-history").innerText(),
+    /Smith Press → current selection: Bench Press · pending/,
+  );
+});
+
+test("guided position/status/substitutions resume after reload and reopening; finish keeps pending slots", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  await p.getByRole("button", { name: "Done", exact: true }).click();
+  await guideReady(p);
+  await p.getByRole("button", { name: "Next", exact: true }).click();
+  await guideReady(p);
+  await p.getByRole("button", { name: "Skip", exact: true }).click();
+  const original = await p.evaluate(() =>
+    workoutActions.getGuidedWorkoutState(),
+  );
+  await p.reload();
+  await p.locator('[data-view="workout"]').click();
+  assert.equal(
+    await p.locator("#guidedSlot").inputValue(),
+    original.currentSlotId,
+  );
+  const reopened = await p.context().newPage();
+  await reopened.goto(origin);
+  await reopened.locator('[data-view="workout"]').click();
+  assert.deepEqual(
+    await reopened.evaluate(() => workoutActions.getGuidedWorkoutState()),
+    original,
+  );
+  await reopened
+    .getByRole("button", { name: "Log current exercise", exact: true })
+    .click();
+  assert.equal(
+    await reopened.locator("#fExercise").inputValue(),
+    "Lateral Raise",
+  );
+  const dialogs = [];
+  reopened.on("dialog", async (dialog) => {
+    dialogs.push(dialog.message());
+    await dialog.accept();
+  });
+  await reopened
+    .getByRole("button", { name: "Finish workout", exact: true })
+    .click();
+  assert.ok(dialogs.some((message) => /unfinished exercises/.test(message)));
+  const saved = await backup(reopened),
+    session = saved.sessions[0];
+  assert.equal(saved.activeSessionId, null);
+  assert.equal(session.status, "completed");
+  assert.deepEqual(
+    session.guided.slots.map((slot) => slot.status),
+    ["completed", "skipped", "pending"],
+  );
+  await reopened.close();
+});
+
+test("guided navigation protects unsaved input; manual form remains available and no draft is persisted", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const raw = await stored(p);
+  await p.locator("#fWeight").fill("40");
+  await p.locator("#fReps").fill("8");
+  p.removeAllListeners("dialog");
+  p.once("dialog", (dialog) => dialog.dismiss());
+  await p.getByRole("button", { name: "Next", exact: true }).click();
+  assert.equal(await p.locator("#fWeight").inputValue(), "40");
+  assert.equal(
+    (await p.evaluate(() => workoutActions.getGuidedWorkoutState()))
+      .currentSlotId,
+    "slot-1",
+  );
+  assert.equal(await stored(p), raw);
+  p.on("dialog", (dialog) => dialog.accept());
+  await p
+    .getByRole("button", { name: "Use manual logging", exact: true })
+    .click();
+  await p.locator("#fDate").fill("2026-10-23");
+  await p.locator("#fExercise").fill("Bench Press");
+  await p.locator("#fWeight").fill("90");
+  await p.locator("#fReps").fill("8");
+  await p.getByRole("button", { name: "Add set", exact: true }).click();
+  const set = (await backup(p)).sets.at(-1);
+  assert.equal(set.exercise, "Bench Press");
+  assert.ok(set.sessionId);
+  assert.equal(set.planSlotId, undefined);
+  assert.equal(
+    (await p.evaluate(() => workoutActions.getGuidedWorkoutState()))
+      .currentExercise.sets.length,
+    0,
+  );
+});
+
+test("guided schema-7 backups round trip; schema-6 active sessions require explicit Enable guidance", async (t) => {
+  const p = await app(t);
+  const fixture = JSON.parse(
+    await fs.readFile(path.join(__dirname, "fixtures/session-v6.json"), "utf8"),
+  );
+  await importBackup(p, fixture);
+  await p.locator('[data-view="workout"]').click();
+  assert.equal(
+    await p.evaluate(() => workoutActions.getGuidedWorkoutState()),
+    null,
+  );
+  assert.equal(
+    await p
+      .getByRole("button", { name: "Enable guidance", exact: true })
+      .isVisible(),
+    true,
+  );
+  await p.getByRole("button", { name: "Enable guidance", exact: true }).click();
+  await p.locator("#fWeight").fill("100");
+  await p.locator("#fReps").fill("8");
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  await p.locator('[data-view="data"]').click();
+  const exporting = p.waitForEvent("download");
+  await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+  const exported = JSON.parse(
+    await fs.readFile(await (await exporting).path(), "utf8"),
+  );
+  assert.equal(exported.version, 7);
+  assert.ok(exported.sessions[0].guided.requests.length);
+  await importBackup(p, exported);
+  assert.deepEqual(await backup(p), exported);
+  const second = p.waitForEvent("download");
+  await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+  assert.deepEqual(
+    JSON.parse(await fs.readFile(await (await second).path(), "utf8")),
+    exported,
+  );
+});
+
+test("guided failures and stale tabs retain prior committed state and unsaved input", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  await p.locator("#fWeight").fill("40");
+  await p.locator("#fReps").fill("8");
+  const before = await backup(p),
+    raw = await stored(p);
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw Error("quota");
+    };
+  });
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  assert.deepEqual(await backup(p), before);
+  assert.equal(await stored(p), raw);
+  assert.equal(await p.locator("#fReps").inputValue(), "8");
+  await p.reload();
+  const stale = await p.context().newPage();
+  await stale.goto(origin);
+  await p.evaluate(() => {
+    const state = workoutActions.getGuidedWorkoutState();
+    workoutActions.moveGuidedSlot({
+      sessionId: state.sessionId,
+      expectedRevision: state.revision,
+      direction: "next",
+    });
+  });
+  const staleBefore = await backup(stale);
+  const result = await stale.evaluate(() => {
+    const state = workoutActions.getGuidedWorkoutState();
+    return workoutActions.setGuidedSlotStatus({
+      sessionId: state.sessionId,
+      expectedRevision: state.revision,
+      planSlotId: state.currentSlotId,
+      status: "completed",
+    });
+  });
+  assert.equal(result.code, "PERSISTENCE_ERROR");
+  assert.deepEqual(await backup(stale), staleBefore);
+  assert.equal((await backup(p)).sessions[0].guided.slots[0].status, "pending");
+  await stale.close();
+});
+
+test("guided controls fit phone/desktop widths with useful touch targets and canonical version", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    const buttons = await p
+      .locator(".guided-controls button")
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
+    assert.ok(buttons.every((height) => height >= 44));
+    assert.equal(
+      await p.locator("#appVersion").textContent(),
+      await p.evaluate(() => `GymBro ${APP_VERSION.version}`),
+    );
+  }
+});
+
+test("corrupt persisted guided position blocks recovery without guessing or overwriting", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const invalid = await backup(p);
+  invalid.sessions[0].guided.currentSlotId = "invalid-slot";
+  const raw = JSON.stringify(invalid);
+  await p.evaluate(
+    ([key, value]) => localStorage.setItem(key, value),
+    [KEY, raw],
+  );
+  await p.reload();
+  assert.equal(await p.locator("#storageNotice").isVisible(), true);
+  assert.equal(await stored(p), raw);
+  assert.equal(
+    (
+      await p.evaluate(() =>
+        workoutActions.startGuidedSession({
+          date: "2026-10-23",
+          templateId: "push",
+          duration: 30,
+        }),
+      )
+    ).code,
+    "PERSISTENCE_ERROR",
+  );
+  assert.equal(await stored(p), raw);
 });

@@ -4,7 +4,7 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 ## Product and scope
 
-- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestones 2 and 3 use independent data version **6**.
+- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestones 2 and 3 used schema **6**; Milestone 4 uses independent data schema **7**.
 - **iPhone usability is the primary UX target.** Prioritize readable screens, reachable controls, touch input, on-screen keyboard behavior, and Safari compatibility; retain working desktop behavior.
 - Preserve working functionality unless the task explicitly requires changing it. **Do not redesign the UI unless specifically requested.**
 - Retain the vanilla JavaScript, static-file, no-build application. Node dependencies are development tooling, not runtime requirements.
@@ -29,6 +29,9 @@ The app has no runtime package installation or build step. Serve the repository 
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guided-workouts.js`                | DOM-free guided validation, state selectors and transaction-backed guided action extension.                                                                 |
+| `guided-ui.js`                      | Guided Workout DOM adapter and transient form context; no committed draft persistence.                                                                      |
+| `GUIDED_WORKOUTS.md`                | Schema-7 guidance contracts, action API, migration and iPhone acceptance steps.                                                                             |
 | `history-view.js`                   | Detached DOM-free History presentation selector: explicit sessions in setIds order, sessionless date groups for display only, source filters.               |
 | `HISTORY_AND_BACKUPS.md`            | History/recovery presentation contracts and Milestone 3 acceptance checklist.                                                                               |
 | `ui-acronyms.js`                    | Presentation-only shared acronym glossary and native hover tooltips; never changes stored data.                                                             |
@@ -111,7 +114,7 @@ The app has no runtime package installation or build step. Serve the repository 
 
 ## Baseline and reporting
 
-- The user confirmed Milestone 1 acceptance and Vercel **Ready · Production · main · `6f10b49`** before authorizing Milestone 2. The user subsequently accepted merging Milestone 2 as main `14b12a8`; its regression suite passed and production served 2.2.5. Do not invent physical-device details. Milestone 3 acceptance remains pending.
+- The user confirmed Milestone 1 acceptance and Vercel **Ready · Production · main · `6f10b49`** before authorizing Milestone 2. The user subsequently accepted merging Milestone 2 as main `14b12a8`; its regression suite passed and production served 2.2.5. Do not invent physical-device details. The user accepted Milestone 3 via PR #4 at `fd616fa`; its full regression suite passed and production served 2.3.0. Milestone 4 device acceptance remains pending.
 
 - V1.6 is **not yet frozen as the final stabilized baseline**. The physical-phone smoke test remains pending unless actual results have subsequently been recorded in `REAL_PHONE_SMOKE_TEST.md`.
 - Do not mark the phone checklist complete from desktop/mobile emulation. Record the actual device, OS, browser, code revision, results, and remaining failures. Do not claim iPhone Safari support was tested using Chromium.
@@ -148,3 +151,18 @@ The app has no runtime package installation or build step. Serve the repository 
 - Complete restore replaces the validated database; history merge keeps the established merge semantics. Explain the operation and selected backup before confirmation. Cancellation and conflicts must leave storage unchanged.
 
 - Update `RELEASE_HISTORY.md` for accepted releases with exact canonical application version, independent schema, application revision, linked PR and meaningful changes. Distinguish preview lineage from accepted releases; do not invent past versions or physical-device results. Documentation-only updates do not bump the application build.
+
+## Guided workouts — Milestone 4
+
+- Exercise identity is currently the exercise-library name key. Do not invent IDs, equivalence, set/rep targets, rest periods or progression thresholds. Preserve every 60-minute slot and the existing 30-minute `short` selections, including existing roles.
+- Start guided sessions atomically with snapshot and initial progress. Schema 6→7 preserves all old records and does not invent guidance. Existing active sessions require explicit Enable guidance.
+- Position is separate from status: navigation never marks Done/Skip, and logging never infers completion. Finishing may retain pending slots after confirmation. No session reopen workflow.
+- Substitution changes session-local actual exercise for subsequent sets only. Snapshot, template and previously logged sets must stay unchanged.
+- Guided actions require an expected revision. Set submissions require action request IDs, not value-based deduplication. Persist committed request history (including deletion tombstones) atomically; failed writes must not consume a request.
+- Resume committed guided state after reload. Invalid current slots fail conservatively. Keep partially entered forms transient and confirm before guided navigation discards them.
+- History changes stay limited to planned/actual exercise and explicit guided statuses. Use the same action/state layer for future v3 adapters; no AI/voice implementation here.
+
+## Product north star
+
+- Read `GymBro_PRD.md` when assessing product or architecture changes. ChatGPT is the future coaching/reasoning layer; GymBro provides structured memory, actions, persistence and the dashboard/manual fallback. All workout control must remain available through DOM-independent structured actions/state.
+- The PRD is a roadmap, not blanket authorization to expand a milestone. Follow the specifically approved scope; do not add autonomous training prescriptions, AI/voice or later features merely because the PRD describes future capabilities.

@@ -11,6 +11,7 @@ function fixture(prepare = (state) => state) {
     "seed.js",
     "workout-data.js",
     "workout-sessions.js",
+    "guided-workouts.js",
     "workout-actions.js",
   ]) {
     vm.runInContext(
@@ -304,7 +305,7 @@ test("invalid import is atomic and incomplete edits preserve uncertainty by defa
     edit.state.sets.find((row) => row.id === historical.id).complete,
     false,
   );
-  assert.equal(edit.state.version, 6);
+  assert.equal(edit.state.version, 7);
   assert.equal(edit.state.sets[0].id, initial.sets[0].id);
 });
 

@@ -1,5 +1,12 @@
 # Changes
 
+## 2.4.0 — Milestone 4 (preview)
+
+- Add atomic guided session start, explicit Done/Skip, persisted navigation and session-local substitutions over immutable plan snapshots. Preserve earlier sets and manual logging.
+- Show factual previous performance by exact exercise and unit without prescriptions or progression. Add gym-sized controls near the current card and set form.
+- Add schema 6→7 migration without inventing progress; back up guidance and committed request IDs for safe retries, rollback and resume. Preserve the storage key, old history and imports.
+- Show guided statuses/planned-versus-current selections in existing session History. Finish after confirmation can retain unfinished slots.
+
 ## 2.3.0 — Milestone 3
 
 - Present separate explicit sessions with saved plan, mode/status, exercises and authoritative set order; retain legacy/sessionless records in labelled date groups for display only.

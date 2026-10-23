@@ -14,7 +14,7 @@ There is no backend, account, API key, or application build. Keep `index.html`, 
 
 ## Data and backups
 
-The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The application uses independent data version **6**, adding explicit sessions while retaining the current workout UI. Version-5 databases upgrade in memory with empty sessions and a null active pointer; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older version-5 applications cannot read version-6 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
+The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The application uses independent data version **7**, supporting explicit sessions and guided progress while preserving legacy history and manual logging. Version-5 databases upgrade with empty sessions and a null active pointer; version-6 databases advance to 7 without adding guidance to existing sessions. All migration happens in memory; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older applications that support only schema 5 or 6 cannot read version-7 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
 
 Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
 
@@ -39,7 +39,7 @@ Performance charts and gains exclude incomplete records and compare positive ext
 
 Exercise detail's **Latest** shows the most recent set with recorded load and reps, including assisted, bodyweight, zero-load, and approximate records. It is independent of ranking eligibility.
 
-Milestone 2 session lifecycle actions are programmatic only; no new controls or history redesign are included. With no active session, manual logging works as before. With one active, new manual sets link to it and must use its local date; explicit `sessionId: null` in the action API logs sessionless. ChatGPT imports remain sessionless. See [the session schema and acceptance guide](WORKOUT_SESSIONS.md).
+Session lifecycle actions were introduced programmatically in Milestone 2; Milestone 4 now exposes guided start/resume/finish controls, while retaining those APIs. With no active session, manual logging works as before. With one active, new manual sets link to it and must use its local date; explicit `sessionId: null` in the action API logs sessionless. ChatGPT imports remain sessionless. See [the session schema and acceptance guide](WORKOUT_SESSIONS.md).
 
 ## Development
 
@@ -76,7 +76,7 @@ The existing vanilla JavaScript workflow is retained. V2 can introduce explicit 
 
 `app-version.js` is the canonical release source. The format is **MAJOR.MINOR.PATCH-BUILD**: product generation, milestone, non-feature/bugfix release, and a fixed UTC build timestamp (`YYYYMMDDTHHmmssZ`). Milestone 2 starts at 2.2.0. Update the committed timestamp for each deployable build; do not derive it from the browser clock. The normal footer and page title show the complete version, also available as `APP_VERSION` for diagnostics.
 
-Application releases and `DATA_VERSION` are independent. Complete JSON backups include `appVersion` and the existing `version: 6` schema field (no redundant `dataVersion` field). Export metadata does not mutate workout state. Restore uses only schema compatibility: missing or different application versions are accepted. Re-export identifies the exporting build. CSV and ChatGPT interchange remain unchanged. The private npm package contains tooling only and has no separate application version.
+Application releases and `DATA_VERSION` are independent. Complete JSON backups include `appVersion` and the existing `version: 7` schema field (no redundant `dataVersion` field). Export metadata does not mutate workout state. Restore uses only schema compatibility: missing or different application versions are accepted. Re-export identifies the exporting build. CSV and ChatGPT interchange remain unchanged. The private npm package contains tooling only and has no separate application version.
 
 The header Help button opens the application user guide, including logging, history icon actions, program modes, imports and local backup/restore. Update the relevant help text when user-facing workflows change. History uses labelled pencil/trash controls with compact 28px buttons; wide tables scroll within their cards.
 
@@ -89,3 +89,11 @@ History presents explicit sessions separately with saved plan name, mode, status
 Data explains complete JSON backup versus sets-only CSV, complete restore versus history merge, and shows a file/content/effect summary before the final native confirmation. Recovery explains the difference between original saved bytes and the open tab’s in-memory export. No schema, storage or workout-action changes are introduced. See [History and backup behavior](HISTORY_AND_BACKUPS.md) for exact semantics and iPhone acceptance steps.
 
 See [release history](RELEASE_HISTORY.md) for accepted milestones, exact application builds, schema compatibility and preview lineage.
+
+## Guided workouts (Milestone 4)
+
+Workout now offers Start workout with a saved template, local date and approximate 30/60-minute mode. Session snapshots retain existing slot selections. Log sets, explicitly choose Done/Skip, navigate, substitute locally, reload/resume and finish even with pending exercises after confirmation. Manual logging remains available. No training targets, rest timers, progression, AI or voice are introduced.
+
+Guided state and submission identities are persisted through the DOM-free action layer in schema 7. Failed writes commit neither progress nor request IDs. Exercise identity remains the existing exercise-library name key; no new ID system or equivalence policy is added. Read [guided-workout contracts and acceptance steps](GUIDED_WORKOUTS.md) before modifying this flow.
+
+The product north star is [GymBro_PRD.md](GymBro_PRD.md): ChatGPT supplies future virtual-trainer reasoning, while GymBro supplies structured memory/actions, persistence and the dashboard/manual fallback. The [guided action/state alignment audit](GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) maps the current DOM-independent control surface to that boundary; actual voice/AI integration remains future work.

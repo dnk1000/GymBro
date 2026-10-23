@@ -1,5 +1,7 @@
 # Workout sessions — v2 Milestone 2
 
+Historical milestone documentation: Milestone 4 adds schema 7 and guided actions; see [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md) for current guidance contracts. Existing unguided behavior remains supported.
+
 Milestone 2 adds a data model and DOM-free actions, not guided-workout controls or a new history interface. The UI displays the canonical application version from `app-version.js`, independently of schema 6. Milestone 1 acceptance and production `main` commit `6f10b49` were confirmed by the user before this work began.
 
 ## Schema 6

@@ -180,6 +180,25 @@ function addSet() {
     notes: fNotes.value.trim(),
     complete: !document.getElementById("fApproximate").checked,
   };
+  if (guidedFormContext && !editingSetId) {
+    if (guidedFormContext.committed) return;
+    const context = guidedFormContext;
+    const result = workoutActions.logGuidedSet({
+      ...input,
+      sessionId: context.sessionId,
+      planSlotId: context.planSlotId,
+      expectedRevision: context.revision,
+      requestId: context.requestId,
+    });
+    if (applyActionResult(result)) {
+      clearForm(false);
+      const state = workoutActions.getGuidedWorkoutState(context.sessionId);
+      setGuidedFormContext(state, context.requestId, true);
+      document.getElementById("guidedFormMessage").textContent =
+        "Set saved. Enter the next set when ready; Done is a separate action.";
+    }
+    return;
+  }
   const result = editingSetId
     ? workoutActions.editSet(editingSetId, input)
     : workoutActions.logSet(input);
@@ -187,6 +206,12 @@ function addSet() {
 }
 function clearForm(clearEx = true) {
   editingSetId = null;
+  guidedFormContext = null;
+  document.getElementById("guidedFormNotice").hidden = true;
+  document.getElementById("guidedEntryActions").hidden = true;
+  fWeight.placeholder = "90";
+  fDate.readOnly = false;
+  fExercise.readOnly = false;
   document.getElementById("incompleteEditNotice").hidden = true;
   document.getElementById("fApproximate").checked = false;
   document.getElementById("setFormTitle").textContent = "Log a set";
@@ -261,6 +286,7 @@ function renderAll() {
   renderImportHistory();
   renderExercises();
   if (selectedTemplateId) editTemplate(selectedTemplateId);
+  renderGuidedWorkout();
   document
     .querySelectorAll('#workout label[for="fRpe"], #workout label[for="fRir"]')
     .forEach(explainAcronyms);
@@ -477,6 +503,10 @@ function latestSet(ex) {
     .at(-1);
 }
 function loadExerciseToForm(ex) {
+  if (guidedFormContext) {
+    if (!confirmDiscardSetInput()) return;
+    clearForm();
+  }
   // A plan's Log action always starts a new set, never repurposes an edit.
   if (editingSetId) clearForm();
   fExercise.value = ex;
@@ -558,6 +588,7 @@ function renderHistory() {
             : count(group.sets.length);
         return `<article class="history-group" ${session ? `data-session-id="${esc(session.id)}"` : `data-legacy-date="${esc(group.date)}"`}>
       ${heading}
+      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul><p class="sub">Set records below show the actual exercise performed, including earlier substitutions.</p></details>` : ""}
       <p class="sub">${countText}</p>
       <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
       ${group.sets.length ? `<p class="sub">Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
