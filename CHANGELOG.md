@@ -2,6 +2,7 @@
 
 ## 1.6
 
+- V2 Milestone 1: extract DOM-free workout actions and validation helpers with explicit inputs, structured results, detached state inspection, and persist-before-commit behavior. Keep the existing UI, data version and import IDs.
 - Fix mobile Exercises overflow by allowing the single-column grid to shrink; wide tables scroll inside their cards.
 - Restore exercise-detail Latest across load units, independently of performance-ranking filters.
 - Preserve unreadable/future-version storage, surface failures, roll back failed edits, and detect stale tabs before saving.

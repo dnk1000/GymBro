@@ -84,6 +84,28 @@ let db = load();
 let editingSetId = null;
 let selectedExercise = "Seated Row";
 let selectedTemplateId = null;
+const workoutActions = createWorkoutActions({
+  getState: () => db,
+  setState: (next) => {
+    db = next;
+  },
+  persist: (next) => persistData(next),
+  createId: newId,
+});
+function getWorkoutState() {
+  return workoutActions.getWorkoutState();
+}
+// UI effects are deliberately outside the action/persistence boundary.
+function applyActionResult(result) {
+  renderStorageNotice();
+  if (!result.ok) {
+    alert(result.errors.join("\n"));
+    return false;
+  }
+  renderAll();
+  return true;
+}
+
 function jsArg(value) {
   return esc(JSON.stringify(String(value)));
 }
@@ -96,23 +118,6 @@ function newId() {
           n.toString(16).padStart(2, "0"),
         ).join(""))
   );
-}
-function ensureExercise(data, name) {
-  if (!hasOwn(data.exerciseLibrary, name))
-    data.exerciseLibrary[name] = {
-      primary: "Uncategorized",
-      secondary: [],
-      pattern: "",
-      type: "",
-      status: "new",
-    };
-}
-function numeric(value) {
-  return value == null || (typeof value === "string" && value.trim() === "")
-    ? null
-    : typeof value === "number" || typeof value === "string"
-      ? Number(value)
-      : NaN;
 }
 function esc(s) {
   return String(s ?? "").replace(
@@ -162,12 +167,7 @@ document.querySelectorAll(".tab").forEach(
 );
 
 function addSet() {
-  const previous = editingSetId
-    ? db.sets.find((s) => s.id === editingSetId)
-    : null;
-  const e = {
-    ...previous,
-    id: previous?.id || newId(),
+  const input = {
     date: fDate.value,
     exercise: fExercise.value.trim(),
     weight: numeric(fWeight.value),
@@ -178,26 +178,12 @@ function addSet() {
     pain: numeric(fPain.value) ?? 0,
     painArea: fPainArea.value.trim(),
     notes: fNotes.value.trim(),
-    source: previous?.source || "manual",
+    complete: !document.getElementById("fApproximate").checked,
   };
-  e.complete =
-    e.weight != null &&
-    e.reps != null &&
-    !document.getElementById("fApproximate").checked;
-  const errors = setErrors(e);
-  if (!validDate(e.date)) errors.push("Choose a valid workout date.");
-  if (errors.length) {
-    alert(errors.join("\n"));
-    return;
-  }
-  if (
-    changeDB((next) => {
-      ensureExercise(next, e.exercise);
-      if (previous) next.sets[next.sets.findIndex((s) => s.id === e.id)] = e;
-      else next.sets.push(e);
-    })
-  )
-    clearForm(false);
+  const result = editingSetId
+    ? workoutActions.editSet(editingSetId, input)
+    : workoutActions.logSet(input);
+  if (applyActionResult(result)) clearForm(false);
 }
 function clearForm(clearEx = true) {
   editingSetId = null;
@@ -236,35 +222,16 @@ function editSet(id) {
   fExercise.focus();
 }
 function addBodyweight() {
-  const row = {
+  const result = workoutActions.logBodyweight({
     date: bwDate.value,
     value: numeric(bwValue.value),
-    source: "manual",
-  };
-  if (!validDate(row.date) || !validNumber(row.value, Number.MIN_VALUE)) {
-    alert("Enter a valid date and positive bodyweight.");
-    return;
-  }
-  if (changeDB((next) => next.bodyweights.push(row))) bwValue.value = "";
+  });
+  if (applyActionResult(result)) bwValue.value = "";
 }
 function deleteSet(id) {
-  if (confirm("Delete this set?")) {
-    if (
-      changeDB((next) => {
-        const set = next.sets.find((s) => s.id === id);
-        next.sets = next.sets.filter((s) => s.id !== id);
-        if (set?.importBatch) {
-          const row = next.imports.find((x) => x.batch === set.importBatch);
-          if (row)
-            row.setCount = next.sets.filter(
-              (s) => s.importBatch === row.batch,
-            ).length;
-        }
-      }) &&
-      editingSetId === id
-    )
-      clearForm();
-  }
+  if (!confirm("Delete this set?")) return;
+  if (applyActionResult(workoutActions.deleteSet(id)) && editingSetId === id)
+    clearForm();
 }
 function renderAll() {
   renderDatalist();
@@ -502,17 +469,12 @@ function loadExerciseToForm(ex) {
 }
 function startTemplate(id, duration = 60) {
   if (
-    changeDB((next) => {
-      next.program.activeTemplateId = id;
-      next.program.activeDuration = duration;
-    })
+    applyActionResult(workoutActions.selectPlan({ templateId: id, duration }))
   )
     document.querySelector('[data-view="workout"]').click();
 }
 function clearActivePlan() {
-  changeDB((next) => {
-    next.program.activeTemplateId = null;
-  });
+  applyActionResult(workoutActions.clearPlan());
 }
 function renderToday() {
   const d = fDate.value || today();
@@ -600,110 +562,6 @@ function showExercise(ex) {
 }
 
 let inboxDraft = null;
-function simpleHash(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(16);
-}
-function normalizeInboxPayload(x) {
-  requireValue(isObject(x), "Workout JSON must be an object.");
-  requireValue(
-    x.schema == null || x.schema === "gym-tracker-chatgpt-v1",
-    "Unsupported import schema.",
-  );
-  const src = x.session ?? x.workout ?? x;
-  requireValue(isObject(src), "Workout must be an object.");
-  const text = (value, fallback = "") => {
-    requireValue(
-      value == null || typeof value === "string",
-      "Text fields must contain text.",
-    );
-    return value ?? fallback;
-  };
-  const date = text(src.date ?? x.date);
-  const template = text(src.template ?? src.workoutTemplate);
-  const duration = numeric(src.duration ?? src.durationMinutes);
-  const sessionNotes = text(src.notes ?? src.sessionNotes);
-  const bodyweight = numeric(src.bodyweight ?? src.bodyWeight);
-  requireValue(
-    !(src.sets != null && src.exercises != null),
-    "Supply sets or exercises, not both.",
-  );
-  let rows = [];
-  if (src.sets != null) {
-    requireValue(Array.isArray(src.sets), "Sets must be an array.");
-    rows = src.sets;
-  }
-  if (src.exercises != null) {
-    requireValue(Array.isArray(src.exercises), "Exercises must be an array.");
-    src.exercises.forEach((e) => {
-      requireValue(
-        isObject(e) && Array.isArray(e.sets),
-        "Each exercise needs a sets array.",
-      );
-      e.sets.forEach((z, i) => {
-        requireValue(isObject(z), "Invalid set.");
-        rows.push({
-          ...z,
-          exercise: z.exercise ?? e.exercise ?? e.name,
-          setNumber: z.setNumber ?? i + 1,
-        });
-      });
-    });
-  }
-  const sets = rows.map((z, i) => {
-    requireValue(isObject(z), "Invalid set.");
-    requireValue(
-      z.complete == null || typeof z.complete === "boolean",
-      "Complete must be true or false.",
-    );
-    return {
-      include: z.include !== false,
-      exercise: text(z.exercise ?? z.name).trim(),
-      weight: numeric(z.weight),
-      unit: text(z.unit, "lb"),
-      reps: numeric(z.reps),
-      rpe: numeric(z.rpe),
-      rir: numeric(z.rir),
-      pain: numeric(z.pain) ?? 0,
-      painArea: text(z.painArea ?? z.pain_area),
-      notes: text(z.notes),
-      complete: z.complete !== false,
-      setNumber: z.setNumber ?? i + 1,
-    };
-  });
-  // Retain V1.5 generated IDs, including its completeness representation.
-  const legacySets = sets.map(({ include, ...z }, i) => ({
-    ...z,
-    complete:
-      rows[i].complete !== false &&
-      rows[i].weight != null &&
-      rows[i].reps != null,
-  }));
-  const importId =
-    text(x.importId ?? x.import_id ?? src.importId ?? src.import_id) ||
-    simpleHash(JSON.stringify({ date, template, duration, sets: legacySets }));
-  return { importId, date, template, duration, sessionNotes, bodyweight, sets };
-}
-function validateDraft(d) {
-  const issues = [];
-  if (!validDate(d.date))
-    issues.push("Choose a real workout date (YYYY-MM-DD).");
-  if (d.duration != null && !validNumber(d.duration, Number.MIN_VALUE))
-    issues.push("Duration must be a positive number.");
-  if (d.bodyweight != null && !validNumber(d.bodyweight, Number.MIN_VALUE))
-    issues.push("Bodyweight must be a positive number.");
-  const selected = d.sets.filter((s) => s.include);
-  if (!selected.length) issues.push("Select at least one set.");
-  d.sets.forEach((s, i) => {
-    if (s.include)
-      setErrors(s).forEach((error) => issues.push(`Set ${i + 1}: ${error}`));
-  });
-  return issues;
-}
 function parseInbox() {
   try {
     inboxDraft = normalizeInboxPayload(JSON.parse(inboxRaw.value));
@@ -755,61 +613,10 @@ function renderInboxDraft() {
 }
 function commitInbox() {
   if (!inboxDraft) return;
-  const issues = validateDraft(inboxDraft);
-  if (issues.length) {
-    alert(issues.join("\n"));
-    return;
-  }
-  if (db.imports.some((x) => x.importId === inboxDraft.importId)) {
-    alert("That workout has already been imported.");
-    return;
-  }
-  const chosen = inboxDraft.sets.filter((s) => s.include);
-  const batch = "cg_" + inboxDraft.importId;
-  if (
-    !changeDB((next) => {
-      chosen.forEach((s, i) => {
-        ensureExercise(next, s.exercise);
-        next.sets.push({
-          id: batch + "_" + String(i + 1).padStart(2, "0"),
-          date: inboxDraft.date,
-          exercise: s.exercise,
-          weight: s.weight,
-          unit: s.unit,
-          reps: s.reps,
-          rpe: s.rpe,
-          rir: s.rir,
-          pain: s.pain,
-          painArea: s.painArea,
-          notes: s.notes,
-          source: "chatgpt",
-          complete: s.complete && s.weight != null && s.reps != null,
-          importBatch: batch,
-          setNumber: i + 1,
-        });
-      });
-      if (inboxDraft.bodyweight != null)
-        next.bodyweights.push({
-          date: inboxDraft.date,
-          value: inboxDraft.bodyweight,
-          source: "chatgpt",
-          importBatch: batch,
-        });
-      next.imports.push({
-        importId: inboxDraft.importId,
-        batch,
-        date: inboxDraft.date,
-        template: inboxDraft.template,
-        duration: inboxDraft.duration,
-        setCount: chosen.length,
-        notes: inboxDraft.sessionNotes,
-        committedAt: new Date().toISOString(),
-      });
-    })
-  )
-    return;
+  const result = workoutActions.commitImport(inboxDraft);
+  if (!applyActionResult(result)) return;
   clearInbox(false);
-  inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${chosen.length} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
+  inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${result.count} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
 }
 function clearInbox(clearText = true) {
   inboxDraft = null;
@@ -939,40 +746,24 @@ function editTemplate(id) {
     )}</div><div style="margin-top:12px"><div class="label">Add exercise</div><div class="formgrid"><div class="span3"><input id="addEx_${esc(id)}" list="exerciseList" placeholder="Exercise"></div><div class="span2"><select id="addRole_${esc(id)}"><option value="accessory">Accessory</option><option value="core">Core</option><option value="substitute">Substitute</option></select></div><div><button onclick="addSlot(${jsArg(id)})">Add</button></div></div></div>`;
 }
 function toggleShort(id, i) {
-  changeDB((next) => {
-    const s = next.program.templates.find((x) => x.id === id).slots[i];
-    s.short = !s.short;
-  });
-}
-function cycleRole(id, i) {
-  changeDB((next) => {
-    const s = next.program.templates.find((x) => x.id === id).slots[i];
-    s.role =
-      s.role === "core"
-        ? "accessory"
-        : s.role === "accessory"
-          ? "substitute"
-          : "core";
-  });
-}
-function removeSlot(id, i) {
-  changeDB((next) =>
-    next.program.templates.find((x) => x.id === id).slots.splice(i, 1),
+  applyActionResult(
+    workoutActions.toggleSlotShort({ templateId: id, index: i }),
   );
 }
+function cycleRole(id, i) {
+  applyActionResult(workoutActions.cycleSlotRole({ templateId: id, index: i }));
+}
+function removeSlot(id, i) {
+  applyActionResult(workoutActions.removeSlot({ templateId: id, index: i }));
+}
 function addSlot(id) {
-  const ex = document.getElementById("addEx_" + id).value.trim();
-  const role = document.getElementById("addRole_" + id).value;
-  if (!safeName(ex)) {
-    alert("Enter an exercise name.");
-    return;
-  }
-  changeDB((next) => {
-    ensureExercise(next, ex);
-    next.program.templates
-      .find((x) => x.id === id)
-      .slots.push({ exercise: ex, role, short: false });
-  });
+  applyActionResult(
+    workoutActions.addSlot({
+      templateId: id,
+      exercise: document.getElementById("addEx_" + id).value.trim(),
+      role: document.getElementById("addRole_" + id).value,
+    }),
+  );
 }
 function download(name, type, text) {
   const a = document.createElement("a");
