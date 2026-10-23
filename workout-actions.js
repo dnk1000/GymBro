@@ -107,20 +107,137 @@ function createWorkoutActions({
       reject(["Workout slot not found."], "NOT_FOUND");
     return template.slots[index];
   }
+  function sessionFor(next, id) {
+    const session = next.sessions.find((row) => row.id === id);
+    if (!session) reject(["Workout session not found."], "NOT_FOUND");
+    return session;
+  }
+  function linkSet(next, set, sessionId, planSlotId) {
+    const session = sessionFor(next, sessionId);
+    if (session.status !== "active" || next.activeSessionId !== session.id)
+      reject(
+        ["New sets can only be attached to the active session."],
+        "INVALID_SESSION_STATE",
+      );
+    if (set.date !== session.date)
+      reject(["Set date must match the session's local workout date."]);
+    if (set.sessionId != null && set.sessionId !== sessionId)
+      reject(["Set already belongs to another session."]);
+    if (
+      planSlotId != null &&
+      !session.planSnapshot?.slots.some((slot) => slot.id === planSlotId)
+    )
+      reject(["Planned slot does not exist in the session snapshot."]);
+    set.sessionId = sessionId;
+    if (planSlotId != null) set.planSlotId = planSlotId;
+    if (!session.setIds.includes(set.id)) session.setIds.push(set.id);
+  }
   return {
     getWorkoutState,
+    getSession(id) {
+      return getWorkoutState().sessions.find((row) => row.id === id) ?? null;
+    },
+    getActiveSession() {
+      const state = getWorkoutState();
+      return (
+        state.sessions.find((row) => row.id === state.activeSessionId) ?? null
+      );
+    },
+    createSession(input = {}) {
+      return transaction((next) => {
+        if (!isObject(input) || !validDate(input.date))
+          reject(["Choose a valid local workout date."]);
+        if (next.activeSessionId !== null)
+          reject(
+            ["Complete the active session before creating another."],
+            "INVALID_SESSION_STATE",
+          );
+        const templateId = hasOwn(input, "templateId")
+          ? input.templateId
+          : next.program.activeTemplateId;
+        const duration = hasOwn(input, "duration")
+          ? input.duration
+          : next.program.activeDuration;
+        if (![30, 60].includes(duration))
+          reject(["Choose a 30- or 60-minute mode."]);
+        const template =
+          templateId === null ? null : templateFor(next, templateId);
+        const session = {
+          id: `ws_${createId()}`,
+          date: input.date,
+          status: "active",
+          createdAt: now(),
+          completedAt: null,
+          templateId,
+          duration,
+          planSnapshot: snapshotPlan(template, duration),
+          setIds: [],
+        };
+        next.sessions.push(session);
+        next.activeSessionId = session.id;
+        return {
+          sessionId: session.id,
+          changes: ["sessions", "activeSessionId"],
+        };
+      });
+    },
+    completeSession(id) {
+      return transaction((next) => {
+        const session = sessionFor(next, id);
+        if (session.status !== "active" || next.activeSessionId !== id)
+          reject(["Session is not active."], "INVALID_SESSION_STATE");
+        session.status = "completed";
+        session.completedAt = now();
+        next.activeSessionId = null;
+        return { sessionId: id, changes: ["sessions", "activeSessionId"] };
+      });
+    },
+    attachSetToSession(input = {}) {
+      return transaction((next) => {
+        if (!isObject(input)) reject(["Attachment input must be an object."]);
+        const set = next.sets.find((row) => row.id === input.setId);
+        if (!set) reject(["Set not found."], "NOT_FOUND");
+        linkSet(next, set, input.sessionId, input.planSlotId);
+        return {
+          setId: set.id,
+          sessionId: set.sessionId,
+          changes: ["sets", "sessions"],
+        };
+      });
+    },
     logSet(input) {
       return transaction((next) => {
         const set = record(input);
+        const sessionId = hasOwn(input, "sessionId")
+          ? input.sessionId
+          : next.activeSessionId;
+        if (sessionId !== null) linkSet(next, set, sessionId, input.planSlotId);
+        else if (input.planSlotId != null)
+          reject(["A planned slot requires a session."]);
         ensureExercise(next, set.exercise);
         next.sets.push(set);
-        return { setId: set.id, changes: ["sets", "exerciseLibrary"] };
+        return {
+          setId: set.id,
+          ...(set.sessionId ? { sessionId: set.sessionId } : {}),
+          changes: [
+            "sets",
+            "exerciseLibrary",
+            ...(set.sessionId ? ["sessions"] : []),
+          ],
+        };
       });
     },
     editSet(id, patch) {
       return transaction((next) => {
         const index = next.sets.findIndex((row) => row.id === id);
         if (index < 0) reject(["Set not found."], "NOT_FOUND");
+        if (isObject(patch))
+          for (const key of ["sessionId", "planSlotId"]) {
+            if (hasOwn(patch, key) && patch[key] !== next.sets[index][key])
+              reject([
+                "Session relationships cannot be changed by editSet; use a supported attachment action.",
+              ]);
+          }
         const set = record(patch, next.sets[index]);
         ensureExercise(next, set.exercise);
         next.sets[index] = set;
@@ -132,6 +249,10 @@ function createWorkoutActions({
         const set = next.sets.find((row) => row.id === id);
         if (!set) reject(["Set not found."], "NOT_FOUND");
         next.sets = next.sets.filter((row) => row.id !== id);
+        if (set.sessionId != null) {
+          const session = sessionFor(next, set.sessionId);
+          session.setIds = session.setIds.filter((setId) => setId !== id);
+        }
         if (set.importBatch) {
           const summary = next.imports.find(
             (row) => row.batch === set.importBatch,
@@ -143,7 +264,11 @@ function createWorkoutActions({
         }
         return {
           setId: id,
-          changes: set.importBatch ? ["sets", "imports"] : ["sets"],
+          changes: [
+            "sets",
+            ...(set.importBatch ? ["imports"] : []),
+            ...(set.sessionId != null ? ["sessions"] : []),
+          ],
         };
       });
     },

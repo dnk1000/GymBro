@@ -836,36 +836,7 @@ function importJSON() {
           throw Error(
             "Restore a complete backup to recover unreadable storage.",
           );
-        next = structuredClone(db);
-        const ids = new Set(next.sets.map((s) => s.id));
-        for (const set of restored.sets) {
-          if (!ids.has(set.id)) {
-            next.sets.push(set);
-            ids.add(set.id);
-            ensureExercise(next, set.exercise);
-          }
-        }
-        const weights = new Set(
-          next.bodyweights.map((w) => JSON.stringify([w.date, w.value])),
-        );
-        for (const row of restored.bodyweights) {
-          const key = JSON.stringify([row.date, row.value]);
-          if (!weights.has(key)) {
-            next.bodyweights.push(row);
-            weights.add(key);
-          }
-        }
-        const imports = new Set(next.imports.map((i) => i.importId));
-        for (const row of restored.imports)
-          if (!imports.has(row.importId)) {
-            next.imports.push(row);
-            imports.add(row.importId);
-          }
-        for (const row of next.imports)
-          if (row.batch)
-            row.setCount = next.sets.filter(
-              (s) => s.importBatch === row.batch,
-            ).length;
+        next = mergeHistoryData(db, restored);
       }
       if (save(next, mode === "restore")) {
         db = next;

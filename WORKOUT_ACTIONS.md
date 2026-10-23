@@ -1,6 +1,6 @@
 # Workout actions — v2 Milestone 1
 
-This is an incremental extraction from V1.6. The application version remains 1.6, data version remains 5, and the storage key remains `daveGymTrackerV1`. No sessions, guided workouts, progression, AI, or voice features have been added.
+Milestone 1 established this incremental extraction from V1.6 using data version 5. Milestone 2 extends it with [explicit sessions and data version 6](WORKOUT_SESSIONS.md). The application branding remains V1.6 and the storage key remains `daveGymTrackerV1`. Guided workouts, progression, AI and voice remain outside the implemented scope.
 
 ## Boundary
 
@@ -12,7 +12,7 @@ Persistence and injected callbacks are synchronous. `persist(candidate)` must re
 
 ## State and results
 
-`getWorkoutState()` (also `workoutActions.getWorkoutState()`) returns a detached, JSON-serializable snapshot of the committed database: sets, bodyweights, preferences, exercise library, program, imports and data version. Mutating a snapshot or a result's state cannot alter committed data. Forms, selected tabs, edit mode, and the uncommitted import draft are excluded; this is not an active-session API.
+`getWorkoutState()` (also `workoutActions.getWorkoutState()`) returns a detached, JSON-serializable snapshot of the committed database: sets, bodyweights, preferences, exercise library, program, imports, sessions, active-session ID and data version. Mutating a snapshot or a result's state cannot alter committed data. Forms, selected tabs, edit mode, and the uncommitted import draft are excluded. Milestone 2 adds `getSession(id)` and `getActiveSession()` for focused session inspection.
 
 Each action returns:
 
@@ -46,7 +46,7 @@ The transaction clones current state, applies the proposed change to that candid
 | `removeSlot({ templateId, index })`       | Removes a valid existing slot. Slot actions return `templateId` and `index`.                                                                                                                                                 |
 | `commitImport(draft)`                     | Accepts the reviewed, normalized draft returned by `normalizeInboxPayload(payload)`, including selected rows. Returns `importId`, `batch`, `setIds`, and `count`. Does not clear or mutate the draft.                        |
 
-Inputs are plain data. Dates are explicit local-calendar `YYYY-MM-DD` strings. Numeric action inputs are numbers or null where supported; UI string conversion remains in the adapter. There is no `exerciseId` migration: `exercise` remains the existing name key. Generated manual IDs and import batch/set IDs retain their current formats. Import normalization and generated V1.5-compatible import IDs are unchanged.
+Inputs are plain data. Dates are explicit local-calendar `YYYY-MM-DD` strings. Numeric action inputs are numbers or null where supported; UI string conversion remains in the adapter. There is no `exerciseId` migration: `exercise` remains the existing name key. Generated manual IDs and import batch/set IDs retain their current formats. Import normalization and generated V1.5-compatible import IDs are unchanged. Milestone 2 adds optional `sessionId`/`planSlotId` to `logSet`; relationship changes are not accepted through `editSet`. See the session guide for the omitted/null/explicit-ID distinction and lifecycle APIs.
 
 Example:
 
@@ -72,7 +72,7 @@ if (!result.ok) {
 - Complete-backup restore/history merge, reset/clear, and storage recovery still use their existing UI orchestration and `save()` adapter. They share `persistData()` and update the same committed database, so the state selector observes those replacements too.
 - State ownership is still the existing in-memory `db`, accessed through injected callbacks. This is not a new store framework, subscription system, or schema.
 - All writes are synchronous whole-database local-storage writes. Migration to asynchronous persistence would require an explicit transaction/await contract, not silently swapping in a Promise-returning adapter.
-- Plan selection remains global, exercises remain name-keyed, and template slots remain index-addressed. Sessions, stable exercise/session/slot identities, concurrency beyond current stale-tab protection, and active-session resume belong to subsequent approved work.
+- Plan selection remains global, exercises remain name-keyed, and permanent template slots remain index-addressed. Milestone 2 adds stable session IDs, session-scoped snapshot slot IDs and active-state persistence. Guided resume controls, a stable exercise catalog and stronger cross-tab concurrency remain later work.
 - Snapshots/results copy the database. Add targeted selectors if measured history size makes this expensive; no speculative cache or event bus is included now.
 
 Run `npm test` for both browser workflows and DOM-free action tests. Physical-iPhone validation remains a separate requirement; see `REAL_PHONE_SMOKE_TEST.md`.

@@ -1,0 +1,47 @@
+{
+  "version": 6,
+  "sets": [],
+  "bodyweights": [],
+  "imports": [],
+  "preferences": {},
+  "exerciseLibrary": {
+    "Bench Press": {
+      "primary": "Chest",
+      "secondary": ["Triceps"],
+      "pattern": "Horizontal Push",
+      "type": "Compound",
+      "status": "core"
+    }
+  },
+  "program": {
+    "name": "Synthetic acceptance fixture",
+    "activeTemplateId": "demo-plan",
+    "activeDuration": 30,
+    "templates": [
+      {
+        "id": "demo-plan",
+        "name": "Synthetic acceptance plan",
+        "focus": "Test only",
+        "intensity": "Test only",
+        "slots": [{ "exercise": "Bench Press", "role": "core", "short": true }]
+      }
+    ]
+  },
+  "sessions": [
+    {
+      "id": "ws_synthetic-acceptance-only",
+      "date": "2026-10-23",
+      "status": "active",
+      "createdAt": "2026-10-23T12:00:00.000Z",
+      "completedAt": null,
+      "templateId": "demo-plan",
+      "duration": 30,
+      "planSnapshot": {
+        "name": "Synthetic acceptance plan",
+        "slots": [{ "id": "slot-1", "exercise": "Bench Press", "role": "core" }]
+      },
+      "setIds": []
+    }
+  ],
+  "activeSessionId": "ws_synthetic-acceptance-only"
+}

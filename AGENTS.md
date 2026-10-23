@@ -4,7 +4,7 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 ## Product and scope
 
-- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. The current version is **V1.6**, with internal data version **5**.
+- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. UI branding remains **V1.6** during incremental v2 work; Milestone 2 uses internal data version **6**.
 - **iPhone usability is the primary UX target.** Prioritize readable screens, reachable controls, touch input, on-screen keyboard behavior, and Safari compatibility; retain working desktop behavior.
 - Preserve working functionality unless the task explicitly requires changing it. **Do not redesign the UI unless specifically requested.**
 - Retain the vanilla JavaScript, static-file, no-build application. Node dependencies are development tooling, not runtime requirements.
@@ -34,11 +34,14 @@ The app has no runtime package installation or build step. Serve the repository 
 | `app.js`                            | UI adapters, form/draft state, navigation, history, analytics, charts, and DOM rendering. Configures `workoutActions` and the `getWorkoutState()` selector. |
 | `workout-actions.js`                | DOM-free workout action factory. Explicit inputs, detached state snapshots, structured results, and persist-before-commit transactions.                     |
 | `workout-data.js`                   | DOM-free data validation, legacy migration, import normalization, and shared data helpers.                                                                  |
+| `workout-sessions.js`               | DOM-free session validation, immutable plan snapshots, bidirectional set relationships, and conservative history merge.                                     |
 | `storage.js`                        | Browser storage loading/writing, stale-tab detection, and recovery UI. `persistData()` reports write results without DOM effects.                           |
 | `seed.js`                           | Original historical workout data, baseline program, exercise taxonomy, and coaching preferences.                                                            |
 | `gymbro-logo.png`                   | Header and favicon branding asset.                                                                                                                          |
 | `tests/app.test.cjs`                | Chromium regression tests using Node's test runner and Playwright Core; starts an isolated local server and disposable browser contexts.                    |
 | `tests/workout-actions.test.cjs`    | Action/state tests in a JavaScript runtime without DOM or browser globals, including persistence failure and compatibility cases.                           |
+| `tests/workout-sessions.test.cjs`   | Session/migration/snapshot/relationship and merge tests.                                                                                                    |
+| `WORKOUT_SESSIONS.md`               | Exact schema-6 model, session actions, version-5 compatibility, and preview acceptance checklist.                                                           |
 | `package.json`, `package-lock.json` | Development commands and pinned test dependencies.                                                                                                          |
 | `README.md`                         | Run instructions, product behavior, data storage, backup semantics, and development workflow.                                                               |
 | `CHATGPT_IMPORT_SCHEMA.md`          | Supported workout JSON interchange format and validation rules.                                                                                             |
@@ -76,7 +79,11 @@ The app has no runtime package installation or build step. Serve the repository 
 - A plan's Log action starts a new set; it must not accidentally overwrite the set currently being edited.
 - **Latest** in exercise detail is history, not a performance ranking: show the most recent set with recorded load and reps, including assisted, bodyweight, zero-load, and approximate sets.
 - **Best comparable set-work**, performance charts, and gains use complete, positive external loads in the latest eligible matching unit for that exercise. Exclude assisted/bodyweight records from these rankings; never compare incompatible load units as equivalent.
-- Training days count unique workout dates. Do not imply the current model distinguishes multiple sessions on one date.
+- The existing Training days metric still counts unique dates; do not silently change it to count explicit sessions or redesign history during Milestone 2.
+- Version-5 history remains sessionless. Never infer legacy sessions or timestamps. Session-linked sets must match session dates and appear exactly once in that session's ordered `setIds`, with a matching reverse `sessionId`.
+- Session creation/completion/attachment must remain DOM-free and atomic. Only one session is active; completing it records completion and clears the pointer. Do not attach new members to completed sessions or invent a reopen/move/detach workflow.
+- `logSet`: omitted `sessionId` uses the active session; explicit `null` is sessionless; an explicit ID must be the valid active session. Do not fabricate `planSlotId`; validate it against the same session snapshot. Preserve snapshot intent when permanent templates change.
+- Deleting a linked set removes its session-order reference; normal field corrections preserve membership. Conflicting date or relationship edits fail, rather than changing a session date or moving a set silently.
 - Refresh affected views after edits. Do not leave exercise details or plan displays showing stale values.
 
 ## Import and export compatibility
@@ -99,6 +106,8 @@ The app has no runtime package installation or build step. Serve the repository 
 - If managed-browser policy blocks direct `file:` navigation, report that specific skip and validate through the local static server. Do not bypass administrator policy or claim the skipped path passed.
 
 ## Baseline and reporting
+
+- The user confirmed Milestone 1 acceptance and Vercel **Ready · Production · main · `6f10b49`** before authorizing Milestone 2. Milestone 2 device acceptance remains separate and pending; do not infer device details or mark its checklist complete from automated tests.
 
 - V1.6 is **not yet frozen as the final stabilized baseline**. The physical-phone smoke test remains pending unless actual results have subsequently been recorded in `REAL_PHONE_SMOKE_TEST.md`.
 - Do not mark the phone checklist complete from desktop/mobile emulation. Record the actual device, OS, browser, code revision, results, and remaining failures. Do not claim iPhone Safari support was tested using Chromium.

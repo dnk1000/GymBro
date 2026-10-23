@@ -1,5 +1,13 @@
 # Changes
 
+## v2 Milestone 2 (preview development)
+
+- Add schema-6 explicit sessions, persisted active identity, stable set relationships and self-contained mode-filtered plan snapshots.
+- Keep version-5 sets/IDs/metadata sessionless and unchanged; preserve storage key, ChatGPT interchange/hashes and duplicate protection.
+- Extend DOM-free actions for lifecycle/attachment and manual logging's omitted/null/explicit session selection. Validate reciprocal order, matching dates and snapshot slots; protect completed sessions from new membership.
+- Include sessions in complete backups; reject ambiguous history merges atomically. Keep localStorage, failed-write recovery and stale-tab protections.
+- Retain the current UI and workout split. Guided workouts, history redesign, progression, AI/voice and later milestones are not included.
+
 ## 1.6
 
 - V2 Milestone 1: extract DOM-free workout actions and validation helpers with explicit inputs, structured results, detached state inspection, and persist-before-commit behavior. Keep the existing UI, data version and import IDs.

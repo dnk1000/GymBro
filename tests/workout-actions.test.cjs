@@ -7,7 +7,12 @@ const path = require("node:path");
 // A real JS runtime with no window, document, controls, dialogs or event objects.
 function fixture(prepare = (state) => state) {
   const runtime = vm.createContext({ structuredClone });
-  for (const file of ["seed.js", "workout-data.js", "workout-actions.js"]) {
+  for (const file of [
+    "seed.js",
+    "workout-data.js",
+    "workout-sessions.js",
+    "workout-actions.js",
+  ]) {
     vm.runInContext(
       fs.readFileSync(path.join(__dirname, "..", file), "utf8"),
       runtime,
@@ -299,7 +304,7 @@ test("invalid import is atomic and incomplete edits preserve uncertainty by defa
     edit.state.sets.find((row) => row.id === historical.id).complete,
     false,
   );
-  assert.equal(edit.state.version, 5);
+  assert.equal(edit.state.version, 6);
   assert.equal(edit.state.sets[0].id, initial.sets[0].id);
 });
 
