@@ -1265,3 +1265,145 @@ test("History icon actions stay together, preserve accessible names and confirm 
     true,
   );
 });
+
+test("acronym hover explanations cover static controls and rerendered effort/import fields", async (t) => {
+  const p = await app(t);
+  await p.evaluate(() => {
+    workoutActions.logSet({
+      date: "2026-10-23",
+      exercise: "Bench Press",
+      weight: 100,
+      reps: 8,
+      unit: "lb",
+      rpe: 8,
+    });
+    renderHistory();
+  });
+  assert.match(
+    await p.locator('label[for="fRpe"] abbr').getAttribute("title"),
+    /Rating of Perceived Exertion/,
+  );
+  assert.match(
+    await p.locator('label[for="fRir"] abbr').getAttribute("title"),
+    /Repetitions in Reserve/,
+  );
+  await p.locator('[data-view="data"]').click();
+  assert.match(
+    await p
+      .getByRole("button", { name: "Export JSON", exact: true })
+      .getAttribute("title"),
+    /JavaScript Object Notation/,
+  );
+  assert.match(
+    await p
+      .getByRole("button", { name: "Export sets CSV", exact: true })
+      .getAttribute("title"),
+    /Comma-Separated Values/,
+  );
+  await p.locator('[data-view="history"]').click();
+  const effort = p
+    .locator("#historyTable abbr")
+    .filter({ hasText: /^RPE$/ })
+    .first();
+  assert.match(await effort.getAttribute("title"), /1–10/);
+  await p.evaluate(() => renderHistory());
+  assert.match(await effort.getAttribute("title"), /Rating/);
+  await stage(p, workout([set({ rpe: 8, rir: 2 })]));
+  assert.match(
+    await p
+      .locator("#inboxReview abbr")
+      .filter({ hasText: /^RPE$/ })
+      .first()
+      .getAttribute("title"),
+    /Rating/,
+  );
+  assert.match(
+    await p
+      .locator("#inboxReview abbr")
+      .filter({ hasText: /^RIR$/ })
+      .first()
+      .getAttribute("title"),
+    /Repetitions/,
+  );
+  assert.equal(await p.locator("abbr abbr").count(), 0);
+});
+
+test("corrected incomplete imports can be explicitly completed without losing metadata or dedup protection", async (t) => {
+  const p = await app(t);
+  await stage(
+    p,
+    workout(
+      [set({ reps: null, complete: false, notes: "uncertain reps", rpe: 7 })],
+      { importId: "correct-incomplete" },
+    ),
+  );
+  await p.locator("#commitInboxBtn").click();
+  const original = (await backup(p)).sets.at(-1);
+  await p.locator('[data-view="history"]').click();
+  await p
+    .locator("#historyTable tbody tr")
+    .filter({ hasText: "uncertain reps" })
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  assert.equal(await p.locator("#incompleteEditNotice").isVisible(), true);
+  assert.equal(await p.locator("#fApproximate").isChecked(), true);
+  await p.getByRole("button", { name: "Mark complete", exact: true }).click();
+  assert.equal(await p.locator("#fApproximate").isChecked(), true);
+  assert.match(
+    await p.locator("#incompleteEditMessage").textContent(),
+    /positive whole-number reps/,
+  );
+  assert.deepEqual((await backup(p)).sets.at(-1), original);
+  await p.locator("#fReps").fill("12");
+  await p.getByRole("button", { name: "Mark complete", exact: true }).click();
+  assert.equal(await p.locator("#fApproximate").isChecked(), false);
+  assert.deepEqual((await backup(p)).sets.at(-1), original);
+  await p.getByRole("button", { name: "Save changes", exact: true }).click();
+  const corrected = (await backup(p)).sets.at(-1);
+  assert.deepEqual(corrected, { ...original, reps: 12, complete: true });
+  await p.reload();
+  assert.deepEqual((await backup(p)).sets.at(-1), corrected);
+  await p.locator('[data-view="history"]').click();
+  assert.doesNotMatch(
+    await p
+      .locator("#historyTable tbody tr")
+      .filter({ hasText: "uncertain reps" })
+      .innerText(),
+    /incomplete/,
+  );
+  await stage(p, workout([set()], { importId: "correct-incomplete" }));
+  assert.equal(await p.locator("#commitInboxBtn").isDisabled(), true);
+});
+
+test("marking an incomplete edit complete retains rollback on failed persistence", async (t) => {
+  const p = await app(t);
+  await stage(
+    p,
+    workout([set({ complete: false, notes: "keep approximate" })]),
+  );
+  await p.locator("#commitInboxBtn").click();
+  const original = await backup(p),
+    raw = await stored(p);
+  await p.locator('[data-view="history"]').click();
+  await p
+    .locator("#historyTable tbody tr")
+    .filter({ hasText: "keep approximate" })
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  await p.getByRole("button", { name: "Mark complete", exact: true }).click();
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw new Error("quota");
+    };
+  });
+  await p.getByRole("button", { name: "Save changes", exact: true }).click();
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  assert.equal(await p.locator("#fApproximate").isChecked(), false);
+  assert.equal(
+    await p
+      .getByRole("button", { name: "Save changes", exact: true })
+      .isVisible(),
+    true,
+  );
+});

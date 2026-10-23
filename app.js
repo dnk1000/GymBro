@@ -187,6 +187,7 @@ function addSet() {
 }
 function clearForm(clearEx = true) {
   editingSetId = null;
+  document.getElementById("incompleteEditNotice").hidden = true;
   document.getElementById("fApproximate").checked = false;
   document.getElementById("setFormTitle").textContent = "Log a set";
   document.getElementById("saveSetBtn").textContent = "Add set";
@@ -201,6 +202,9 @@ function editSet(id) {
   if (!s) return;
   clearForm();
   editingSetId = id;
+  document.getElementById("incompleteEditNotice").hidden = s.complete;
+  document.getElementById("incompleteEditMessage").textContent =
+    "This record is marked approximate/incomplete. Correcting values does not clear that explicit flag. Once weight and reps are accurate, choose Mark complete (or uncheck the option), then Save changes.";
   document.getElementById("fApproximate").checked = !s.complete;
   for (const [field, key] of Object.entries({
     fDate: "date",
@@ -220,6 +224,20 @@ function editSet(id) {
   document.querySelector('[data-view="workout"]').click();
   renderToday();
   fExercise.focus();
+}
+function markEditedSetComplete() {
+  const message = document.getElementById("incompleteEditMessage");
+  if (
+    !validNumber(numeric(fWeight.value), 0) ||
+    !validNumber(numeric(fReps.value), 1, Infinity, true)
+  ) {
+    message.textContent =
+      "Enter an accurate weight (zero is allowed) and positive whole-number reps before marking this record complete.";
+    return;
+  }
+  document.getElementById("fApproximate").checked = false;
+  message.textContent =
+    "Marked complete in this form. Save changes to update the record; nothing has been saved yet.";
 }
 function addBodyweight() {
   const result = workoutActions.logBodyweight({
@@ -243,6 +261,7 @@ function renderAll() {
   renderImportHistory();
   renderExercises();
   if (selectedTemplateId) editTemplate(selectedTemplateId);
+  explainAcronyms();
 }
 function allExercises() {
   return unique([
@@ -511,6 +530,7 @@ function renderToday() {
         )
         .join("")
     : `<div class="sub">No sets logged for ${d}.</div>`;
+  explainAcronyms(todaySets);
 }
 
 function renderHistory() {
@@ -518,6 +538,7 @@ function renderHistory() {
   let rows = [...db.sets].sort((a, b) => b.date.localeCompare(a.date));
   if (filter !== "all") rows = rows.filter((s) => s.source === filter);
   historyTable.innerHTML = `<table><thead><tr><th>Date</th><th>Exercise</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s) => `<tr><td>${s.date}</td><td>${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${s.rpe != null ? "RPE " + s.rpe : s.rir != null ? s.rir + " RIR" : "—"}</td><td>${s.pain ? `${s.pain}/10 ${esc(s.painArea)}` : "—"}</td><td>${esc(s.notes || "")}</td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+  explainAcronyms(historyTable);
 }
 function renderExercises() {
   const xs = allExercises();
@@ -610,6 +631,8 @@ function renderInboxDraft() {
       )
       .join("") || '<div class="sub">No sets found.</div>';
   commitInboxBtn.disabled = dup || issues.length > 0;
+  explainAcronyms(inboxReview);
+  explainAcronyms(inboxStatus);
 }
 function commitInbox() {
   if (!inboxDraft) return;

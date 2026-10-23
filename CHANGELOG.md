@@ -1,5 +1,10 @@
 # Changes
 
+## 2.2.4
+
+- Explain RPE, RIR, JSON and CSV with native hover tooltips in labels, help, history, workout summaries and import review.
+- Make the preserved incomplete flag explicit in the edit form and add Mark complete for reliable corrected values; Save changes still commits the edit atomically.
+
 ## 2.2.3
 
 - Condense History actions to 28px buttons, 14px icons and 4px spacing (60px total), preserving accessible names and existing behavior.

@@ -29,6 +29,7 @@ The app has no runtime package installation or build step. Serve the repository 
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui-acronyms.js`                    | Presentation-only shared acronym glossary and native hover tooltips; never changes stored data.                                                             |
 | `app-version.js`                    | Canonical immutable application version and export metadata helper; independent of data schema version.                                                     |
 | `index.html`                        | Application shell, seven views, form markup, and script loading.                                                                                            |
 | `styles.css`                        | Shared visual styling, responsive grids, forms, and mobile layout.                                                                                          |
@@ -134,3 +135,5 @@ The app has no runtime package installation or build step. Serve the repository 
 - Restore compatibility depends on schema, never application build. Old backups without `appVersion` and different-build backups remain supported when their data schema is supported.
 
 - Keep the application-wide Help dialog in `index.html` accurate when user-facing controls or workflows change. Help is a user guide, not preview acceptance instructions; its version label must use `APP_VERSION`.
+
+- Keep the acronym glossary in `ui-acronyms.js` current when introducing user-facing acronyms. Preserve explicit incompleteness; never silently clear it solely because weight/reps exist. The edit form must explain how to mark corrected records complete.

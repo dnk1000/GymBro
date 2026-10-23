@@ -206,6 +206,21 @@
                 incomplete record (exclude from performance calculations)</label
               >
             </div>
+            <div id="incompleteEditNotice" class="notice status-warn" hidden>
+              <p id="incompleteEditMessage">
+                This record is marked approximate/incomplete. Correcting values
+                does not clear that explicit flag. Once weight and reps are
+                accurate, choose Mark complete (or uncheck the option), then
+                Save changes.
+              </p>
+              <button
+                type="button"
+                class="btn small secondary"
+                onclick="markEditedSetComplete()"
+              >
+                Mark complete
+              </button>
+            </div>
             <div class="actions">
               <button id="saveSetBtn" onclick="addSet()">Add set</button
               ><button class="btn secondary" onclick="clearForm()">
@@ -474,8 +489,11 @@
       </p>
       <p>
         Use the approximate/incomplete option when a record is uncertain.
-        Missing values are not treated as zero. Add set saves a new record; Save
-        changes updates the record you are editing.
+        Missing values are not treated as zero. When correcting an incomplete
+        record, use Mark complete or uncheck Approximate / incomplete once the
+        values are reliable, then Save changes. Editing values alone preserves
+        the flag. Add set saves a new record; Save changes updates the record
+        you are editing.
       </p>
       <h3>History</h3>
       <p>
@@ -529,6 +547,7 @@
     <script src="workout-sessions.js"></script>
     <script src="storage.js"></script>
     <script src="workout-actions.js"></script>
+    <script src="ui-acronyms.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
