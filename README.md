@@ -1,41 +1,62 @@
-# GymBro V1.5
+# GymBro V1.6
 
-A local-first, phone-friendly workout tracker built around the current Baseline Split v1.
+A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
 
-## What's in V1.5
+## Run
 
-- Editable 5-workout split with 60-minute and 30-minute versions.
-- Core / accessory / substitute exercise roles.
-- Exercise taxonomy by primary muscle, secondary muscles, movement pattern and type.
-- Fast set logging with load, reps, RPE, RIR, pain and notes.
-- Historical workout data preloaded from prior sessions.
-- Bodyweight, performance trends, gains and problem flags.
-- **ChatGPT Inbox** for turning a conversational gym session into structured workout data.
-- Review/correct-before-commit workflow.
-- Duplicate import protection using `importId`.
-- Unknown exercise and incomplete-set warnings.
-- JSON backup/restore and CSV export.
+Open `index.html` in a modern browser, or serve this directory locally:
 
-## Running it
+```sh
+python3 -m http.server 8000 --bind 127.0.0.1
+```
 
-Open `index.html` in a modern browser. There is no server and no account required.
+There is no backend, account, API key, or application build. Keep `index.html`, `app.js`, `seed.js`, `storage.js`, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
 
-Data is stored in that browser's local storage. Use **Backup** periodically if the data matters to you.
+## Data and backups
 
-## ChatGPT workflow
+The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. V1.6 reads older data and uses internal data version 5. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved.
 
-At the end of a gym session, ask ChatGPT for a **GymBro import**. Paste the resulting JSON into **ChatGPT Inbox → Workout JSON**, choose **Review import**, make any corrections, then **Commit workout**.
+Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
 
-The app accepts both a top-level `sets` array and an `exercises` array where each exercise contains `sets`. See `CHATGPT_IMPORT_SCHEMA.md` and `chatgpt-import-example.json`.
+- **Backup / Export JSON** includes history, bodyweights, program, exercise library, preferences, and import metadata.
+- **Restore complete backup** validates the entire file, then replaces all of those fields after confirmation.
+- **Merge history only** adds sets, bodyweights, and import metadata while preserving current settings. Existing set IDs win; duplicate IDs inside a backup are rejected.
+- **Export sets CSV** exports sets only. Formula-like text is prefixed with an apostrophe for spreadsheet safety; JSON preserves original text exactly.
 
-## Important migration fix
+Unreadable or unsupported newer data is left untouched. A recovery notice offers an original-data download, full backup restore, or an explicit empty start. Failed saves do not commit in-memory edits or clear the form. If another tab changes storage, the old tab pauses saving until reloaded. Use one editing tab at a time; local storage is not a transactional multi-user database.
 
-V1.5 fixes the prior migration behavior so edits to your workout split are preserved on reload rather than being replaced with the default program.
+## Workout and import workflow
 
-## Current architecture
+Choose a 30- or 60-minute plan, then log sets. Workout dates use the device's local date. History supports editing and deleting sets from all sources. The **Approximate / incomplete** checkbox preserves uncertainty even when numeric values are available.
 
-V1.5 intentionally remains local-first. The import schema is designed so a later version can synchronize the same records through Google Drive/Sheets or a database without changing the workout history format.
+Paste structured workout JSON into **ChatGPT Inbox**, review it, then commit. A nested `exercises` array or a flat `sets` array is supported. See [the import format](CHATGPT_IMPORT_SCHEMA.md); an example is available through the Inbox's **Example file** button.
 
+Invalid dates, numbers, effort ranges, and unsupported units block commits. Missing load/reps and unknown exercise names produce review notes; incomplete records remain supported. Session notes and explicit `complete: false` survive commit and backup. Import IDs remain recorded when sets are corrected or deleted, preventing accidental reimport.
 
-## Branding
-The app package includes `gymbro-logo.png`, the black-and-white vintage strongman GymBro emblem used in the header and browser icon.
+Performance charts and gains exclude incomplete records and compare positive external loads using the latest eligible unit for each exercise. Assisted and bodyweight sets remain visible in history but are excluded from load-times-reps rankings. These summaries are training context, not automatic individualized coaching. **Training days** counts unique dates, not separate sessions on the same date.
+
+Exercise detail's **Latest** shows the most recent set with recorded load and reps, including assisted, bodyweight, zero-load, and approximate records. It is independent of ranking eligibility.
+
+## Development
+
+```sh
+npm ci
+npm test
+```
+
+Tests use Node's test runner, `playwright-core`, and an installed Chromium executable. Default: `/usr/bin/chromium`; set `CHROMIUM_PATH` to use another installation. The test harness starts its own temporary local server and isolated browser contexts; it does not touch real workout storage.
+
+Managed Chromium may block direct `file:` navigation by administrator policy. The direct-file test reports a skip in that case; use the local static server in that environment.
+
+A physical-phone smoke test is a separate release gate. See [the device checklist](REAL_PHONE_SMOKE_TEST.md). Responsive Chromium checks do not establish Safari or real-device readiness.
+
+Files:
+
+- `index.html`: form markup and the seven views.
+- `styles.css`: responsive layout and visual styling.
+- `app.js`: application actions, import review, analytics, and rendering.
+- `seed.js`: the original historical dataset and baseline program.
+- `storage.js`: validation, legacy migration, safe persistence, and recovery.
+- `tests/app.test.cjs`: browser regression coverage for normal workflows and data-loss edge cases.
+
+The existing vanilla JavaScript workflow is retained. V2 can introduce explicit session/exercise IDs and further module boundaries behind tested migrations. Exercise classification editing and cross-device synchronization remain future work.
