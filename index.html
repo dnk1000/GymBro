@@ -139,9 +139,20 @@
       </section>
 
       <section id="workout" class="view">
+        <div
+          id="guidedWorkout"
+          class="card guided-workout"
+          aria-label="Guided workout"
+        ></div>
         <div class="grid cols2">
           <div class="card">
             <h2 id="setFormTitle">Log a set</h2>
+            <div id="guidedFormNotice" class="notice" hidden>
+              <p id="guidedFormMessage"></p>
+              <button class="btn secondary" onclick="useManualLogging()">
+                Use manual logging
+              </button>
+            </div>
             <div class="formgrid">
               <div class="span2">
                 <label class="label" for="fDate">Date</label
@@ -232,6 +243,27 @@
               <button id="saveSetBtn" onclick="addSet()">Add set</button
               ><button class="btn secondary" onclick="clearForm()">
                 Clear / cancel edit
+              </button>
+            </div>
+            <div id="guidedEntryActions" class="guided-entry-actions" hidden>
+              <button
+                class="btn secondary"
+                onclick="guidedCommand('status', 'completed')"
+              >
+                Done with exercise
+              </button>
+              <button
+                class="btn secondary"
+                onclick="guidedCommand('status', 'skipped')"
+              >
+                Skip this exercise
+              </button>
+              <button
+                id="guidedEntryNext"
+                class="btn secondary"
+                onclick="guidedCommand('move', 'next')"
+              >
+                Next exercise
               </button>
             </div>
             <datalist id="exerciseList"></datalist>
@@ -510,6 +542,37 @@
         the flag. Add set saves a new record; Save changes updates the record
         you are editing.
       </p>
+      <h3>Guided workouts</h3>
+      <p>
+        In Workout, choose a saved workout, date and approximate 30/60-minute
+        mode, then Start workout. The 30-minute mode keeps the existing
+        abbreviated slots; neither mode guarantees a duration. No target sets,
+        reps, rest times or progression advice are prescribed.
+      </p>
+      <p>
+        Log current exercise opens its set form. Enter the actual load, unit and
+        reps, then Log guided set; enter another set to log again. Previous
+        performance is informational and separated by unit. Done and Skip are
+        explicit choices, independent of logging or Previous/Next. Navigation
+        never marks an exercise complete. Controls beside the form let you mark
+        Done, Skip or move Next without scrolling back to the workout card.
+      </p>
+      <p>
+        A session-only substitute changes subsequent sets for the planned slot,
+        leaving earlier sets and the permanent template unchanged. Reloading or
+        reopening restores saved position, substitutions, statuses and logged
+        sets. Partially entered form values are not backed up or restored; save
+        sets before leaving. Unsaved form input requires confirmation before
+        guided navigation discards it.
+      </p>
+      <p>
+        Only one workout can be active. Existing active sessions require Enable
+        guidance and keep all prior sets; no completion is inferred. Finish
+        workout can retain pending exercises after confirmation. Use manual
+        logging keeps the existing manual form available; while a session is
+        active, manual sets attach to that session without inventing a
+        planned-slot association.
+      </p>
       <h3>History</h3>
       <p>
         Review explicit sessions with their saved plan name, mode, status and
@@ -521,7 +584,10 @@
         details for all saved fields. The pencil edits a set; the trash icon
         deletes it after confirmation. Swipe the table horizontally to reach
         additional columns on a small screen. Incomplete records remain marked,
-        and imported records retain their source.
+        and imported records retain their source. Guided exercise status shows
+        planned/current exercise selections and explicit pending, completed or
+        skipped status; individual set records remain authoritative for actual
+        exercises performed.
       </p>
       <h3>ChatGPT Inbox</h3>
       <p>
@@ -566,10 +632,12 @@
     <script src="seed.js"></script>
     <script src="workout-data.js"></script>
     <script src="workout-sessions.js"></script>
+    <script src="guided-workouts.js"></script>
     <script src="storage.js"></script>
     <script src="workout-actions.js"></script>
     <script src="ui-acronyms.js"></script>
     <script src="history-view.js"></script>
+    <script src="guided-ui.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

@@ -521,3 +521,61 @@ canvas {
 #backupEffect {
   line-height: 1.6;
 }
+
+.guided-workout {
+  margin-bottom: 14px;
+}
+.guided-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.guided-controls,
+.guided-substitution {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.guided-controls button,
+.guided-substitution button,
+.guided-workout > button {
+  min-height: 44px;
+}
+.guided-substitution label {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.guided-workout h2,
+.guided-workout h3,
+.guided-sets,
+.guided-previous,
+.guided-history {
+  overflow-wrap: anywhere;
+}
+.guided-workout label {
+  display: block;
+}
+.guided-previous {
+  margin: 10px 0;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+@media (max-width: 600px) {
+  .guided-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.guided-entry-actions:not([hidden]) {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.guided-entry-actions button {
+  min-height: 44px;
+}

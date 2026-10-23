@@ -36,3 +36,7 @@ Pass requires all checks to complete without data loss, unusable controls, page 
 ## Milestone 3 — pending physical-device acceptance
 
 Main `14b12a8` contains accepted Milestone 2; production served 2.2.5 before branching. Milestone 3 is not physically tested by automated Chromium checks. Follow [the History and backup checklist](HISTORY_AND_BACKUPS.md), recording actual device/OS/browser, commit, results and failures. Export and verify production JSON before testing; keep synthetic data on the preview origin only.
+
+## Milestone 4 — pending physical-device acceptance
+
+Start from accepted main `fd616fa` (Milestone 3). Test the 2.4.0 preview with the checklist in [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md). Production JSON backup must be exported and verified first. Chromium viewport testing is not physical Safari acceptance. Do not mark completed without device/browser/build and actual results.

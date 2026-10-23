@@ -1,5 +1,7 @@
 # Milestone 3: History and backup presentation
 
+Historical milestone documentation: Milestone 4 adds schema 7 and guided actions; see [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md) for current guidance contracts. Existing unguided behavior remains supported.
+
 This milestone starts from accepted main `14b12a88166d8c9cb7dfb3d70bccb0f68d0c8d34`. Application version is the independent canonical 2.3.0 build in `app-version.js`. Data schema stays **6**, storage key stays `daveGymTrackerV1`, and no migration or workout-action changes are introduced.
 
 ## History

@@ -1,5 +1,5 @@
 // V1.6 keeps the existing storage key and migrates V1–V1.5 records in memory.
-const DATA_VERSION = 6;
+const DATA_VERSION = 7;
 const UNITS = ["lb", "lb/side", "assist lb", "bodyweight"];
 const hasOwn = (object, key) => Object.hasOwn(object, key);
 const isObject = (value) =>
@@ -96,6 +96,7 @@ function migrateData(input) {
     if (!hasOwn(set, "complete"))
       set.complete = set.weight != null && set.reps != null;
   });
+  // 6 → 7 adds guided invariants, not inferred progress. Existing records stay unchanged.
   data.version = DATA_VERSION;
   validateData(data);
   return data;
@@ -224,6 +225,7 @@ function validateData(data) {
     "Active template does not exist.",
   );
   validateSessions(data);
+  validateGuidance(data);
 }
 
 function emptyData() {

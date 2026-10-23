@@ -31,6 +31,15 @@ function createWorkoutActions({
         error.errors || [error.message],
       );
     }
+    if (details?.unchanged)
+      return {
+        ok: true,
+        code: "NO_CHANGE",
+        errors: [],
+        changes: [],
+        ...details,
+        state: getWorkoutState(),
+      };
     try {
       const saved = persist(next);
       if (!saved || saved.ok !== true)
@@ -132,7 +141,76 @@ function createWorkoutActions({
     if (planSlotId != null) set.planSlotId = planSlotId;
     if (!session.setIds.includes(set.id)) session.setIds.push(set.id);
   }
+  function makeSession(next, input = {}) {
+    if (!isObject(input) || !validDate(input.date))
+      reject(["Choose a valid local workout date."]);
+    if (next.activeSessionId !== null)
+      reject(
+        ["Complete the active session before creating another."],
+        "INVALID_SESSION_STATE",
+      );
+    const templateId = hasOwn(input, "templateId")
+      ? input.templateId
+      : next.program.activeTemplateId;
+    const duration = hasOwn(input, "duration")
+      ? input.duration
+      : next.program.activeDuration;
+    if (![30, 60].includes(duration))
+      reject(["Choose a 30- or 60-minute mode."]);
+    const template = templateId === null ? null : templateFor(next, templateId);
+    const session = {
+      id: `ws_${createId()}`,
+      date: input.date,
+      status: "active",
+      createdAt: now(),
+      completedAt: null,
+      templateId,
+      duration,
+      planSnapshot: snapshotPlan(template, duration),
+      setIds: [],
+    };
+    next.sessions.push(session);
+    next.activeSessionId = session.id;
+    return session;
+  }
+  function finishSession(next, id, options = {}) {
+    const session = sessionFor(next, id);
+    if (session.status !== "active" || next.activeSessionId !== id)
+      reject(["Session is not active."], "INVALID_SESSION_STATE");
+    if (session.guided) {
+      if (options.expectedRevision !== session.guided.revision)
+        reject(
+          ["Guided progress changed; inspect it before finishing."],
+          "STALE_GUIDANCE",
+        );
+      const pending = session.guided.slots.filter(
+        (slot) => slot.status === "pending",
+      ).length;
+      if (pending && options.allowPending !== true)
+        reject(
+          [
+            `${pending} unfinished exercises remain. Finish anyway? Their pending status will be preserved.`,
+          ],
+          "CONFIRM_UNFINISHED",
+        );
+      session.guided.revision++;
+    }
+    session.status = "completed";
+    session.completedAt = now();
+    next.activeSessionId = null;
+    return { sessionId: id, changes: ["sessions", "activeSessionId"] };
+  }
   return {
+    ...createGuidedActions({
+      transaction,
+      reject,
+      getWorkoutState,
+      makeSession,
+      sessionFor,
+      record,
+      linkSet,
+      finishSession,
+    }),
     getWorkoutState,
     getSession(id) {
       return getWorkoutState().sessions.find((row) => row.id === id) ?? null;
@@ -145,52 +223,15 @@ function createWorkoutActions({
     },
     createSession(input = {}) {
       return transaction((next) => {
-        if (!isObject(input) || !validDate(input.date))
-          reject(["Choose a valid local workout date."]);
-        if (next.activeSessionId !== null)
-          reject(
-            ["Complete the active session before creating another."],
-            "INVALID_SESSION_STATE",
-          );
-        const templateId = hasOwn(input, "templateId")
-          ? input.templateId
-          : next.program.activeTemplateId;
-        const duration = hasOwn(input, "duration")
-          ? input.duration
-          : next.program.activeDuration;
-        if (![30, 60].includes(duration))
-          reject(["Choose a 30- or 60-minute mode."]);
-        const template =
-          templateId === null ? null : templateFor(next, templateId);
-        const session = {
-          id: `ws_${createId()}`,
-          date: input.date,
-          status: "active",
-          createdAt: now(),
-          completedAt: null,
-          templateId,
-          duration,
-          planSnapshot: snapshotPlan(template, duration),
-          setIds: [],
-        };
-        next.sessions.push(session);
-        next.activeSessionId = session.id;
+        const session = makeSession(next, input);
         return {
           sessionId: session.id,
           changes: ["sessions", "activeSessionId"],
         };
       });
     },
-    completeSession(id) {
-      return transaction((next) => {
-        const session = sessionFor(next, id);
-        if (session.status !== "active" || next.activeSessionId !== id)
-          reject(["Session is not active."], "INVALID_SESSION_STATE");
-        session.status = "completed";
-        session.completedAt = now();
-        next.activeSessionId = null;
-        return { sessionId: id, changes: ["sessions", "activeSessionId"] };
-      });
+    completeSession(id, options = {}) {
+      return transaction((next) => finishSession(next, id, options));
     },
     attachSetToSession(input = {}) {
       return transaction((next) => {
