@@ -40,3 +40,7 @@ Main `14b12a8` contains accepted Milestone 2; production served 2.2.5 before bra
 ## Milestone 4 — pending physical-device acceptance
 
 Start from accepted main `fd616fa` (Milestone 3). Test the 2.4.0 preview with the checklist in [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md). Production JSON backup must be exported and verified first. Chromium viewport testing is not physical Safari acceptance. Do not mark completed without device/browser/build and actual results.
+
+## Milestone 5 — pending physical-device acceptance
+
+Milestone 4 was merged at `817fc17`; production was verified serving 2.4.0 before Milestone 5 began. No new workout interaction screens are introduced in Milestone 5. Follow [TRAINER_EVIDENCE.md](TRAINER_EVIDENCE.md) to check the 2.5.0 preview and retained guided/manual flows. Export/verify production JSON first. Record actual device/browser/build and results rather than inferring physical acceptance from Chromium tests.

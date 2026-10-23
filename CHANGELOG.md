@@ -1,5 +1,11 @@
 # Changes
 
+## 2.5.0 — Milestone 5 (preview)
+
+- Add read-only trainer performance/workout context composed from existing guided state, with exact exercise/unit evidence, source/session references, pain, unparsed notes/preferences and explicit unknown classifications.
+- Add transparent set comparisons and complete-recorded-repetition totals, with missing/ambiguous/unsafe evidence reasons. Return review/insufficient_evidence only; no progression prescriptions, score, 1RM or inferred working/failure classes.
+- Keep guided/manual UI, workout actions, persistence schema 7, import hashes, backups and authoritative records unchanged. No Milestone 6.
+
 ## 2.4.0 — Milestone 4 (preview)
 
 - Add atomic guided session start, explicit Done/Skip, persisted navigation and session-local substitutions over immutable plan snapshots. Preserve earlier sets and manual logging.

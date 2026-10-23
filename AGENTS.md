@@ -29,6 +29,8 @@ The app has no runtime package installation or build step. Serve the repository 
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `performance-context.js`            | Read-only trainer context, record comparability, referenced arithmetic and conservative evidence-review policy.                                             |
+| `TRAINER_EVIDENCE.md`               | Milestone 5 API/output contracts, approved evidence policy and acceptance checklist.                                                                        |
 | `guided-workouts.js`                | DOM-free guided validation, state selectors and transaction-backed guided action extension.                                                                 |
 | `guided-ui.js`                      | Guided Workout DOM adapter and transient form context; no committed draft persistence.                                                                      |
 | `GUIDED_WORKOUTS.md`                | Schema-7 guidance contracts, action API, migration and iPhone acceptance steps.                                                                             |
@@ -166,3 +168,11 @@ The app has no runtime package installation or build step. Serve the repository 
 
 - Read `GymBro_PRD.md` when assessing product or architecture changes. ChatGPT is the future coaching/reasoning layer; GymBro provides structured memory, actions, persistence and the dashboard/manual fallback. All workout control must remain available through DOM-independent structured actions/state.
 - The PRD is a roadmap, not blanket authorization to expand a milestone. Follow the specifically approved scope; do not add autonomous training prescriptions, AI/voice or later features merely because the PRD describes future capabilities.
+
+## Trainer evidence — Milestone 5
+
+- `performance-context.js` is read-only. Compose the existing guided selector for trainer workout context; never create parallel authoritative session/guidance state or persist derived evidence.
+- Follow `TRAINER_EVIDENCE.md` (`trainer-evidence-v1`): exact actual exercise and unit, referenced arithmetic, separate modes as context, no substitution equivalence/conversion/1RM/composite scores or automatic increase/maintain recommendations.
+- Require explicit asOfDate; never use a runtime clock or arbitrary stale cutoff to change deterministic evidence. Preserve same-day chronology uncertainty and legacy display-only grouping.
+- Keep existing preference text unparsed; structured goals/constraints and working-set/failure classification are not modeled. Do not infer them from notes or add a trainer-profile schema without approval.
+- Evidence selectors must not write storage or change templates, current inputs, guided state, historical records or future prescriptions. ChatGPT remains the reasoning/coaching layer. Milestone 6 is separate work.

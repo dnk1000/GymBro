@@ -97,3 +97,9 @@ Workout now offers Start workout with a saved template, local date and approxima
 Guided state and submission identities are persisted through the DOM-free action layer in schema 7. Failed writes commit neither progress nor request IDs. Exercise identity remains the existing exercise-library name key; no new ID system or equivalence policy is added. Read [guided-workout contracts and acceptance steps](GUIDED_WORKOUTS.md) before modifying this flow.
 
 The product north star is [GymBro_PRD.md](GymBro_PRD.md): ChatGPT supplies future virtual-trainer reasoning, while GymBro supplies structured memory/actions, persistence and the dashboard/manual fallback. The [guided action/state alignment audit](GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) maps the current DOM-independent control surface to that boundary; actual voice/AI integration remains future work.
+
+## Trainer evidence (Milestone 5)
+
+`workoutActions.getExercisePerformanceContext(...)`, `compareExercisePerformance(...)` and `getTrainerWorkoutContext(...)` expose read-only, detached JSON evidence for the future ChatGPT trainer. Supply an explicit `asOfDate`. The workout context composes the existing guided selector; no new workout model or interaction screen is introduced.
+
+Results contain exact exercise/unit context, ordered records, provenance, pain, unparsed preference/notes, transparent arithmetic and supporting IDs. Only `review`/`insufficient_evidence` evidence summaries are returned, never increase/maintain commands. Working-set/failure classification and structured constraints remain unknown where not modeled. No schema increment, persisted scores or state mutations are needed. See [TRAINER_EVIDENCE.md](TRAINER_EVIDENCE.md) for the approved policy, API contracts and acceptance checks.
