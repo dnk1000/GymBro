@@ -161,3 +161,8 @@ The app has no runtime package installation or build step. Serve the repository 
 - Guided actions require an expected revision. Set submissions require action request IDs, not value-based deduplication. Persist committed request history (including deletion tombstones) atomically; failed writes must not consume a request.
 - Resume committed guided state after reload. Invalid current slots fail conservatively. Keep partially entered forms transient and confirm before guided navigation discards them.
 - History changes stay limited to planned/actual exercise and explicit guided statuses. Use the same action/state layer for future v3 adapters; no AI/voice implementation here.
+
+## Product north star
+
+- Read `GymBro_PRD.md` when assessing product or architecture changes. ChatGPT is the future coaching/reasoning layer; GymBro provides structured memory, actions, persistence and the dashboard/manual fallback. All workout control must remain available through DOM-independent structured actions/state.
+- The PRD is a roadmap, not blanket authorization to expand a milestone. Follow the specifically approved scope; do not add autonomous training prescriptions, AI/voice or later features merely because the PRD describes future capabilities.
