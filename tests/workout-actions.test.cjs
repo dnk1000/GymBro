@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 // A real JS runtime with no window, document, controls, dialogs or event objects.
-function fixture() {
+function fixture(prepare = (state) => state) {
   const runtime = vm.createContext({ structuredClone });
   for (const file of ["seed.js", "workout-data.js", "workout-actions.js"]) {
     vm.runInContext(
@@ -14,7 +14,7 @@ function fixture() {
       { filename: file },
     );
   }
-  let state = vm.runInContext("migrateData(seed)", runtime);
+  let state = prepare(vm.runInContext("migrateData(seed)", runtime));
   let durable = JSON.stringify(state),
     writes = 0,
     commits = 0,
@@ -301,4 +301,30 @@ test("invalid import is atomic and incomplete edits preserve uncertainty by defa
   );
   assert.equal(edit.state.version, 5);
   assert.equal(edit.state.sets[0].id, initial.sets[0].id);
+});
+
+test("partial edits preserve every omitted field exactly, including imported text and metadata", () => {
+  const f = fixture((state) => {
+    Object.assign(state.sets[0], {
+      exercise: " Bench Press ",
+      notes: "  imported note\nwith deliberate whitespace  ",
+      painArea: " right shoulder ",
+      rpe: 7.5,
+      rir: 1,
+      pain: 2,
+      source: "chatgpt",
+      complete: false,
+      importBatch: "cg_legacy-record",
+      setNumber: 3,
+      customMetadata: { attachment: "machine A", tags: ["legacy"] },
+    });
+    return state;
+  });
+  const before = f.state().sets[0];
+  const result = f.actions.editSet(before.id, { reps: 11 });
+  assert.equal(result.ok, true);
+  assert.deepEqual(f.state().sets[0], { ...before, reps: 11 });
+  assert.deepEqual(JSON.parse(f.durable()).sets[0], { ...before, reps: 11 });
+  result.state.sets[0].customMetadata.tags.push("tampered");
+  assert.deepEqual(f.state().sets[0].customMetadata, before.customMetadata);
 });

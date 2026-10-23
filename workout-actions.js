@@ -87,7 +87,7 @@ function createWorkoutActions({
         };
     for (const key of fields) if (hasOwn(input, key)) set[key] = input[key];
     for (const key of ["exercise", "painArea", "notes"])
-      set[key] = cleanText(set[key]);
+      if (!previous || hasOwn(input, key)) set[key] = cleanText(set[key]);
     const errors = setErrors(set);
     if (!validDate(set.date)) errors.push("Choose a valid workout date.");
     if (typeof set.complete !== "boolean")
