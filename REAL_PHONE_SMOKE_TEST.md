@@ -4,6 +4,8 @@ Status: **Pending — not executed on a physical phone.** The cloud workspace ha
 
 Use a separate test copy/origin, not a browser profile containing real workout data. Open the complete app directory through a web server reachable from the phone. Keep its address unchanged throughout the test. No account or API key is needed.
 
+**Before testing a milestone that touches persistence, export a complete JSON database backup from the production GymBro address and verify that the file was saved.** A Vercel Preview Deployment is a separate origin with its own local storage. Its initial/seeded records are not your production history. Use test records there, or deliberately import a copy of the backup; retain the original file. Do not restore test data over production.
+
 Record:
 
 - Device model:
@@ -15,6 +17,7 @@ Record:
 
 Checklist (leave unchecked until verified on the device):
 
+- [ ] Export the production database as JSON, verify the saved file, and record the preview address separately from the production address.
 - [ ] Open the app; confirm V1.6, the logo, dashboard and charts load.
 - [ ] Visit all seven tabs in portrait and landscape. Confirm the Exercises page fits the screen, with wide tables scrolling within their cards rather than widening the page.
 - [ ] Open the on-screen keyboard; confirm exercise, load, reps and notes remain editable and the save control is reachable.

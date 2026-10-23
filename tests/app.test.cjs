@@ -142,7 +142,10 @@ test("corrupt, malformed and future-version storage remains byte-for-byte intact
     assert.equal(await stored(p), raw);
     assert.equal(await p.locator("#storageNotice").isVisible(), true);
     assert.equal(
-      await p.evaluate(() => changeDB((next) => next.sets.push({}))),
+      await p.evaluate(
+        () =>
+          workoutActions.logBodyweight({ date: "2026-10-23", value: 210 }).ok,
+      ),
       false,
     );
     assert.equal(await stored(p), raw);
@@ -463,23 +466,19 @@ test("a second tab pauses stale writes and leaves its committed data intact", as
   const other = await p.context().newPage();
   await other.goto(origin);
   await other.evaluate(() =>
-    changeDB((next) => {
-      next.preferences.other = "new tab";
-    }),
+    workoutActions.logBodyweight({ date: "2026-10-23", value: 212.1 }),
   );
   await p.waitForFunction(() => storageState.stale);
   const raw = await stored(p);
   assert.equal(
-    await p.evaluate(() =>
-      changeDB((next) => {
-        next.preferences.mine = "stale tab";
-      }),
+    await p.evaluate(
+      () => workoutActions.logBodyweight({ date: "2026-10-23", value: 213 }).ok,
     ),
     false,
   );
   assert.equal(await stored(p), raw);
   await p.reload();
-  assert.equal((await backup(p)).preferences.other, "new tab");
+  assert.equal((await backup(p)).bodyweights.at(-1).value, 212.1);
 });
 
 test("local workout date remains local when UTC has advanced to tomorrow", async (t) => {
@@ -674,4 +673,75 @@ test("Latest shows assisted, bodyweight and zero-load history without ranking it
     .filter({ hasText: "Latest check" })
     .click();
   assert.match(await latest.innerText(), /50 assist lb × 8/);
+});
+
+test("action API uses real persistence without rendering or alerts and returns detached state", async (t) => {
+  const p = await app(t);
+  const result = await p.evaluate(() => {
+    // Disabling effects catches accidental coupling without altering the DOM itself.
+    const realRender = renderAll,
+      realNotice = renderStorageNotice,
+      realAlert = window.alert;
+    renderAll =
+      renderStorageNotice =
+      window.alert =
+        () => {
+          throw Error("UI effect in action");
+        };
+    try {
+      const before = getWorkoutState();
+      const logged = workoutActions.logSet({
+        date: "2026-10-23",
+        exercise: "Bench Press",
+        weight: 95,
+        reps: 6,
+        notes: "API",
+      });
+      const inspected = getWorkoutState();
+      inspected.sets.length = 0;
+      return {
+        logged,
+        length: getWorkoutState().sets.length,
+        beforeLength: before.sets.length,
+        persisted: JSON.parse(localStorage.getItem(KEY)),
+      };
+    } finally {
+      renderAll = realRender;
+      renderStorageNotice = realNotice;
+      window.alert = realAlert;
+    }
+  });
+  assert.equal(result.logged.ok, true);
+  assert.equal(result.length, result.beforeLength + 1);
+  assert.equal(result.persisted.sets.at(-1).id, result.logged.setId);
+  assert.deepEqual(result.persisted, result.logged.state);
+});
+
+test("failed import and edit writes retain their review/form inputs and committed data", async (t) => {
+  const p = await app(t);
+  await stage(
+    p,
+    workout([set({ exercise: "New failed exercise" })], {
+      importId: "write-failure",
+      notes: "keep draft",
+    }),
+  );
+  const before = await backup(p);
+  const draft = await p.evaluate(() => structuredClone(inboxDraft));
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Full", "QuotaExceededError");
+    };
+  });
+  await p.locator("#commitInboxBtn").click();
+  assert.deepEqual(await backup(p), before);
+  assert.deepEqual(await p.evaluate(() => structuredClone(inboxDraft)), draft);
+  assert.equal(await p.locator("#commitInboxBtn").isDisabled(), false);
+  assert.equal(await stored(p), null);
+  await p.evaluate((id) => editSet(id), before.sets[0].id);
+  await p.locator("#fNotes").fill("unsaved correction");
+  await p.getByRole("button", { name: "Save changes", exact: true }).click();
+  assert.equal(await p.locator("#fNotes").inputValue(), "unsaved correction");
+  assert.equal(await p.locator("#saveSetBtn").innerText(), "Save changes");
+  assert.deepEqual(await backup(p), before);
 });

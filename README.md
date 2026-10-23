@@ -10,13 +10,15 @@ Open `index.html` in a modern browser, or serve this directory locally:
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-There is no backend, account, API key, or application build. Keep `index.html`, `app.js`, `seed.js`, `storage.js`, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
+There is no backend, account, API key, or application build. Keep `index.html`, `app.js`, `seed.js`, `workout-data.js`, `workout-actions.js`, `storage.js`, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
 
 ## Data and backups
 
 The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. V1.6 reads older data and uses internal data version 5. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved.
 
 Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
+
+Before testing any milestone that touches persistence, export a complete JSON backup from production and verify the saved file. A Vercel preview has separate browser storage; empty or seeded preview data does not indicate missing production history. Keep production and preview addresses/data distinct. Automated tests use disposable storage only.
 
 - **Backup / Export JSON** includes history, bodyweights, program, exercise library, preferences, and import metadata.
 - **Restore complete backup** validates the entire file, then replaces all of those fields after confirmation.
@@ -54,9 +56,14 @@ Files:
 
 - `index.html`: form markup and the seven views.
 - `styles.css`: responsive layout and visual styling.
-- `app.js`: application actions, import review, analytics, and rendering.
+- `app.js`: UI adapters, import review, analytics, and rendering; configures the workout actions.
+- `workout-actions.js`: DOM-free actions with explicit inputs, structured results and state snapshots.
+- `workout-data.js`: DOM-free validation, migration, import normalization and data helpers.
 - `seed.js`: the original historical dataset and baseline program.
-- `storage.js`: validation, legacy migration, safe persistence, and recovery.
+- `storage.js`: browser persistence, stale-tab detection, recovery, and legacy backup/reset adapters.
 - `tests/app.test.cjs`: browser regression coverage for normal workflows and data-loss edge cases.
+- `tests/workout-actions.test.cjs`: action/state regression tests without a DOM or browser globals.
+
+See [the workout action interface](WORKOUT_ACTIONS.md) for inputs, results, state inspection and the Milestone 1 boundary. Existing storage data remains version 5; this extraction does not introduce sessions or change the UI.
 
 The existing vanilla JavaScript workflow is retained. V2 can introduce explicit session/exercise IDs and further module boundaries behind tested migrations. Exercise classification editing and cross-device synchronization remain future work.

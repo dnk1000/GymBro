@@ -27,21 +27,24 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 The app has no runtime package installation or build step. Serve the repository with `python3 -m http.server 8000 --bind 127.0.0.1` (also available as `npm start`). Keep the static assets together.
 
-| File | Responsibility |
-| --- | --- |
-| `index.html` | Application shell, seven views, form markup, and script loading. |
-| `styles.css` | Shared visual styling, responsive grids, forms, and mobile layout. |
-| `app.js` | Application actions, workout logging, import review, history, analytics, charts, and DOM rendering. Currently contains mixed concerns; separate them gradually when practical. |
-| `storage.js` | Data validation, legacy migration, safe persistence, stale-tab detection, and recovery. |
-| `seed.js` | Original historical workout data, baseline program, exercise taxonomy, and coaching preferences. |
-| `gymbro-logo.png` | Header and favicon branding asset. |
-| `tests/app.test.cjs` | Chromium regression tests using Node's test runner and Playwright Core; starts an isolated local server and disposable browser contexts. |
-| `package.json`, `package-lock.json` | Development commands and pinned test dependencies. |
-| `README.md` | Run instructions, product behavior, data storage, backup semantics, and development workflow. |
-| `CHATGPT_IMPORT_SCHEMA.md` | Supported workout JSON interchange format and validation rules. |
-| `CHANGELOG.md` | Meaningful version changes. |
-| `REAL_PHONE_SMOKE_TEST.md` | Physical-device validation checklist and release-gate status. |
-| `AGENTS.md` | Project rules for future Codex work. |
+| File                                | Responsibility                                                                                                                                              |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.html`                        | Application shell, seven views, form markup, and script loading.                                                                                            |
+| `styles.css`                        | Shared visual styling, responsive grids, forms, and mobile layout.                                                                                          |
+| `app.js`                            | UI adapters, form/draft state, navigation, history, analytics, charts, and DOM rendering. Configures `workoutActions` and the `getWorkoutState()` selector. |
+| `workout-actions.js`                | DOM-free workout action factory. Explicit inputs, detached state snapshots, structured results, and persist-before-commit transactions.                     |
+| `workout-data.js`                   | DOM-free data validation, legacy migration, import normalization, and shared data helpers.                                                                  |
+| `storage.js`                        | Browser storage loading/writing, stale-tab detection, and recovery UI. `persistData()` reports write results without DOM effects.                           |
+| `seed.js`                           | Original historical workout data, baseline program, exercise taxonomy, and coaching preferences.                                                            |
+| `gymbro-logo.png`                   | Header and favicon branding asset.                                                                                                                          |
+| `tests/app.test.cjs`                | Chromium regression tests using Node's test runner and Playwright Core; starts an isolated local server and disposable browser contexts.                    |
+| `tests/workout-actions.test.cjs`    | Action/state tests in a JavaScript runtime without DOM or browser globals, including persistence failure and compatibility cases.                           |
+| `package.json`, `package-lock.json` | Development commands and pinned test dependencies.                                                                                                          |
+| `README.md`                         | Run instructions, product behavior, data storage, backup semantics, and development workflow.                                                               |
+| `CHATGPT_IMPORT_SCHEMA.md`          | Supported workout JSON interchange format and validation rules.                                                                                             |
+| `CHANGELOG.md`                      | Meaningful version changes.                                                                                                                                 |
+| `REAL_PHONE_SMOKE_TEST.md`          | Physical-device validation checklist and release-gate status.                                                                                               |
+| `AGENTS.md`                         | Project rules for future Codex work.                                                                                                                        |
 
 ## Read before editing
 
@@ -61,6 +64,8 @@ The app has no runtime package installation or build step. Serve the repository 
 - Destructive restore, reset, and clear operations must remain explicit user actions with confirmation. Never erase real data during development or tests.
 - A future schema change requires a deliberate versioned migration and regression coverage for old data, customized programs, invalid input, and unsupported future versions. Do not downgrade newer data or silently discard fields.
 - Before changing the workout data model, document migration and backward-compatibility implications, including existing local history, imported records, and exported backups. An upgrade must not lose existing workout history.
+- **Export your GymBro database before testing any milestone that touches persistence.** For manual testing, export a complete JSON backup from the production address and verify the file is saved before opening the preview. Do not substitute a CSV export or claim a user's backup was made without access to that browser.
+- Vercel previews have a different browser origin and separate local storage. Empty/seeded preview data is not evidence that production history disappeared. Identify which origin is under test, use test data or deliberately import a copy of the backup, and never overwrite production history just to match a preview. Automated tests must use isolated disposable storage, never a user's real browser database.
 
 ## Logging, history, and analytics
 
@@ -100,3 +105,12 @@ The app has no runtime package installation or build step. Serve the repository 
 - Do not freeze/tag the stabilized baseline or begin v2 until the requested real-phone validation is completed and failures are resolved, or the user explicitly changes this requirement.
 - Finish work with a concise account of changes, user-visible behavior changes, validation evidence, and remaining limitations. Distinguish implemented code, local validation, physical-device testing, and deployment/publication.
 - Before completing a task, test the affected functionality and summarize what changed. For documentation-only work, verify the document and referenced paths rather than claiming application tests were rerun. Explicitly report any validation that could not be performed.
+
+## GymBro v2 milestone delivery workflow
+
+- Start each milestone from the latest GitHub `main`, on a dedicated branch named `v2/milestone-N-short-description`. Never implement milestone work directly on `main`.
+- Implement only the approved milestone scope. Run all applicable tests before committing, use a clear commit message, and push the milestone branch to GitHub.
+- Create or update a pull request against `main` when supported. Do not merge it unless the user explicitly approves and requests the merge. Bug fixes stay on the same milestone branch and update its existing PR/preview.
+- Use a Vercel Preview Deployment for physical-iPhone testing. Do not deploy milestone branches directly to the production Vercel environment. Report missing integration/access instead of inventing a preview URL or claiming deployment succeeded.
+- After pushing, report the branch, commit hash, tests/results, PR status/link, preview deployment status/link, and specific iPhone checks.
+- Only after milestone approval should it be merged. After merge, verify production deployment from `main` succeeds before starting the next milestone.
