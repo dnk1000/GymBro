@@ -201,6 +201,7 @@ function createWorkoutActions({
     return { sessionId: id, changes: ["sessions", "activeSessionId"] };
   }
   return {
+    ...createPerformanceSelectors(getWorkoutState),
     ...createGuidedActions({
       transaction,
       reject,

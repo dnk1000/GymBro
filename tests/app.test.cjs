@@ -2199,3 +2199,150 @@ test("corrupt persisted guided position blocks recovery without guessing or over
   );
   assert.equal(await stored(p), raw);
 });
+
+test("trainer evidence APIs compose guided state and run without storage writes or rendered form state", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const original = await backup(p),
+    raw = await stored(p);
+  const inspection = await p.evaluate(() => {
+    const state = workoutActions.getGuidedWorkoutState();
+    const context = workoutActions.getTrainerWorkoutContext({
+      asOfDate: "2026-10-23",
+    });
+    const exercise = workoutActions.getExercisePerformanceContext({
+      exercise: "Smith Press",
+      asOfDate: "2026-10-23",
+      unit: "lb/side",
+    });
+    return { state, context, exercise };
+  });
+  assert.equal(inspection.context.ok, true);
+  assert.equal(inspection.exercise.ok, true);
+  assert.deepEqual(inspection.context.result.guidedWorkout, inspection.state);
+  assert.equal(
+    inspection.context.result.preferences.actual.recordedText,
+    original.preferences["Smith Press"],
+  );
+  assert.equal(inspection.context.result.structuredConstraints, null);
+  assert.equal(await stored(p), raw);
+  assert.deepEqual(await backup(p), original);
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw Error("writes forbidden for selectors");
+    };
+  });
+  assert.equal(
+    (
+      await p.evaluate(() =>
+        workoutActions.getTrainerWorkoutContext({ asOfDate: "2026-10-23" }),
+      )
+    ).ok,
+    true,
+  );
+  assert.equal(await stored(p), raw);
+});
+
+test("trainer context follows domain logging even when the guided DOM has not been rerendered", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const inspection = await p.evaluate(() => {
+    const g = workoutActions.getGuidedWorkoutState();
+    const saved = workoutActions.logGuidedSet({
+      sessionId: g.sessionId,
+      planSlotId: g.currentSlotId,
+      expectedRevision: g.revision,
+      requestId: "trainer-no-dom",
+      weight: 40,
+      unit: "lb/side",
+      reps: 8,
+      rpe: 7,
+      pain: 2,
+      painArea: "shoulder",
+      notes: "Synthetic trainer API evidence",
+    });
+    return {
+      saved,
+      context: workoutActions.getTrainerWorkoutContext({
+        asOfDate: "2026-10-23",
+      }),
+    };
+  });
+  assert.equal(inspection.saved.ok, true);
+  assert.equal(inspection.context.ok, true);
+  assert.equal(inspection.context.result.currentSlotSets.length, 1);
+  assert.equal(
+    inspection.context.result.currentPainContext[0].references.setId,
+    inspection.saved.setId,
+  );
+  assert.match(
+    await p.locator("#guidedWorkout").innerText(),
+    /0 sets recorded/,
+  );
+  assert.equal(
+    inspection.context.result.guidedWorkout.currentExercise.status,
+    "pending",
+  );
+});
+
+test("derived evidence is not persisted and reproduces across complete backup restore", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const before = await p.evaluate(() =>
+    workoutActions.getTrainerWorkoutContext({ asOfDate: "2026-10-23" }),
+  );
+  await p.locator('[data-view="data"]').click();
+  const pending = p.waitForEvent("download");
+  await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+  const exported = JSON.parse(
+    await fs.readFile(await (await pending).path(), "utf8"),
+  );
+  assert.equal(exported.version, 7);
+  assert.equal(
+    exported.appVersion,
+    await p.evaluate(() => APP_VERSION.version),
+  );
+  assert.equal(Object.hasOwn(exported, "trainerEvidence"), false);
+  assert.equal(Object.hasOwn(exported, "progressionState"), false);
+  await importBackup(p, exported);
+  assert.deepEqual(
+    await p.evaluate(() =>
+      workoutActions.getTrainerWorkoutContext({ asOfDate: "2026-10-23" }),
+    ),
+    before,
+  );
+  assert.deepEqual(await backup(p), exported);
+});
+
+test("exercise library counts session identities and sessionless date groups", async (t) => {
+  const p = await app(t);
+  const result = await p.evaluate(() => {
+    db.sets = [
+      { exercise: "Bench Press", date: "2026-10-23", sessionId: "one" },
+      { exercise: "Bench Press", date: "2026-10-23", sessionId: "one" },
+      { exercise: "Bench Press", date: "2026-10-23", sessionId: "two" },
+      { exercise: "Bench Press", date: "2026-10-23" },
+      { exercise: "Bench Press", date: "2026-10-23" },
+      { exercise: "Bench Press", date: "2026-10-22", complete: false },
+    ];
+    const before = JSON.stringify(db);
+    renderExercises();
+    return {
+      unchanged: before === JSON.stringify(db),
+      empty: exerciseSessionCount([]),
+    };
+  });
+  await p.locator('[data-view="exercises"]').click();
+  const row = p
+    .locator("#exerciseTable .exercise-row")
+    .filter({ hasText: "Bench Press" });
+  assert.equal(await row.locator("td").nth(3).textContent(), "6");
+  assert.equal(await row.locator("td").nth(4).textContent(), "4");
+  assert.match(
+    await p.locator("#exerciseTable").textContent(),
+    /not inferred sessions/,
+  );
+  await row.click();
+  assert.match(await p.locator("#exerciseDetail").textContent(), /Sessions4/);
+  assert.deepEqual(result, { unchanged: true, empty: 0 });
+});

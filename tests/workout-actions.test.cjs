@@ -12,6 +12,7 @@ function fixture(prepare = (state) => state) {
     "workout-data.js",
     "workout-sessions.js",
     "guided-workouts.js",
+    "performance-context.js",
     "workout-actions.js",
   ]) {
     vm.runInContext(

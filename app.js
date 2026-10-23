@@ -596,17 +596,26 @@ function renderHistory() {
       })
       .join("") || '<p class="sub">No history matches this source filter.</p>';
 }
+// Legacy dates are display groups only, never inferred persisted sessions.
+function exerciseSessionCount(records) {
+  return (
+    new Set(records.filter((s) => s.sessionId).map((s) => s.sessionId)).size +
+    new Set(records.filter((s) => !s.sessionId).map((s) => s.date)).size
+  );
+}
 function renderExercises() {
   const xs = allExercises();
-  exerciseTable.innerHTML = `<table><thead><tr><th>Exercise</th><th>Primary</th><th>Role</th><th>Sets</th><th>Last</th></tr></thead><tbody>${xs
+  exerciseTable.innerHTML = `<table><thead><tr><th>Exercise</th><th>Primary</th><th>Role</th><th>Sets</th><th style="white-space:nowrap"># Sessions</th><th>Last</th></tr></thead><tbody>${xs
     .map((ex) => {
       const r = db.sets
         .filter((s) => s.exercise === ex)
         .sort((a, b) => b.date.localeCompare(a.date));
       const m = db.exerciseLibrary?.[ex] || {};
-      return `<tr class="exercise-row" onclick="showExercise(${jsArg(ex)})"><td>${esc(ex)}</td><td>${esc(m.primary || "Uncategorized")}</td><td>${esc(m.status || "")}</td><td>${r.length}</td><td>${r[0]?.date || "—"}</td></tr>`;
+      return `<tr class="exercise-row" onclick="showExercise(${jsArg(ex)})"><td>${esc(ex)}</td><td>${esc(m.primary || "Uncategorized")}</td><td>${esc(m.status || "")}</td><td>${r.length}</td><td>${exerciseSessionCount(r)}</td><td>${r[0]?.date || "—"}</td></tr>`;
     })
-    .join("")}</tbody></table>`;
+    .join(
+      "",
+    )}</tbody></table><p class="sub">Session counts include explicit workouts plus distinct dates for legacy/sessionless sets. Legacy dates are display groups, not inferred sessions.</p>`;
   if (xs.length)
     showExercise(xs.includes(selectedExercise) ? selectedExercise : xs[0]);
   else {
@@ -630,7 +639,7 @@ function showExercise(ex) {
   const pain = r.filter((s) => s.pain > 0);
   const pref = hasOwn(db.preferences, ex) ? db.preferences[ex] : null;
   const meta = db.exerciseLibrary?.[ex] || {};
-  exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px">${esc(pref)}</div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${unique(r.map((s) => s.date)).length}</strong></div></div></div>`;
+  exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px">${esc(pref)}</div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${exerciseSessionCount(r)}</strong></div></div></div>`;
   lineChart(
     exerciseChart,
     bestByDate(ex).map((x) => ({ v: x.v, label: x.label })),
