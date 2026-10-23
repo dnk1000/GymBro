@@ -418,3 +418,10 @@ canvas {
     min-height: 72px;
   }
 }
+
+/* Keep complete local dates readable; wide history stays in its scroll container. */
+#historyTable th:first-child,
+#historyTable td:first-child {
+  min-width: 100px;
+  white-space: nowrap;
+}

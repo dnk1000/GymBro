@@ -1127,3 +1127,42 @@ test("restore accepts missing and differing application metadata using schema on
     assert.deepEqual(await backup(p), compatible);
   }
 });
+
+test("history dates remain on one line at phone and desktop widths without page overflow", async (t) => {
+  const p = await app(t);
+  for (const width of [320, 390, 778, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    await p.locator('[data-view="history"]').click();
+    const measurements = await p
+      .locator("#historyTable tbody td:first-child")
+      .evaluateAll((cells) =>
+        cells.map((cell) => {
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          return {
+            date: cell.textContent,
+            lines: range.getClientRects().length,
+            width: cell.getBoundingClientRect().width,
+          };
+        }),
+      );
+    assert.ok(measurements.length > 0);
+    for (const cell of measurements) {
+      assert.match(cell.date, /^\d{4}-\d{2}-\d{2}$/);
+      assert.equal(cell.lines, 1, `${cell.date} wraps at ${width}px`);
+      assert.ok(cell.width >= 100);
+    }
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    assert.equal(
+      await p
+        .locator("#historyTable")
+        .evaluate((el) => getComputedStyle(el).overflowX),
+      "auto",
+    );
+  }
+});

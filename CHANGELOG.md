@@ -1,5 +1,9 @@
 # Changes
 
+## 2.2.1
+
+- Widen the History date column and keep dates on one line, retaining horizontal scrolling inside the history card on narrow screens.
+
 ## v2 Milestone 2 (preview development)
 
 - Introduce canonical MAJOR.MINOR.PATCH-BUILD application versioning, a fixed UTC build ID, a shared version footer/page title and complete JSON backup `appVersion` metadata. Keep schema version 6 independent and accept old/different-build backups.
