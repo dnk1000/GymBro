@@ -1,5 +1,5 @@
 // V1.6 keeps the existing storage key and migrates V1–V1.5 records in memory.
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 const UNITS = ["lb", "lb/side", "assist lb", "bodyweight"];
 const hasOwn = (object, key) => Object.hasOwn(object, key);
 const isObject = (value) =>
@@ -64,6 +64,11 @@ function migrateData(input) {
     Array.isArray(data.sets) && Array.isArray(data.bodyweights),
     "Sets and bodyweights must be arrays.",
   );
+  // V5 history remains sessionless. Never infer IDs, boundaries or timestamps.
+  if (version < 6) {
+    if (!hasOwn(data, "sessions")) data.sessions = [];
+    if (!hasOwn(data, "activeSessionId")) data.activeSessionId = null;
+  }
   // Supply only absent legacy fields. Invalid present fields must never be silently replaced.
   if (!hasOwn(data, "exerciseLibrary"))
     data.exerciseLibrary = structuredClone(seed.exerciseLibrary);
@@ -96,6 +101,14 @@ function migrateData(input) {
   return data;
 }
 function validateData(data) {
+  requireValue(
+    isObject(data) && data.version === DATA_VERSION,
+    "Unsupported data version.",
+  );
+  requireValue(
+    Array.isArray(data.sets) && Array.isArray(data.bodyweights),
+    "Sets and bodyweights must be arrays.",
+  );
   const ids = new Set();
   data.sets.forEach((set, index) => {
     const prefix = `Set ${index + 1}: `;
@@ -210,6 +223,7 @@ function validateData(data) {
       templates.has(data.program.activeTemplateId),
     "Active template does not exist.",
   );
+  validateSessions(data);
 }
 
 function emptyData() {
@@ -218,6 +232,8 @@ function emptyData() {
     sets: [],
     bodyweights: [],
     imports: [],
+    sessions: [],
+    activeSessionId: null,
     version: DATA_VERSION,
   };
 }

@@ -1,6 +1,6 @@
 # GymBro V1.6 physical-phone smoke test
 
-Status: **Pending — not executed on a physical phone.** The cloud workspace has no attached phone or remote-device testing connector. Automated mobile viewport checks are not a substitute for this test. Do not freeze the stabilized baseline or begin v2 until the physical test is recorded and any failures are resolved.
+Status: **Milestone 1 acceptance was confirmed by the user**, followed by production `main` commit `6f10b49`. Device/OS/browser details were not supplied; no physical test was performed by the agent. **Milestone 2 acceptance is pending**; use [its session-specific checklist](WORKOUT_SESSIONS.md#acceptance-testing-on-an-iphone). The cloud workspace has no attached phone or remote-device testing connector. Automated mobile viewport checks are not a substitute for physical acceptance testing.
 
 Use a separate test copy/origin, not a browser profile containing real workout data. Open the complete app directory through a web server reachable from the phone. Keep its address unchanged throughout the test. No account or API key is needed.
 

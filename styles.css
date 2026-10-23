@@ -418,3 +418,62 @@ canvas {
     min-height: 72px;
   }
 }
+
+/* Keep complete local dates readable; wide history stays in its scroll container. */
+#historyTable th:first-child,
+#historyTable td:first-child {
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+.header-tools,
+.help-heading,
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-tools {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.history-actions {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.icon-button {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 6px;
+}
+.icon-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+#helpDialog {
+  box-sizing: border-box;
+  width: min(640px, calc(100% - 24px));
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+#helpDialog::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+.help-heading {
+  justify-content: space-between;
+}
+.help-heading h2 {
+  margin: 0;
+}
+#helpDialog p {
+  line-height: 1.6;
+}

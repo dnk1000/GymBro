@@ -95,9 +95,12 @@ const set = (extra = {}) => ({
   ...extra,
 });
 
-test("V1.6 boots, navigates all tabs, saves a set, reloads and exports it", async (t) => {
+test("GymBro boots, navigates all tabs, saves a set, reloads and exports it", async (t) => {
   const p = await app(t);
-  assert.match(await p.title(), /V1.6/);
+  assert.equal(
+    await p.title(),
+    await p.evaluate(() => `GymBro ${APP_VERSION.version}`),
+  );
   for (const view of [
     "dashboard",
     "program",
@@ -124,7 +127,7 @@ test("V1.6 boots, navigates all tabs, saves a set, reloads and exports it", asyn
   const download = await downloading;
   const exported = JSON.parse(await fs.readFile(await download.path(), "utf8"));
   assert.equal(exported.sets.at(-1).notes, "persist me");
-  assert.equal(exported.version, 5);
+  assert.equal(exported.version, 6);
 });
 
 test("corrupt, malformed and future-version storage remains byte-for-byte intact", async (t) => {
@@ -202,7 +205,7 @@ test("V1.5 migration preserves customized program, history and preferences", asy
   await p.reload();
   assert.equal(await stored(p), raw, "startup does not rewrite data");
   const migrated = await backup(p);
-  assert.equal(migrated.version, 5);
+  assert.equal(migrated.version, 6);
   assert.deepEqual(migrated.program, legacy.program);
   assert.deepEqual(migrated.sets, legacy.sets);
   assert.equal(migrated.preferences.custom, "my preference");
@@ -744,4 +747,651 @@ test("failed import and edit writes retain their review/form inputs and committe
   assert.equal(await p.locator("#fNotes").inputValue(), "unsaved correction");
   assert.equal(await p.locator("#saveSetBtn").innerText(), "Save changes");
   assert.deepEqual(await backup(p), before);
+});
+
+test("v5 storage migrates without writing or changing old records; failed first session write keeps raw v5 intact", async (t) => {
+  const p = await app(t);
+  const legacy = await backup(p);
+  legacy.version = 5;
+  delete legacy.sessions;
+  delete legacy.activeSessionId;
+  legacy.sets[0].customMetadata = { retained: ["all fields", 0] };
+  const raw = JSON.stringify(legacy);
+  await p.evaluate(
+    ([key, value]) => localStorage.setItem(key, value),
+    [KEY, raw],
+  );
+  await p.reload();
+  const migrated = await backup(p);
+  assert.equal(migrated.version, 6);
+  assert.deepEqual(migrated.sets, legacy.sets);
+  assert.deepEqual(migrated.sessions, []);
+  assert.equal(migrated.activeSessionId, null);
+  assert.equal(await stored(p), raw);
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Full", "QuotaExceededError");
+    };
+  });
+  const failed = await p.evaluate(() =>
+    workoutActions.createSession({ date: "2026-10-23", templateId: "push" }),
+  );
+  assert.equal(failed.code, "PERSISTENCE_ERROR");
+  assert.equal(await stored(p), raw);
+  assert.deepEqual(await backup(p), migrated);
+  await p.reload();
+  const created = await p.evaluate(() =>
+    workoutActions.createSession({ date: "2026-10-23", templateId: "push" }),
+  );
+  assert.equal(created.ok, true);
+  assert.equal(JSON.parse(await stored(p)).version, 6);
+  assert.deepEqual((await backup(p)).sets, legacy.sets);
+});
+
+test("active session and manual set links survive reload and reopening; completion and second same-day session persist", async (t) => {
+  let p = await app(t);
+  const created = await p.evaluate(() =>
+    workoutActions.createSession({
+      date: "2026-10-23",
+      templateId: "push",
+      duration: 30,
+    }),
+  );
+  assert.equal(created.ok, true);
+  await p.locator('[data-view="workout"]').click();
+  await p.locator("#fDate").fill("2026-10-23");
+  await p.locator("#fExercise").fill("Bench Press");
+  await p.locator("#fWeight").fill("100");
+  await p.locator("#fReps").fill("8");
+  await p.getByRole("button", { name: "Add set", exact: true }).click();
+  const set = (await backup(p)).sets.at(-1);
+  assert.equal(set.sessionId, created.sessionId);
+  await p.reload();
+  assert.equal(
+    await p.evaluate(() => workoutActions.getActiveSession().id),
+    created.sessionId,
+  );
+  const context = p.context();
+  await p.close();
+  p = await context.newPage();
+  await p.goto(origin);
+  assert.equal(
+    await p.evaluate(() => workoutActions.getActiveSession().id),
+    created.sessionId,
+  );
+  assert.deepEqual(
+    await p.evaluate(() => workoutActions.getActiveSession().setIds),
+    [set.id],
+  );
+  const completed = await p.evaluate(
+    (id) => workoutActions.completeSession(id),
+    created.sessionId,
+  );
+  assert.equal(completed.ok, true);
+  await p.reload();
+  assert.equal(await p.evaluate(() => workoutActions.getActiveSession()), null);
+  const storedSession = await p.evaluate(
+    (id) => workoutActions.getSession(id),
+    created.sessionId,
+  );
+  assert.equal(storedSession.status, "completed");
+  assert(storedSession.completedAt);
+  const second = await p.evaluate(() =>
+    workoutActions.createSession({
+      date: "2026-10-23",
+      templateId: "pull",
+      duration: 60,
+    }),
+  );
+  assert.equal(second.ok, true);
+  assert.notEqual(second.sessionId, created.sessionId);
+  assert.equal((await backup(p)).sessions.length, 2);
+});
+
+test("JSON export/restore/export preserves sessions and active pointer exactly; old V1.6 backup restores sessionless", async (t) => {
+  const p = await app(t);
+  await p.evaluate(() => {
+    workoutActions.createSession({
+      date: "2026-10-23",
+      templateId: "push",
+      duration: 30,
+    });
+    workoutActions.logSet({
+      date: "2026-10-23",
+      exercise: "Smith Press",
+      weight: 50,
+      reps: 8,
+      unit: "lb/side",
+      planSlotId: "slot-1",
+    });
+  });
+  async function exported() {
+    await p.locator('[data-view="data"]').click();
+    const pending = p.waitForEvent("download");
+    await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+    return JSON.parse(await fs.readFile(await (await pending).path(), "utf8"));
+  }
+  const first = await exported();
+  assert.equal(first.sessions.length, 1);
+  assert.equal(first.activeSessionId, first.sessions[0].id);
+  await p
+    .getByRole("button", { name: "Erase all local data", exact: true })
+    .click();
+  assert.deepEqual((await backup(p)).sessions, []);
+  await importBackup(p, first);
+  assert.deepEqual(await exported(), first);
+  const legacy = structuredClone(first);
+  legacy.version = 5;
+  delete legacy.sessions;
+  delete legacy.activeSessionId;
+  legacy.sets = legacy.sets.filter((set) => !set.sessionId);
+  await importBackup(p, legacy);
+  const restored = await backup(p);
+  assert.equal(restored.version, 6);
+  assert.deepEqual(restored.sessions, []);
+  assert.equal(restored.activeSessionId, null);
+  assert.deepEqual(restored.sets, legacy.sets);
+});
+
+test("session create, completion and attachment retain stale-tab and write-failure protections", async (t) => {
+  const p = await app(t);
+  const manual = await p.evaluate(() =>
+    workoutActions.logSet({
+      date: "2026-10-23",
+      exercise: "Bench Press",
+      weight: 100,
+      reps: 8,
+    }),
+  );
+  const created = await p.evaluate(() =>
+    workoutActions.createSession({ date: "2026-10-23" }),
+  );
+  const initial = await backup(p),
+    raw = await stored(p);
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Full", "QuotaExceededError");
+    };
+  });
+  const completed = await p.evaluate(
+    (id) => workoutActions.completeSession(id),
+    created.sessionId,
+  );
+  assert.equal(completed.code, "PERSISTENCE_ERROR");
+  assert.deepEqual(await backup(p), initial);
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  const other = await p.context().newPage();
+  await other.goto(origin);
+  const otherCompletion = await other.evaluate(
+    (id) => workoutActions.completeSession(id),
+    created.sessionId,
+  );
+  assert.equal(otherCompletion.ok, true);
+  await p.waitForFunction(() => storageState.stale);
+  const updated = await stored(p);
+  for (const result of await p.evaluate(
+    ({ sessionId, setId }) => [
+      workoutActions.completeSession(sessionId),
+      workoutActions.attachSetToSession({ sessionId, setId }),
+      workoutActions.logSet({
+        date: "2026-10-23",
+        exercise: "Bench Press",
+        weight: 100,
+        reps: 8,
+      }),
+    ],
+    { sessionId: created.sessionId, setId: manual.setId },
+  ))
+    assert.equal(result.code, "PERSISTENCE_ERROR");
+  assert.equal(await stored(p), updated);
+  assert.deepEqual(await backup(p), initial);
+  await p.reload();
+  assert.equal(await p.evaluate(() => workoutActions.getActiveSession()), null);
+});
+
+test("malformed v6 sessions and future v7 storage remain untouched and block session writes", async (t) => {
+  const p = await app(t);
+  const valid = await backup(p);
+  const malformed = structuredClone(valid);
+  malformed.activeSessionId = "missing";
+  const future = structuredClone(valid);
+  future.version = 7;
+  const missing = structuredClone(valid);
+  delete missing.sessions;
+  for (const data of [malformed, future, missing]) {
+    const raw = JSON.stringify(data);
+    await p.evaluate(
+      ([key, value]) => localStorage.setItem(key, value),
+      [KEY, raw],
+    );
+    await p.reload();
+    assert.equal(await stored(p), raw);
+    assert.equal(await p.locator("#storageNotice").isVisible(), true);
+    const result = await p.evaluate(() =>
+      workoutActions.createSession({ date: "2026-10-23" }),
+    );
+    assert.equal(result.ok, false);
+    assert.equal(await stored(p), raw);
+  }
+});
+
+test("session history merge is atomic on conflicts and preserves all session links on success", async (t) => {
+  const p = await app(t);
+  const created = await p.evaluate(() =>
+    workoutActions.createSession({ date: "2026-10-23", templateId: "push" }),
+  );
+  await p.evaluate(() =>
+    workoutActions.logSet({
+      date: "2026-10-23",
+      exercise: "Bench Press",
+      weight: 100,
+      reps: 8,
+    }),
+  );
+  const sessionBackup = await backup(p);
+  await p.locator('[data-view="data"]').click();
+  await p
+    .getByRole("button", { name: "Erase all local data", exact: true })
+    .click();
+  await importBackup(p, sessionBackup, "merge");
+  assert.deepEqual((await backup(p)).sessions, sessionBackup.sessions);
+  assert.equal((await backup(p)).activeSessionId, created.sessionId);
+  const before = await backup(p),
+    raw = await stored(p),
+    conflict = structuredClone(sessionBackup);
+  conflict.sessions[0].planSnapshot.name = "conflicting intent";
+  await importBackup(p, conflict, "merge");
+  assert.deepEqual(await backup(p), before);
+  assert.equal(await stored(p), raw);
+});
+
+test("a stale tab cannot create a competing session over another tab's persisted active session", async (t) => {
+  const p = await app(t),
+    initial = await backup(p),
+    other = await p.context().newPage();
+  await other.goto(origin);
+  const created = await other.evaluate(() =>
+    workoutActions.createSession({ date: "2026-10-23" }),
+  );
+  assert.equal(created.ok, true);
+  await p.waitForFunction(() => storageState.stale);
+  const raw = await stored(p);
+  const result = await p.evaluate(() =>
+    workoutActions.createSession({ date: "2026-10-23" }),
+  );
+  assert.equal(result.code, "PERSISTENCE_ERROR");
+  assert.deepEqual(await backup(p), initial);
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  assert.equal(
+    await p.evaluate(() => workoutActions.getActiveSession().id),
+    created.sessionId,
+  );
+});
+
+test("published synthetic iPhone fixture restores and logs through the existing mobile form", async (t) => {
+  const p = await app(t, {
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const fixture = JSON.parse(
+    await fs.readFile(path.join(__dirname, "fixtures/session-v6.json"), "utf8"),
+  );
+  await importBackup(p, fixture);
+  assert.deepEqual(await backup(p), fixture);
+  await p.locator('[data-view="workout"]').click();
+  await p.locator("#fDate").fill(fixture.sessions[0].date);
+  await p.locator("#fExercise").fill("Bench Press");
+  await p.locator("#fWeight").fill("100");
+  await p.locator("#fReps").fill("8");
+  await p.getByRole("button", { name: "Add set", exact: true }).click();
+  await p.reload();
+  const saved = await backup(p),
+    set = saved.sets[0];
+  assert.equal(set.sessionId, fixture.activeSessionId);
+  assert.equal(Object.hasOwn(set, "planSlotId"), false);
+  assert.deepEqual(saved.sessions[0].setIds, [set.id]);
+});
+
+test("canonical version is visible across phone/desktop views and complete exports", async (t) => {
+  const p = await app(t);
+  const version = await p.evaluate(() => APP_VERSION.version);
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    for (const view of [
+      "dashboard",
+      "program",
+      "workout",
+      "history",
+      "inbox",
+      "exercises",
+      "data",
+    ]) {
+      await p.locator(`[data-view="${view}"]`).click();
+      const footer = p.locator("#appVersion");
+      assert.equal(await footer.textContent(), `GymBro ${version}`);
+      await footer.scrollIntoViewIfNeeded();
+      assert.equal(await footer.isVisible(), true);
+      const box = await footer.boundingBox();
+      assert.ok(box.x >= 0 && box.x + box.width <= width);
+      assert.equal(
+        await p.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+    }
+  }
+  assert.equal(await p.title(), `GymBro ${version}`);
+  const original = await backup(p);
+  const raw = await stored(p);
+  const downloading = p.waitForEvent("download");
+  await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+  const exported = JSON.parse(
+    await fs.readFile(await (await downloading).path(), "utf8"),
+  );
+  assert.equal(exported.appVersion, version);
+  assert.equal(exported.version, 6);
+  const { appVersion, ...content } = exported;
+  assert.deepEqual(content, original);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  assert.equal(
+    await p.locator("#appVersion").textContent(),
+    `GymBro ${version}`,
+  );
+});
+
+test("restore accepts missing and differing application metadata using schema only", async (t) => {
+  const p = await app(t);
+  const legacy = await backup(p);
+  legacy.version = 5;
+  delete legacy.sessions;
+  delete legacy.activeSessionId;
+  delete legacy.appVersion;
+  await importBackup(p, legacy);
+  assert.equal((await backup(p)).version, 6);
+  assert.deepEqual((await backup(p)).sets, legacy.sets);
+  for (const appVersion of [
+    undefined,
+    "1.6.0-old-build",
+    "99.8.7-20990101T000000Z",
+  ]) {
+    const compatible = await backup(p);
+    if (appVersion === undefined) delete compatible.appVersion;
+    else compatible.appVersion = appVersion;
+    await importBackup(p, compatible);
+    assert.deepEqual(await backup(p), compatible);
+  }
+});
+
+test("history dates remain on one line at phone and desktop widths without page overflow", async (t) => {
+  const p = await app(t);
+  for (const width of [320, 390, 778, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    await p.locator('[data-view="history"]').click();
+    const measurements = await p
+      .locator("#historyTable tbody td:first-child")
+      .evaluateAll((cells) =>
+        cells.map((cell) => {
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          return {
+            date: cell.textContent,
+            lines: range.getClientRects().length,
+            width: cell.getBoundingClientRect().width,
+          };
+        }),
+      );
+    assert.ok(measurements.length > 0);
+    for (const cell of measurements) {
+      assert.match(cell.date, /^\d{4}-\d{2}-\d{2}$/);
+      assert.equal(cell.lines, 1, `${cell.date} wraps at ${width}px`);
+      assert.ok(cell.width >= 100);
+    }
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    assert.equal(
+      await p
+        .locator("#historyTable")
+        .evaluate((el) => getComputedStyle(el).overflowX),
+      "auto",
+    );
+  }
+});
+
+test("application Help opens, scrolls and closes without changing workout state", async (t) => {
+  const p = await app(t);
+  const original = await backup(p);
+  const raw = await stored(p);
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    await p.getByRole("button", { name: "Help", exact: true }).click();
+    const dialog = p.getByRole("dialog", { name: "GymBro help" });
+    assert.equal(await dialog.isVisible(), true);
+    for (const heading of [
+      "Dashboard",
+      "Program",
+      "Workout",
+      "History",
+      "ChatGPT Inbox",
+      "Exercises",
+      "Data and backups",
+    ]) {
+      assert.equal(
+        await dialog
+          .getByRole("heading", { name: heading, exact: true })
+          .count(),
+        1,
+      );
+    }
+    assert.equal(
+      await p.locator("#helpVersion").textContent(),
+      await p.evaluate(() => `GymBro ${APP_VERSION.version}`),
+    );
+    const box = await dialog.boundingBox();
+    assert.ok(box.x >= 0 && box.x + box.width <= width);
+    assert.ok(box.y >= 0 && box.height <= 844);
+    await p.locator("#helpVersion").scrollIntoViewIfNeeded();
+    assert.ok(await dialog.evaluate((el) => el.scrollTop > 0));
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    assert.equal(await dialog.isVisible(), false);
+    assert.equal(
+      await p
+        .getByRole("button", { name: "Help", exact: true })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+  }
+  await p.getByRole("button", { name: "Help", exact: true }).click();
+  await p.keyboard.press("Escape");
+  assert.equal(await p.locator("#helpDialog").isVisible(), false);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+});
+
+test("History icon actions stay together, preserve accessible names and confirm deletion", async (t) => {
+  const p = await app(t);
+  await p.locator('[data-view="history"]').click();
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    const row = p.locator("#historyTable tbody tr").first();
+    const edit = row.getByRole("button", { name: "Edit", exact: true });
+    const remove = row.getByRole("button", { name: "Delete", exact: true });
+    assert.equal(await edit.textContent(), "");
+    assert.equal(await remove.textContent(), "");
+    const a = await edit.boundingBox(),
+      b = await remove.boundingBox();
+    assert.equal(a.y, b.y);
+    assert.ok(b.x + b.width - a.x <= 60, "Actions fit within 60px");
+    assert.ok(
+      a.width === 28 && a.height === 28 && b.width === 28 && b.height === 28,
+    );
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+  }
+  const original = await backup(p);
+  // Cancel the existing confirmation: no set is removed.
+  p.removeAllListeners("dialog");
+  p.once("dialog", (dialog) => dialog.dismiss());
+  await p
+    .locator("#historyTable tbody tr")
+    .first()
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  assert.deepEqual(await backup(p), original);
+  p.on("dialog", (dialog) => dialog.accept());
+  // Existing edit/delete regression tests also exercise these labelled icons.
+  await p
+    .locator("#historyTable tbody tr")
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  assert.equal(
+    await p
+      .getByRole("button", { name: "Save changes", exact: true })
+      .isVisible(),
+    true,
+  );
+});
+
+test("acronym hover explanations are limited to workout and import entry labels", async (t) => {
+  const p = await app(t);
+  await p.evaluate(() => {
+    workoutActions.logSet({
+      date: "2026-10-23",
+      exercise: "Bench Press",
+      weight: 100,
+      reps: 8,
+      unit: "lb",
+      rpe: 8,
+    });
+    renderHistory();
+  });
+  assert.match(
+    await p.locator('label[for="fRpe"] abbr').getAttribute("title"),
+    /Rating of Perceived Exertion/,
+  );
+  assert.match(
+    await p.locator('label[for="fRir"] abbr').getAttribute("title"),
+    /Repetitions in Reserve/,
+  );
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator("#historyTable abbr").count(), 0);
+  await p.evaluate(() => renderHistory());
+  assert.equal(await p.locator("#historyTable abbr").count(), 0);
+  assert.equal(
+    await p.locator("#todaySets abbr, #helpDialog abbr, #data abbr").count(),
+    0,
+  );
+  assert.equal(await p.locator("#data button[title]").count(), 0);
+  await stage(p, workout([set({ rpe: 8, rir: 2 })]));
+  assert.match(
+    await p
+      .locator("#inboxReview abbr")
+      .filter({ hasText: /^RPE$/ })
+      .first()
+      .getAttribute("title"),
+    /Rating/,
+  );
+  assert.match(
+    await p
+      .locator("#inboxReview abbr")
+      .filter({ hasText: /^RIR$/ })
+      .first()
+      .getAttribute("title"),
+    /Repetitions/,
+  );
+  assert.equal(await p.locator("abbr abbr").count(), 0);
+});
+
+test("corrected incomplete imports can be explicitly completed without losing metadata or dedup protection", async (t) => {
+  const p = await app(t);
+  await stage(
+    p,
+    workout(
+      [set({ reps: null, complete: false, notes: "uncertain reps", rpe: 7 })],
+      { importId: "correct-incomplete" },
+    ),
+  );
+  await p.locator("#commitInboxBtn").click();
+  const original = (await backup(p)).sets.at(-1);
+  await p.locator('[data-view="history"]').click();
+  await p
+    .locator("#historyTable tbody tr")
+    .filter({ hasText: "uncertain reps" })
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  assert.equal(await p.locator("#incompleteEditNotice").isVisible(), true);
+  assert.equal(await p.locator("#fApproximate").isChecked(), true);
+  await p.getByRole("button", { name: "Mark complete", exact: true }).click();
+  assert.equal(await p.locator("#fApproximate").isChecked(), true);
+  assert.match(
+    await p.locator("#incompleteEditMessage").textContent(),
+    /positive whole-number reps/,
+  );
+  assert.deepEqual((await backup(p)).sets.at(-1), original);
+  await p.locator("#fReps").fill("12");
+  await p.getByRole("button", { name: "Mark complete", exact: true }).click();
+  assert.equal(await p.locator("#fApproximate").isChecked(), false);
+  assert.deepEqual((await backup(p)).sets.at(-1), original);
+  await p.getByRole("button", { name: "Save changes", exact: true }).click();
+  const corrected = (await backup(p)).sets.at(-1);
+  assert.deepEqual(corrected, { ...original, reps: 12, complete: true });
+  await p.reload();
+  assert.deepEqual((await backup(p)).sets.at(-1), corrected);
+  await p.locator('[data-view="history"]').click();
+  assert.doesNotMatch(
+    await p
+      .locator("#historyTable tbody tr")
+      .filter({ hasText: "uncertain reps" })
+      .innerText(),
+    /incomplete/,
+  );
+  await stage(p, workout([set()], { importId: "correct-incomplete" }));
+  assert.equal(await p.locator("#commitInboxBtn").isDisabled(), true);
+});
+
+test("marking an incomplete edit complete retains rollback on failed persistence", async (t) => {
+  const p = await app(t);
+  await stage(
+    p,
+    workout([set({ complete: false, notes: "keep approximate" })]),
+  );
+  await p.locator("#commitInboxBtn").click();
+  const original = await backup(p),
+    raw = await stored(p);
+  await p.locator('[data-view="history"]').click();
+  await p
+    .locator("#historyTable tbody tr")
+    .filter({ hasText: "keep approximate" })
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  await p.getByRole("button", { name: "Mark complete", exact: true }).click();
+  await p.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw new Error("quota");
+    };
+  });
+  await p.getByRole("button", { name: "Save changes", exact: true }).click();
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  assert.equal(await p.locator("#fApproximate").isChecked(), false);
+  assert.equal(
+    await p
+      .getByRole("button", { name: "Save changes", exact: true })
+      .isVisible(),
+    true,
+  );
 });
