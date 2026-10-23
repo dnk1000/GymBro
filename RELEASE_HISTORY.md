@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## In review
+
+`2.6.0-20261023T220541Z` · schema 7 · Milestone 6 on `v2/milestone-6-iphone-hardening`: read-only resume/stale-storage checks and focused mobile entry/target corrections. Physical iPhone Safari acceptance pending; not merged or released to production. See [IPHONE_HARDENING.md](IPHONE_HARDENING.md).
+
 ## Milestone releases
 
 | Application release            | Data schema | Source and approval                                                                                                                                                                                                             | Changes                                                                                                                                                                                                                |

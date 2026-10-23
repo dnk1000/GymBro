@@ -46,6 +46,7 @@ function fixture() {
         persist: (next) => {
           assert.equal(JSON.stringify(state), raw, "persist before commit");
           writes++;
+          if (fail === "throw") throw new Error("quota exception");
           if (fail) return { ok: false, errors: ["quota"] };
           raw = JSON.stringify(next);
           return { ok: true };
@@ -500,4 +501,130 @@ test("unserializable guided parameters return validation errors without writes o
     assert.deepEqual(f.state(), before);
     assert.equal(f.writes(), writes);
   }
+});
+
+test("all active guided mutations roll back on rejected/throwing writes and safely reject duplicate revisions", () => {
+  const operations = [
+    ["selectGuidedSlot", (f) => command(f, { planSlotId: "slot-2" })],
+    ["moveGuidedSlot", (f) => command(f, { direction: "next" })],
+    ["setGuidedSlotStatus", (f) => command(f, { status: "completed" })],
+    ["setGuidedSlotStatus", (f) => command(f, { status: "skipped" })],
+    [
+      "substituteGuidedExercise",
+      (f) => command(f, { exercise: "Bench Press" }),
+    ],
+    ["logGuidedSet", (f) => set(f, "hardening-retry")],
+    ["finishGuidedSession", (f) => command(f, { allowPending: true })],
+  ];
+  for (const failure of [true, "throw"]) {
+    for (const [name, params] of operations) {
+      const f = fixture();
+      start(f, 30);
+      const input = params(f),
+        before = f.state(),
+        raw = f.raw(),
+        commits = f.commits();
+      f.fail(failure);
+      const rejected = f.a[name](input);
+      assert.equal(rejected.ok, false, name);
+      assert.equal(rejected.code, "PERSISTENCE_ERROR", name);
+      assert.ok(rejected.errors.length);
+      assert.deepEqual(f.state(), before, name);
+      assert.equal(f.raw(), raw, name);
+      assert.equal(f.commits(), commits, name);
+      f.fail(false);
+      assert.equal(f.a[name](input).ok, true, name);
+      const committed = f.state(),
+        writes = f.writes();
+      const retry = f.a[name](input);
+      assert.equal(
+        retry.code,
+        name === "logGuidedSet"
+          ? "REPLAY"
+          : name === "finishGuidedSession"
+            ? "INVALID_SESSION_STATE"
+            : "STALE_GUIDANCE",
+        name,
+      );
+      assert.equal(f.writes(), writes, name);
+      assert.deepEqual(f.state(), committed, name);
+      assert.deepEqual(f.reload().getWorkoutState(), committed, name);
+    }
+  }
+});
+
+test("completed guided sessions keep completion time and reject every new workout mutation", () => {
+  for (const pending of [true, false]) {
+    const f = fixture();
+    start(f, 30);
+    const first = set(f, "before-finish");
+    f.a.logGuidedSet(first);
+    f.a.logSet({
+      date: "2026-10-23",
+      exercise: "Bench Press",
+      weight: 50,
+      reps: 8,
+    });
+    if (!pending) {
+      for (const slot of f.a.getGuidedWorkoutState().slots)
+        f.a.setGuidedSlotStatus(
+          command(f, {
+            planSlotId: slot.planSlotId,
+            status: slot.planSlotId === "slot-1" ? "completed" : "skipped",
+          }),
+        );
+    }
+    const input = command(f, { allowPending: pending });
+    assert.equal(f.a.finishGuidedSession(input).ok, true);
+    const done = f.state(),
+      raw = f.raw();
+    for (const result of [
+      f.a.moveGuidedSlot({ ...input, direction: "next" }),
+      f.a.selectGuidedSlot({ ...input, planSlotId: "slot-2" }),
+      f.a.setGuidedSlotStatus({ ...input, status: "completed" }),
+      f.a.substituteGuidedExercise({ ...input, exercise: "Bench Press" }),
+      f.a.logGuidedSet({ ...first, requestId: "new-after-completion" }),
+      f.a.finishGuidedSession(input),
+      f.a.logSet({
+        date: "2026-10-23",
+        exercise: "Bench Press",
+        weight: 50,
+        reps: 8,
+        sessionId: input.sessionId,
+      }),
+    ]) {
+      assert.equal(result.ok, false);
+      assert.equal(result.code, "INVALID_SESSION_STATE");
+    }
+    assert.equal(f.a.logGuidedSet(first).code, "REPLAY");
+    assert.deepEqual(f.state(), done);
+    assert.equal(f.raw(), raw);
+    assert.equal(done.activeSessionId, null);
+    assert.ok(done.sessions[0].completedAt);
+    assert.equal(done.sessions[0].setIds.length, 2);
+    assert.equal(
+      f.reload().getSession(input.sessionId).completedAt,
+      done.sessions[0].completedAt,
+    );
+  }
+});
+
+test("explicit Enable guidance remains atomic when storage throws", () => {
+  const f = fixture();
+  f.a.createSession({ date: "2026-10-23", templateId: "push", duration: 30 });
+  const before = f.state(),
+    raw = f.raw();
+  f.fail("throw");
+  const result = f.a.enableGuidance(before.activeSessionId);
+  assert.equal(result.code, "PERSISTENCE_ERROR");
+  assert.deepEqual(f.state(), before);
+  assert.equal(f.raw(), raw);
+  assert.equal(f.a.getGuidedWorkoutState(), null);
+  f.fail(false);
+  assert.equal(f.a.enableGuidance(before.activeSessionId).ok, true);
+  assert.deepEqual(
+    f.a.getActiveSession().planSnapshot,
+    before.sessions[0].planSnapshot,
+  );
+  assert.deepEqual(f.a.getWorkoutState().sets, before.sets);
 });

@@ -1,5 +1,11 @@
 # Changes
 
+## 2.6.0 — Milestone 6 (preview; physical iPhone acceptance pending)
+
+- Detect missed cross-tab storage changes when a page becomes visible or is restored. Warn and pause stale writes without adopting new data, saving drafts, or overwriting committed state. Storage read failures require reload rather than offering an empty reset.
+- Use 16px mobile entry text to avoid Safari focus zoom and 44px primary logging/form-action touch targets; preserve compact History controls and existing layouts.
+- Add mutation rollback/retry, lifecycle recovery, rapid interaction, trainer-context preservation and quota-exception regression coverage. Keep schema 7 and all training/backup semantics unchanged.
+
 ## 2.5.1 — Exercise library counts (preview)
 
 - Add # Sessions beside Sets, counting explicit session IDs and legacy/sessionless dates separately before summing. Explain legacy date grouping and align exercise detail counts. No persistence changes.

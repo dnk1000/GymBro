@@ -579,3 +579,18 @@ button:disabled {
 .guided-entry-actions button {
   min-height: 44px;
 }
+
+/* Prevent Safari focus zoom; retain the existing layout and compact History. */
+@media (max-width: 900px) {
+  input,
+  select,
+  textarea,
+  .inbox-set input,
+  .inbox-set select {
+    font-size: 16px;
+  }
+  #workout .actions button,
+  .guided-entry-actions button {
+    min-height: 44px;
+  }
+}
