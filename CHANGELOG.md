@@ -1,5 +1,9 @@
 # Changes
 
+## 2.2.3
+
+- Condense History actions to 28px buttons, 14px icons and 4px spacing (60px total), preserving accessible names and existing behavior.
+
 ## 2.2.2
 
 - Add application-wide Help covering all tabs, logging, program modes, imports and local backup/restore.

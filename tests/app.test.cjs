@@ -1230,8 +1230,9 @@ test("History icon actions stay together, preserve accessible names and confirm 
     const a = await edit.boundingBox(),
       b = await remove.boundingBox();
     assert.equal(a.y, b.y);
+    assert.ok(b.x + b.width - a.x <= 60, "Actions fit within 60px");
     assert.ok(
-      a.width >= 44 && a.height >= 44 && b.width >= 44 && b.height >= 44,
+      a.width === 28 && a.height === 28 && b.width === 28 && b.height === 28,
     );
     assert.equal(
       await p.evaluate(
