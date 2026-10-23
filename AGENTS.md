@@ -176,3 +176,10 @@ The app has no runtime package installation or build step. Serve the repository 
 - Require explicit asOfDate; never use a runtime clock or arbitrary stale cutoff to change deterministic evidence. Preserve same-day chronology uncertainty and legacy display-only grouping.
 - Keep existing preference text unparsed; structured goals/constraints and working-set/failure classification are not modeled. Do not infer them from notes or add a trainer-profile schema without approval.
 - Evidence selectors must not write storage or change templates, current inputs, guided state, historical records or future prescriptions. ChatGPT remains the reasoning/coaching layer. Milestone 6 is separate work.
+
+## iPhone hardening — Milestone 6
+
+- Lifecycle callbacks may check for stale storage and warn; never rely on them to save committed workout data or silently adopt another tab’s database. Resume checks preserve transient inputs; resolve stale tabs by deliberate reload.
+- Preserve DOM-free guided/trainer/action APIs, schema 7, revision/request contracts and manual fallback. Any proposed persistence schema change requires explicit approval before implementation.
+- Maintain 16px mobile entry text and at least 44px primary workout action heights. Compact History icons retain their existing contract.
+- Physical iPhone Safari acceptance is mandatory and separate from automated Chromium. Record the actual device, iOS, browser, build, commit, date and individual outcomes in REAL_PHONE_SMOKE_TEST.md; leave unavailable results pending. No Milestone 7 without authorization.

@@ -80,3 +80,29 @@ window.addEventListener("storage", (event) => {
     renderStorageNotice();
   }
 });
+
+// Safari may restore a suspended page without delivering a storage event.
+// Recheck on return, but never reload/adopt data or save transient inputs here.
+function checkStoredDataOnResume() {
+  if (
+    document.visibilityState !== "visible" ||
+    storageState.blocked ||
+    storageState.stale
+  )
+    return;
+  try {
+    if (localStorage.getItem(KEY) !== storageState.raw) {
+      storageState.stale = true;
+      storageState.message =
+        "Another tab changed your data. Export this tab if needed, then reload before editing.";
+      renderStorageNotice();
+    }
+  } catch {
+    storageState.stale = true;
+    storageState.message =
+      "Saved data could not be checked. Saving is paused. Keep this tab open, export a backup if possible, and reload when browser storage is available. Unsaved form values have not been saved.";
+    renderStorageNotice();
+  }
+}
+window.addEventListener("pageshow", checkStoredDataOnResume);
+document.addEventListener("visibilitychange", checkStoredDataOnResume);
