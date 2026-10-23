@@ -146,3 +146,5 @@ The app has no runtime package installation or build step. Serve the repository 
 - Legacy/sessionless date groups are presentation only. Preserve every record and source filter; no inferred session identity or timestamps.
 - Keep per-set fields, corrections, compact icon controls and expandable raw record details available. Source filters may hide nonmatching sets but must not renumber session order or rewrite counts as full-session totals.
 - Complete restore replaces the validated database; history merge keeps the established merge semantics. Explain the operation and selected backup before confirmation. Cancellation and conflicts must leave storage unchanged.
+
+- Update `RELEASE_HISTORY.md` for accepted releases with exact canonical application version, independent schema, application revision, linked PR and meaningful changes. Distinguish preview lineage from accepted releases; do not invent past versions or physical-device results. Documentation-only updates do not bump the application build.

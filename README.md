@@ -87,3 +87,5 @@ Hover over RPE and RIR in Workout and ChatGPT import entry labels for explanatio
 History presents explicit sessions separately with saved plan name, mode, status, exercises and ordered sets. Multiple workouts on one date remain separate. Legacy/sessionless records remain fully visible in clearly labelled date groups used only for display. Source filters retain their existing meanings. Each set has compact edit/delete actions and expandable Record details for every saved field; History has no acronym tooltips.
 
 Data explains complete JSON backup versus sets-only CSV, complete restore versus history merge, and shows a file/content/effect summary before the final native confirmation. Recovery explains the difference between original saved bytes and the open tab’s in-memory export. No schema, storage or workout-action changes are introduced. See [History and backup behavior](HISTORY_AND_BACKUPS.md) for exact semantics and iPhone acceptance steps.
+
+See [release history](RELEASE_HISTORY.md) for accepted milestones, exact application builds, schema compatibility and preview lineage.
