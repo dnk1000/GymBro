@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/png" href="gymbro-logo.png" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>GymBro V1.6</title>
+    <title>GymBro</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -18,7 +18,7 @@
           />
           <div class="brand-copy">
             <h1>GymBro</h1>
-            <p>V1.6 • your training log + program + ChatGPT inbox</p>
+            <p>Your training log + program + ChatGPT inbox</p>
           </div>
         </div>
         <div>
@@ -288,7 +288,7 @@
                   Nothing enters your history until you review and commit it.
                 </div>
               </div>
-              <span class="pill">V1.6</span>
+              <span class="pill">ChatGPT Inbox</span>
             </div>
             <label class="label" style="display: block; margin-top: 12px"
               >Workout JSON</label
@@ -420,12 +420,18 @@
           </div>
         </div>
         <div class="footer">
-          V1.6 keeps the workout database local, while the ChatGPT Inbox
+          GymBro keeps the workout database local, while the ChatGPT Inbox
           provides reviewed conversational imports. Cloud sync can be added
           later without changing the workout schema.
         </div>
       </section>
+      <footer
+        class="footer"
+        id="appVersion"
+        aria-label="Application version"
+      ></footer>
     </main>
+    <script src="app-version.js"></script>
     <script src="seed.js"></script>
     <script src="workout-data.js"></script>
     <script src="workout-sessions.js"></script>

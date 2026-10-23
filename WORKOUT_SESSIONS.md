@@ -1,6 +1,6 @@
 # Workout sessions — v2 Milestone 2
 
-Milestone 2 adds a data model and DOM-free actions, not guided-workout controls or a new history interface. UI branding remains V1.6 while v2 is developed incrementally. Milestone 1 acceptance and production `main` commit `6f10b49` were confirmed by the user before this work began.
+Milestone 2 adds a data model and DOM-free actions, not guided-workout controls or a new history interface. The UI displays the canonical application version from `app-version.js`, independently of schema 6. Milestone 1 acceptance and production `main` commit `6f10b49` were confirmed by the user before this work began.
 
 ## Schema 6
 
@@ -71,7 +71,7 @@ The database validator checks IDs, timestamps, mode, snapshot slots, both direct
 
 ## Backup, merge and import behavior
 
-- Complete JSON export contains the entire database, including completed sessions, active session and set links. Restore validates the whole database before replacement. Export → restore → export preserves version-6 content.
+- Complete JSON export contains the entire database, including completed sessions, active session and set links. Restore validates the whole database before replacement. Export → restore → export preserves version-6 content; `appVersion` identifies the exporting build and can change on re-export in a different build. The existing `version` field identifies schema 6. Application metadata is optional and never controls restore compatibility.
 - Restoring an old version-5 backup explicitly replaces the database with its migrated, sessionless state. It does not retain sessions from the replaced database.
 - History merge preserves current settings and existing set IDs. It unions nonconflicting sessions and their links, and is idempotent. Conflicting copies of a session ID, incompatible set relationships, or two different active sessions reject the entire merge. Use complete restore to explicitly choose one database, rather than silently overwriting either history.
 - ChatGPT interchange and normalization are unchanged, including V1.5-generated hashes, batch/set IDs, source metadata, session-level notes, and duplicate protection. ChatGPT imports remain sessionless even if a local session is active; no optional session extension is introduced. Explicit later attachment is possible through the existing attachment action.

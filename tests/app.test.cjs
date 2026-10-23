@@ -95,9 +95,12 @@ const set = (extra = {}) => ({
   ...extra,
 });
 
-test("V1.6 boots, navigates all tabs, saves a set, reloads and exports it", async (t) => {
+test("GymBro boots, navigates all tabs, saves a set, reloads and exports it", async (t) => {
   const p = await app(t);
-  assert.match(await p.title(), /V1.6/);
+  assert.equal(
+    await p.title(),
+    await p.evaluate(() => `GymBro ${APP_VERSION.version}`),
+  );
   for (const view of [
     "dashboard",
     "program",
@@ -1050,4 +1053,77 @@ test("published synthetic iPhone fixture restores and logs through the existing 
   assert.equal(set.sessionId, fixture.activeSessionId);
   assert.equal(Object.hasOwn(set, "planSlotId"), false);
   assert.deepEqual(saved.sessions[0].setIds, [set.id]);
+});
+
+test("canonical version is visible across phone/desktop views and complete exports", async (t) => {
+  const p = await app(t);
+  const version = await p.evaluate(() => APP_VERSION.version);
+  for (const width of [320, 390, 1280]) {
+    await p.setViewportSize({ width, height: 844 });
+    for (const view of [
+      "dashboard",
+      "program",
+      "workout",
+      "history",
+      "inbox",
+      "exercises",
+      "data",
+    ]) {
+      await p.locator(`[data-view="${view}"]`).click();
+      const footer = p.locator("#appVersion");
+      assert.equal(await footer.textContent(), `GymBro ${version}`);
+      await footer.scrollIntoViewIfNeeded();
+      assert.equal(await footer.isVisible(), true);
+      const box = await footer.boundingBox();
+      assert.ok(box.x >= 0 && box.x + box.width <= width);
+      assert.equal(
+        await p.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+    }
+  }
+  assert.equal(await p.title(), `GymBro ${version}`);
+  const original = await backup(p);
+  const raw = await stored(p);
+  const downloading = p.waitForEvent("download");
+  await p.getByRole("button", { name: "Export JSON", exact: true }).click();
+  const exported = JSON.parse(
+    await fs.readFile(await (await downloading).path(), "utf8"),
+  );
+  assert.equal(exported.appVersion, version);
+  assert.equal(exported.version, 6);
+  const { appVersion, ...content } = exported;
+  assert.deepEqual(content, original);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  assert.equal(
+    await p.locator("#appVersion").textContent(),
+    `GymBro ${version}`,
+  );
+});
+
+test("restore accepts missing and differing application metadata using schema only", async (t) => {
+  const p = await app(t);
+  const legacy = await backup(p);
+  legacy.version = 5;
+  delete legacy.sessions;
+  delete legacy.activeSessionId;
+  delete legacy.appVersion;
+  await importBackup(p, legacy);
+  assert.equal((await backup(p)).version, 6);
+  assert.deepEqual((await backup(p)).sets, legacy.sets);
+  for (const appVersion of [
+    undefined,
+    "1.6.0-old-build",
+    "99.8.7-20990101T000000Z",
+  ]) {
+    const compatible = await backup(p);
+    if (appVersion === undefined) delete compatible.appVersion;
+    else compatible.appVersion = appVersion;
+    await importBackup(p, compatible);
+    assert.deepEqual(await backup(p), compatible);
+  }
 });

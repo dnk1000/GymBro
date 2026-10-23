@@ -779,7 +779,7 @@ function exportJSON() {
   download(
     `gymbro-backup-${today()}.json`,
     "application/json",
-    JSON.stringify(db, null, 2),
+    JSON.stringify(createCompleteBackup(db), null, 2),
   );
 }
 function quickBackup() {
@@ -891,3 +891,8 @@ setDefaultDates();
 renderAll();
 renderStorageNotice();
 // Never write on startup: invalid or future-version data remains recoverable.
+
+// Version metadata is independent of workout state and the persistence schema.
+document.title = `GymBro ${APP_VERSION.version}`;
+document.getElementById("appVersion").textContent =
+  `GymBro ${APP_VERSION.version}`;

@@ -1,4 +1,4 @@
-# GymBro V1.6
+# GymBro
 
 A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
 
@@ -14,7 +14,7 @@ There is no backend, account, API key, or application build. Keep `index.html`, 
 
 ## Data and backups
 
-The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The Milestone 2 branch uses internal data version **6**, adding explicit sessions while retaining V1.6 branding and the current UI. Version-5 databases upgrade in memory with empty sessions and a null active pointer; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older version-5 applications cannot read version-6 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
+The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The Milestone 2 branch uses internal data version **6**, adding explicit sessions while retaining the current workout UI. Version-5 databases upgrade in memory with empty sessions and a null active pointer; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older version-5 applications cannot read version-6 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
 
 Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
 
@@ -71,3 +71,9 @@ Files:
 See [the workout action interface](WORKOUT_ACTIONS.md) for the Milestone 1 boundary and [workout sessions](WORKOUT_SESSIONS.md) for the additive Milestone 2 APIs, version-5 migration, and physical-iPhone acceptance steps.
 
 The existing vanilla JavaScript workflow is retained. V2 can introduce explicit session/exercise IDs and further module boundaries behind tested migrations. Exercise classification editing and cross-device synchronization remain future work.
+
+## Application and data versions
+
+`app-version.js` is the canonical release source. The format is **MAJOR.MINOR.PATCH-BUILD**: product generation, milestone, non-feature/bugfix release, and a fixed UTC build timestamp (`YYYYMMDDTHHmmssZ`). Milestone 2 starts at 2.2.0. Update the committed timestamp for each deployable build; do not derive it from the browser clock. The normal footer and page title show the complete version, also available as `APP_VERSION` for diagnostics.
+
+Application releases and `DATA_VERSION` are independent. Complete JSON backups include `appVersion` and the existing `version: 6` schema field (no redundant `dataVersion` field). Export metadata does not mutate workout state. Restore uses only schema compatibility: missing or different application versions are accepted. Re-export identifies the exporting build. CSV and ChatGPT interchange remain unchanged. The private npm package contains tooling only and has no separate application version.

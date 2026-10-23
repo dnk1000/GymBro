@@ -2,6 +2,8 @@
 
 ## v2 Milestone 2 (preview development)
 
+- Introduce canonical MAJOR.MINOR.PATCH-BUILD application versioning, a fixed UTC build ID, a shared version footer/page title and complete JSON backup `appVersion` metadata. Keep schema version 6 independent and accept old/different-build backups.
+
 - Add schema-6 explicit sessions, persisted active identity, stable set relationships and self-contained mode-filtered plan snapshots.
 - Keep version-5 sets/IDs/metadata sessionless and unchanged; preserve storage key, ChatGPT interchange/hashes and duplicate protection.
 - Extend DOM-free actions for lifecycle/attachment and manual logging's omitted/null/explicit session selection. Validate reciprocal order, matching dates and snapshot slots; protect completed sessions from new membership.

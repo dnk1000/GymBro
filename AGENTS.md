@@ -4,7 +4,7 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 ## Product and scope
 
-- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. UI branding remains **V1.6** during incremental v2 work; Milestone 2 uses internal data version **6**.
+- GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestone 2 uses independent data version **6**.
 - **iPhone usability is the primary UX target.** Prioritize readable screens, reachable controls, touch input, on-screen keyboard behavior, and Safari compatibility; retain working desktop behavior.
 - Preserve working functionality unless the task explicitly requires changing it. **Do not redesign the UI unless specifically requested.**
 - Retain the vanilla JavaScript, static-file, no-build application. Node dependencies are development tooling, not runtime requirements.
@@ -29,6 +29,7 @@ The app has no runtime package installation or build step. Serve the repository 
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app-version.js`                    | Canonical immutable application version and export metadata helper; independent of data schema version.                                                     |
 | `index.html`                        | Application shell, seven views, form markup, and script loading.                                                                                            |
 | `styles.css`                        | Shared visual styling, responsive grids, forms, and mobile layout.                                                                                          |
 | `app.js`                            | UI adapters, form/draft state, navigation, history, analytics, charts, and DOM rendering. Configures `workoutActions` and the `getWorkoutState()` selector. |
@@ -123,3 +124,11 @@ The app has no runtime package installation or build step. Serve the repository 
 - Use a Vercel Preview Deployment for physical-iPhone testing. Do not deploy milestone branches directly to the production Vercel environment. Report missing integration/access instead of inventing a preview URL or claiming deployment succeeded.
 - After pushing, report the branch, commit hash, tests/results, PR status/link, preview deployment status/link, and specific iPhone checks.
 - Only after milestone approval should it be merged. After merge, verify production deployment from `main` succeeds before starting the next milestone.
+
+## Application version policy
+
+- Use **MAJOR.MINOR.PATCH-BUILD**. MAJOR is product generation (2 for v2, 3 for v3); MINOR is the milestone (Milestone 2 is 2.2.x); PATCH is a non-feature/bugfix release within that milestone (initial 0, then 1, 2...).
+- BUILD is a committed UTC timestamp in `YYYYMMDDTHHmmssZ` form. Update it once for each deployable code build, including fixes. Never generate it at page load; the same committed build must report the same version after reload.
+- `app-version.js` is the only canonical application version source. UI, diagnostics and complete JSON exports consume `APP_VERSION`. Do not independently hard-code full versions or maintain another application version in private npm tooling metadata.
+- Keep `DATA_VERSION` independent: milestone/application updates do not imply schema migrations. Complete JSON backups use `appVersion` plus the existing `version` field for data schema; do not duplicate it as `dataVersion`.
+- Restore compatibility depends on schema, never application build. Old backups without `appVersion` and different-build backups remain supported when their data schema is supported.

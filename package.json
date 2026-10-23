@@ -1,6 +1,5 @@
 {
   "name": "gymbro",
-  "version": "1.6.0",
   "private": true,
   "scripts": {
     "start": "python3 -m http.server 8000 --bind 127.0.0.1",
