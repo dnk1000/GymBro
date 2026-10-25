@@ -11,12 +11,12 @@ V2.7 is the intended completion release of the V2 trainer-infrastructure phase. 
 | Starting accepted main | `7548553a1c957a11d4f83facfa6e901ce479cf32` — M6, production verified before preparation |
 | Candidate branch | `v2/milestone-7-production-delivery` |
 | Candidate revision / CI / preview | See the milestone PR’s exact head SHA and checks; not a production revision |
-| Production commit / deployment for this version | **Pending — not merged or deployed** |
+| Production commit / deployment for this version | User authorized merging [PR #8](https://github.com/dnk1000/GymBro/pull/8); its merge commit and main deployment checks identify the delivered revision. Final production acceptance remains pending. |
 | M6 physical-iPhone acceptance | **Pending recorded device/iOS/browser/build/date and individual results** |
-| Production JSON backup saved/parseable/retained | **Pending user-browser verification before merge/deployment** |
+| Production JSON backup saved/parseable/retained | **User-browser verification remains unrecorded** |
 | PRD discrepancy disposition | **Pending explicit product decision on reordering and live-session adaptation** |
 | Post-merge production smoke / personal existing data check | **Pending** |
-| Final merge approval | **Pending; preparation approval is not merge approval** |
+| Final merge approval | **User explicitly approved PR #8 and instructed merge into main.** |
 
 ## Capabilities preserved
 
@@ -35,3 +35,6 @@ localStorage quota/eviction/concurrency limits; no cloud sync/accounts/offline s
 Schema remains 7 and key remains daveGymTrackerV1. Back up actual production JSON before the upgrade; preserve active guidance and committed request history. Code rollback does not restore or erase browser data. Never lower schema numbers/delete fields to force a downgrade. Follow [PRODUCTION_DELIVERY.md](PRODUCTION_DELIVERY.md).
 
 After physical results and other gates are recorded, obtain explicit merge approval. After accepted main deploys successfully, record the exact production commit, deployment URL/status, verified displayed version, existing-data confirmation, smoke results and accepted PRD exceptions here. Only then change release status to released and declare V2 complete. Failed verification stops release completion and follows the rollback procedure. No release tag or V3 start is authorized by this preparation artifact.
+
+
+Merge authorization update: the user’s latest instruction is to approve PR #8 and merge it into main. This authorizes the merge and normal main deployment despite the outstanding recorded gates; it does not supply physical-device results, certify a personal production backup, resolve the PRD discrepancies or declare V2 complete. Those evidence rows remain open.
