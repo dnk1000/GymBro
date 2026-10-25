@@ -103,3 +103,7 @@ The product north star is [GymBro_PRD.md](GymBro_PRD.md): ChatGPT supplies futur
 `workoutActions.getExercisePerformanceContext(...)`, `compareExercisePerformance(...)` and `getTrainerWorkoutContext(...)` expose read-only, detached JSON evidence for the future ChatGPT trainer. Supply an explicit `asOfDate`. The workout context composes the existing guided selector; no new workout model or interaction screen is introduced.
 
 Results contain exact exercise/unit context, ordered records, provenance, pain, unparsed preference/notes, transparent arithmetic and supporting IDs. Only `review`/`insufficient_evidence` evidence summaries are returned, never increase/maintain commands. Working-set/failure classification and structured constraints remain unknown where not modeled. No schema increment, persisted scores or state mutations are needed. See [TRAINER_EVIDENCE.md](TRAINER_EVIDENCE.md) for the approved policy, API contracts and acceptance checks.
+
+## iPhone reliability
+
+Each successful workout action is persisted before it reports success; background/unload events do not save workouts. On page restoration or return to the foreground, GymBro checks for missed storage changes. A stale tab warns and pauses editing until deliberate reload; it never adopts or merges another tab’s data automatically. Unsaved form values remain transient and are not restored after reload. Use one editing tab at a time. See [the Milestone 6 audit](IPHONE_HARDENING.md) and [physical Safari checklist](REAL_PHONE_SMOKE_TEST.md#milestone-6--physical-iphone-acceptance-pending).

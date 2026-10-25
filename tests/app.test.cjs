@@ -2346,3 +2346,320 @@ test("exercise library counts session identities and sessionless date groups", a
   assert.match(await p.locator("#exerciseDetail").textContent(), /Sessions4/);
   assert.deepEqual(result, { unchanged: true, empty: 0 });
 });
+
+test("restored/foreground pages detect missed storage events without adopting or overwriting progress", async (t) => {
+  for (const event of ["pageshow", "visibilitychange"]) {
+    const p = await app(t);
+    await startGuide(p);
+    await p.locator("#fNotes").fill("keep unsaved notes");
+    const before = await backup(p);
+    const newer = structuredClone(before);
+    newer.sessions[0].guided.revision++;
+    newer.sessions[0].guided.currentSlotId =
+      newer.sessions[0].guided.slots[1].planSlotId;
+    const raw = JSON.stringify(newer);
+    // Same-document writes do not deliver a storage event. Model a missed event
+    // during suspension, then dispatch only the lifecycle notification.
+    await p.evaluate(
+      ([key, value, event]) => {
+        localStorage.setItem(key, value);
+        if (event === "pageshow")
+          window.dispatchEvent(
+            new PageTransitionEvent("pageshow", { persisted: true }),
+          );
+        else document.dispatchEvent(new Event("visibilitychange"));
+      },
+      [KEY, raw, event],
+    );
+    assert.equal(await p.locator("#storageNotice").isVisible(), true);
+    assert.match(
+      await p.locator("#storageMessage").textContent(),
+      /Another tab/,
+    );
+    assert.deepEqual(await backup(p), before);
+    assert.equal(await p.locator("#fNotes").inputValue(), "keep unsaved notes");
+    const result = await p.evaluate(() => {
+      const s = workoutActions.getGuidedWorkoutState();
+      return workoutActions.moveGuidedSlot({
+        sessionId: s.sessionId,
+        expectedRevision: s.revision,
+        direction: "next",
+      });
+    });
+    assert.equal(result.code, "PERSISTENCE_ERROR");
+    assert.equal(await stored(p), raw);
+    await p.reload();
+    assert.deepEqual(await backup(p), newer);
+    assert.equal(await p.locator("#storageNotice").isVisible(), false);
+  }
+});
+
+test("mobile entry text avoids Safari focus zoom and primary logging controls have 44px targets", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ]) {
+    await p.setViewportSize(viewport);
+    const sizes = await p
+      .locator(
+        "#workout input:not([type=checkbox]), #workout select, #workout textarea",
+      )
+      .evaluateAll((els) =>
+        els.map((el) => ({
+          id: el.id,
+          font: parseFloat(getComputedStyle(el).fontSize),
+        })),
+      );
+    assert.ok(
+      sizes.every((s) => s.font >= 16),
+      JSON.stringify(sizes),
+    );
+    const heights = await p
+      .locator(
+        "#workout .actions button, #guidedEntryActions button, .guided-controls button",
+      )
+      .evaluateAll((els) =>
+        els.map((el) => ({
+          text: el.textContent,
+          height: el.getBoundingClientRect().height,
+        })),
+      );
+    assert.ok(
+      heights.every((s) => s.height >= 44),
+      JSON.stringify(heights),
+    );
+    assert.equal(
+      await p.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+  }
+});
+
+test("resume checks are read-only and storage read exceptions pause editing without offering an empty reset", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const before = await backup(p),
+    raw = await stored(p);
+  await p.evaluate(() => {
+    for (let i = 0; i < 3; i++) {
+      window.dispatchEvent(
+        new PageTransitionEvent("pageshow", { persisted: true }),
+      );
+      document.dispatchEvent(new Event("visibilitychange"));
+    }
+  });
+  assert.deepEqual(await backup(p), before);
+  assert.equal(await stored(p), raw);
+  assert.equal(await p.locator("#storageNotice").isVisible(), false);
+  await p.evaluate(() => {
+    window.originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = () => {
+      throw new DOMException("Storage unavailable", "SecurityError");
+    };
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+  });
+  assert.equal(await p.locator("#storageNotice").isVisible(), true);
+  assert.equal(await p.locator("#recoverStorage").isVisible(), false);
+  assert.deepEqual(await backup(p), before);
+  await p.evaluate(() => {
+    Storage.prototype.getItem = window.originalGetItem;
+  });
+  assert.equal(await stored(p), raw);
+  const result = await p.evaluate(() => {
+    const s = workoutActions.getGuidedWorkoutState();
+    return workoutActions.setGuidedSlotStatus({
+      sessionId: s.sessionId,
+      planSlotId: s.currentSlotId,
+      expectedRevision: s.revision,
+      status: "completed",
+    });
+  });
+  assert.equal(result.code, "PERSISTENCE_ERROR");
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  assert.equal(await p.locator("#storageNotice").isVisible(), false);
+  assert.deepEqual(await backup(p), before);
+});
+
+test("committed workout and trainer context survive navigation, reload and a reopened tab without lifecycle saves", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const submitted = await p.evaluate(() => {
+    let s = workoutActions.getGuidedWorkoutState();
+    const input = {
+      sessionId: s.sessionId,
+      planSlotId: s.currentSlotId,
+      expectedRevision: s.revision,
+      requestId: "interrupt-safe",
+      weight: 40,
+      unit: "lb/side",
+      reps: 8,
+    };
+    if (!workoutActions.logGuidedSet(input).ok) throw Error("Log failed");
+    s = workoutActions.getGuidedWorkoutState();
+    workoutActions.setGuidedSlotStatus({
+      sessionId: s.sessionId,
+      planSlotId: s.currentSlotId,
+      expectedRevision: s.revision,
+      status: "skipped",
+    });
+    s = workoutActions.getGuidedWorkoutState();
+    workoutActions.moveGuidedSlot({
+      sessionId: s.sessionId,
+      expectedRevision: s.revision,
+      direction: "next",
+    });
+    s = workoutActions.getGuidedWorkoutState();
+    workoutActions.substituteGuidedExercise({
+      sessionId: s.sessionId,
+      planSlotId: s.currentSlotId,
+      expectedRevision: s.revision,
+      exercise: "Bench Press",
+    });
+    s = workoutActions.getGuidedWorkoutState();
+    workoutActions.logGuidedSet({
+      ...input,
+      requestId: "after-substitution",
+      planSlotId: s.currentSlotId,
+      expectedRevision: s.revision,
+      unit: "lb",
+    });
+    workoutActions.logSet({
+      date: "2026-10-23",
+      exercise: "Bench Press",
+      weight: 50,
+      reps: 8,
+    });
+    return input;
+  });
+  const before = await backup(p),
+    raw = await stored(p);
+  const context = await p.evaluate(() =>
+    workoutActions.getTrainerWorkoutContext({ asOfDate: "2026-10-23" }),
+  );
+  assert.equal(context.ok, true);
+  // Browser history restoration is exercised, but is not a physical lock/unlock.
+  await p.goto(origin + "/README.md");
+  await p.goBack();
+  assert.deepEqual(await backup(p), before);
+  await p.goForward();
+  await p.goBack();
+  await p.reload();
+  assert.deepEqual(await backup(p), before);
+  const reopened = await p.context().newPage();
+  reopened.on("dialog", (d) => d.accept());
+  await reopened.goto(origin);
+  await p.close();
+  assert.deepEqual(await backup(reopened), before);
+  assert.equal(await stored(reopened), raw);
+  assert.deepEqual(
+    await reopened.evaluate(() =>
+      workoutActions.getTrainerWorkoutContext({ asOfDate: "2026-10-23" }),
+    ),
+    context,
+  );
+  const replay = await reopened.evaluate(
+    (input) => workoutActions.logGuidedSet(input),
+    submitted,
+  );
+  assert.equal(replay.code, "REPLAY");
+  assert.equal(await stored(reopened), raw);
+  await reopened.locator('[data-view="workout"]').click();
+  assert.match(
+    await reopened.locator("#guidedWorkout").innerText(),
+    /Bench Press/,
+  );
+  assert.equal(
+    await reopened
+      .getByRole("button", { name: "Start workout", exact: true })
+      .count(),
+    0,
+  );
+  await reopened.close();
+});
+
+test("rapid guided UI commands commit once per burst and preserve pending slots on finish", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  for (const [command, value] of [
+    ["move", "next"],
+    ["move", "previous"],
+    ["status", "completed"],
+    ["status", "skipped"],
+    ["substitute", null],
+  ]) {
+    await guideReady(p);
+    if (command === "substitute")
+      await p.locator("#guidedSubstitute").selectOption("Bench Press");
+    const before = await p.evaluate(() =>
+      workoutActions.getGuidedWorkoutState(),
+    );
+    await p.evaluate(
+      ([command, value]) => {
+        for (let i = 0; i < 8; i++) guidedCommand(command, value);
+      },
+      [command, value],
+    );
+    const after = await p.evaluate(() =>
+      workoutActions.getGuidedWorkoutState(),
+    );
+    assert.equal(after.revision, before.revision + 1, command);
+    assert.equal(after.sessionId, before.sessionId);
+  }
+  await guideReady(p);
+  const before = await backup(p);
+  await p.evaluate(() => {
+    for (let i = 0; i < 8; i++) guidedCommand("finish");
+  });
+  const done = await backup(p);
+  assert.equal(done.activeSessionId, null);
+  assert.equal(done.sessions.length, 1);
+  assert.equal(done.sessions[0].status, "completed");
+  assert.deepEqual(
+    done.sessions[0].guided.slots,
+    before.sessions[0].guided.slots,
+  );
+  assert.deepEqual(done.sets, before.sets);
+  await p.reload();
+  assert.deepEqual(await backup(p), done);
+});
+
+test("real quota exceptions retain guided form and request identity for intentional retry", async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  await p.locator("#fWeight").fill("40");
+  await p.locator("#fReps").fill("8");
+  const before = await backup(p),
+    raw = await stored(p);
+  const requestId = await p.evaluate(() => guidedFormContext.requestId);
+  await p.evaluate(() => {
+    window.originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Quota exhausted", "QuotaExceededError");
+    };
+  });
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  assert.equal(await p.locator("#fReps").inputValue(), "8");
+  assert.deepEqual(await backup(p), before);
+  assert.equal(await stored(p), raw);
+  assert.equal(await p.evaluate(() => guidedFormContext.requestId), requestId);
+  assert.equal(await p.evaluate(() => guidedFormContext.committed), false);
+  await p.evaluate(() => {
+    Storage.prototype.setItem = window.originalSetItem;
+  });
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  await p.getByRole("button", { name: "Log guided set", exact: true }).click();
+  const saved = await backup(p);
+  assert.equal(saved.sets.length, before.sets.length + 1);
+  assert.equal(saved.sessions[0].guided.requests.length, 1);
+  assert.equal(saved.sessions[0].guided.requests[0].id, requestId);
+  await p.reload();
+  assert.deepEqual(await backup(p), saved);
+});
