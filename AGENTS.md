@@ -192,3 +192,20 @@ The app has no runtime package installation or build step. Serve the repository 
 - Keep schema 7 and workout/domain modules unchanged unless a verified production-blocking defect is separately approved. No AI, voice, transport, backend or speculative V3 infrastructure.
 - Vercel remains branch→Preview, accepted main→Production. CI does not deploy, and a green preview is not production acceptance. Verify required GitHub checks/Vercel settings; do not claim branch protection from inaccessible settings.
 - V2_RELEASE.md is a preparation artifact until the final production SHA/deployment/smoke and physical/backup gates are actually recorded. No release tag or V3 start is implied. Code rollback never automatically restores or downgrades browser data.
+
+
+## V3.0 approved integration boundary
+
+The user authorized the V3.0 integration infrastructure milestone from main d2e6223 despite outstanding V2 acceptance evidence. This section supersedes V2-only prohibitions on the specifically approved account/API/database work; preserve every other domain and data-safety contract.
+
+- GymBro owns structured training facts; trainer providers are replaceable. Reuse the V2-derived domain sources, never copy a workout engine into the server. No OpenAI key, AI coaching, ChatGPT integration, voice, reordering, live-plan adaptation or offline sync in V3.0.
+- Keep schema 7; account revisions and transport receipts are separate PostgreSQL metadata. Preserve domain revisions, original IDs, snapshots, order, unknown metadata, explicit incompleteness, request histories and tombstones.
+- Local actions remain synchronous. Async actions must await durable persistence before committed state/results/UI clearing. Serialize complete mutations, including replay checks. Selectors stay synchronous, detached and read-only.
+- Connected writes execute on the server through shared domain actions. All restore/merge/reset paths must use authenticated first-party account operations. Trainer `history:modify` never permits complete restore, replacement, reset, migration or grant/account administration.
+- Verify Supabase-issued identity server-side. OAuth clients are identified by verified client_id, never body user IDs. Supabase owns OAuth protocol and token cryptography; GymBro owns consent, grant policy and scopes. Default deny; separately consent history:modify. Check current grants on every request and filter write results to avoid leaking ungranted reads.
+- Use restricted PostgreSQL roles, RLS, transaction-local verified user context, atomic account revisions and mutation receipts. Never use a service-role/RLS-bypass account for API persistence.
+- Authentication and authority are separate. Logout retains the displayed connected dataset as a read-only cache; only explicit Use local-only GymBro changes to preserved local history. Never write connected data into daveGymTrackerV1.
+- Migration: validate, preview, confirm, commit, read back, compare integrity, then switch authority. Failure retains local authority and original bytes. New empty accounts must not receive personal seed history/preferences.
+- Preserve seven views and iPhone usability. No mandatory login for local-only operation. Unknown save outcomes retain an explicit retry identity, never silently queue offline writes or generate a replacement logical set.
+- Tests: npm ci, npm run check:syntax, npm run check:release, npm test, npm run test:postgres with an isolated loopback PostgreSQL fixture, npm run check:diff. Do not fold external staging requirements into npm test or weaken V2 tests.
+- Read V3_ARCHITECTURE.md, V3_STAGING.md and V3_RELEASE.md. Use separate V3 Vercel staging and GymBro-Staging Supabase projects. Do not modify V2 production integration or merge without explicit approval. Never claim V2 physical-iPhone, backup or final production acceptance from V3 automated results.

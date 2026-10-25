@@ -20,7 +20,7 @@ function releaseCopy(t) {
     "workout-data.js",
     "index.html",
     "app.js",
-    "V2_RELEASE.md",
+    "V3_RELEASE.md",
     "RELEASE_HISTORY.md",
     "CHANGELOG.md",
   ])
@@ -34,14 +34,14 @@ function replace(dir, file, change) {
 
 test("current release metadata validates independently from historical version references", () => {
   const result = checkRelease(root);
-  assert.match(result.version, /^2\.7\.0-\d{8}T\d{6}Z$/);
+  assert.match(result.version, /^3\.0\.0-\d{8}T\d{6}Z$/);
   assert.equal(result.schema, 7);
 });
 
 test("stale current release documentation fails validation", (t) => {
-  for (const file of ["V2_RELEASE.md", "RELEASE_HISTORY.md", "CHANGELOG.md"]) {
+  for (const file of ["V3_RELEASE.md", "RELEASE_HISTORY.md", "CHANGELOG.md"]) {
     const dir = releaseCopy(t);
-    replace(dir, file, (source) => source.replaceAll("2.7.0", "2.6.0"));
+    replace(dir, file, (source) => source.replaceAll("3.0.0", "2.6.0"));
     assert.throws(() => checkRelease(dir), undefined, file);
   }
 });
@@ -61,7 +61,7 @@ test("runtime-generated or invalid UTC build identifiers are rejected", (t) => {
 
 test("wrong milestone and unapproved schema changes fail the release check", (t) => {
   for (const [file, from, to] of [
-    ["app-version.js", "const minor = 7", "const minor = 6"],
+    ["app-version.js", "const minor = 0", "const minor = 1"],
     ["workout-data.js", "const DATA_VERSION = 7", "const DATA_VERSION = 8"],
   ]) {
     const dir = releaseCopy(t);

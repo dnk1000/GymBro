@@ -56,6 +56,10 @@ function downloadStoredData() {
   download("gymbro-original-data.json", "application/json", storageState.raw);
 }
 function recoverStorage() {
+  if (!connection.isLocal()) {
+    alert("Switch explicitly to local-only GymBro to recover local storage.");
+    return;
+  }
   if (
     !confirm(
       "Replace the unreadable saved data with an empty workout history? Download the original first.",
@@ -70,6 +74,7 @@ function recoverStorage() {
   }
 }
 window.addEventListener("storage", (event) => {
+  if (typeof connection !== "undefined" && !connection.isLocal()) return;
   if (
     event.storageArea === localStorage &&
     (event.key === KEY || event.key === null)
@@ -84,6 +89,7 @@ window.addEventListener("storage", (event) => {
 // Safari may restore a suspended page without delivering a storage event.
 // Recheck on return, but never reload/adopt data or save transient inputs here.
 function checkStoredDataOnResume() {
+  if (typeof connection !== "undefined" && !connection.isLocal()) return;
   if (
     document.visibilityState !== "visible" ||
     storageState.blocked ||

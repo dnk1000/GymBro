@@ -53,10 +53,10 @@ function logCurrentExercise() {
   document.getElementById("setFormTitle").scrollIntoView({ block: "start" });
   fWeight.focus({ preventScroll: true });
 }
-function startGuidedWorkout() {
+async function startGuidedWorkout() {
   if (workoutActions.getActiveSession()) return;
   if (!confirmDiscardSetInput()) return;
-  const result = workoutActions.startGuidedSession({
+  const result = await workoutActions.startGuidedSession({
     date: document.getElementById("guidedDate").value,
     templateId: document.getElementById("guidedTemplate").value,
     duration: Number(document.getElementById("guidedDuration").value),
@@ -66,15 +66,18 @@ function startGuidedWorkout() {
     setGuidedFormContext(workoutActions.getGuidedWorkoutState());
   }
 }
-function enableGuidedWorkout() {
+async function enableGuidedWorkout() {
   if (!confirmDiscardSetInput()) return;
   const session = workoutActions.getActiveSession();
-  if (session && applyActionResult(workoutActions.enableGuidance(session.id))) {
+  if (
+    session &&
+    applyActionResult(await workoutActions.enableGuidance(session.id))
+  ) {
     clearForm();
     setGuidedFormContext(workoutActions.getGuidedWorkoutState());
   }
 }
-function guidedCommand(command, value) {
+async function guidedCommand(command, value) {
   if (Date.now() < guidedActionUntil) return;
   if (!confirmDiscardSetInput()) return;
   const state = workoutActions.getGuidedWorkoutState();
@@ -86,13 +89,22 @@ function guidedCommand(command, value) {
   };
   let result;
   if (command === "move")
-    result = workoutActions.moveGuidedSlot({ ...input, direction: value });
+    result = await workoutActions.moveGuidedSlot({
+      ...input,
+      direction: value,
+    });
   if (command === "select")
-    result = workoutActions.selectGuidedSlot({ ...input, planSlotId: value });
+    result = await workoutActions.selectGuidedSlot({
+      ...input,
+      planSlotId: value,
+    });
   if (command === "status")
-    result = workoutActions.setGuidedSlotStatus({ ...input, status: value });
+    result = await workoutActions.setGuidedSlotStatus({
+      ...input,
+      status: value,
+    });
   if (command === "substitute")
-    result = workoutActions.substituteGuidedExercise({
+    result = await workoutActions.substituteGuidedExercise({
       ...input,
       exercise: document.getElementById("guidedSubstitute").value,
     });
@@ -105,7 +117,7 @@ function guidedCommand(command, value) {
       )
     )
       return;
-    result = workoutActions.finishGuidedSession({
+    result = await workoutActions.finishGuidedSession({
       ...input,
       allowPending: true,
     });
@@ -150,14 +162,17 @@ function renderGuidedWorkout() {
       "",
     )}</select></label><button class="btn secondary" onclick="guidedCommand('substitute')">Use substitute</button></div><p class="sub">Substitution changes subsequent sets only. Earlier sets and the saved plan stay unchanged.</p><button class="btn secondary" onclick="guidedCommand('finish')">Finish workout</button>`;
 }
-function finishManualSession() {
+async function finishManualSession() {
   if (
     !confirmDiscardSetInput() ||
     !confirm("Finish this active workout? Saved sets will be retained.")
   )
     return;
   const active = workoutActions.getActiveSession();
-  if (active && applyActionResult(workoutActions.completeSession(active.id)))
+  if (
+    active &&
+    applyActionResult(await workoutActions.completeSession(active.id))
+  )
     clearForm();
 }
 // A new intentional form entry gets a new request identity; repeated taps don't.

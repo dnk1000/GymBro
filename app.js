@@ -84,7 +84,24 @@ let db = load();
 let editingSetId = null;
 let selectedExercise = "Seated Row";
 let selectedTemplateId = null;
-const workoutActions = createWorkoutActions({
+const connection = createConnectionController({
+  storage: {
+    getItem: (key) => localStorage.getItem(key),
+    setItem: (key, value) => localStorage.setItem(key, value),
+    removeItem: (key) => localStorage.removeItem(key),
+  },
+  getState: () => db,
+  setState: (next) => {
+    db = next;
+  },
+  validate: validateData,
+  localLoad: load,
+  request: connectedRequest,
+  onChange: () => {
+    if (typeof renderAccount === "function") renderAccount();
+  },
+});
+const localWorkoutActions = createWorkoutActions({
   getState: () => db,
   setState: (next) => {
     db = next;
@@ -92,6 +109,60 @@ const workoutActions = createWorkoutActions({
   persist: (next) => persistData(next),
   createId: newId,
 });
+const readActions = new Set([
+  "getWorkoutState",
+  "getSession",
+  "getActiveSession",
+  "getGuidedWorkoutState",
+  "getExercisePerformanceContext",
+  "compareExercisePerformance",
+  "getTrainerWorkoutContext",
+]);
+const workoutActions = Object.fromEntries(
+  Object.entries(localWorkoutActions).map(([name, action]) => [
+    name,
+    (...args) => {
+      if (readActions.has(name)) return action(...args);
+      if (connection.busy)
+        return {
+          ok: false,
+          code: "PERSISTENCE_BUSY",
+          errors: ["A save is in progress."],
+          changes: [],
+        };
+      return connection.isLocal()
+        ? action(...args)
+        : connection.mutate({ op: "action", action: name, args });
+    },
+  ]),
+);
+async function connectedRequest(body, token) {
+  const response = await fetch("/api/gymbro", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json();
+  if (!response.ok)
+    throw Object.assign(
+      Error(result.message || result.code || "Request failed"),
+      { definitive: response.status < 500 },
+    );
+  return result;
+}
+async function saveAccountOperation(op, state, recovery = false) {
+  if (connection.busy) {
+    alert("A save is in progress.");
+    return false;
+  }
+  if (connection.isLocal()) return save(state, recovery);
+  const result = await connection.mutate({ op, state, confirm: true });
+  if (!result.ok) alert(result.errors?.join("\n") || "Changes were not saved.");
+  return result.ok;
+}
 function getWorkoutState() {
   return workoutActions.getWorkoutState();
 }
@@ -166,7 +237,7 @@ document.querySelectorAll(".tab").forEach(
     }),
 );
 
-function addSet() {
+async function addSet() {
   const input = {
     date: fDate.value,
     exercise: fExercise.value.trim(),
@@ -183,7 +254,7 @@ function addSet() {
   if (guidedFormContext && !editingSetId) {
     if (guidedFormContext.committed) return;
     const context = guidedFormContext;
-    const result = workoutActions.logGuidedSet({
+    const result = await workoutActions.logGuidedSet({
       ...input,
       sessionId: context.sessionId,
       planSlotId: context.planSlotId,
@@ -200,8 +271,8 @@ function addSet() {
     return;
   }
   const result = editingSetId
-    ? workoutActions.editSet(editingSetId, input)
-    : workoutActions.logSet(input);
+    ? await workoutActions.editSet(editingSetId, input)
+    : await workoutActions.logSet(input);
   if (applyActionResult(result)) clearForm(false);
 }
 function clearForm(clearEx = true) {
@@ -264,16 +335,19 @@ function markEditedSetComplete() {
   message.textContent =
     "Marked complete in this form. Save changes to update the record; nothing has been saved yet.";
 }
-function addBodyweight() {
-  const result = workoutActions.logBodyweight({
+async function addBodyweight() {
+  const result = await workoutActions.logBodyweight({
     date: bwDate.value,
     value: numeric(bwValue.value),
   });
   if (applyActionResult(result)) bwValue.value = "";
 }
-function deleteSet(id) {
+async function deleteSet(id) {
   if (!confirm("Delete this set?")) return;
-  if (applyActionResult(workoutActions.deleteSet(id)) && editingSetId === id)
+  if (
+    applyActionResult(await workoutActions.deleteSet(id)) &&
+    editingSetId === id
+  )
     clearForm();
 }
 function renderAll() {
@@ -518,14 +592,16 @@ function loadExerciseToForm(ex) {
   document.querySelector('[data-view=\"workout\"]').click();
   fReps.focus();
 }
-function startTemplate(id, duration = 60) {
+async function startTemplate(id, duration = 60) {
   if (
-    applyActionResult(workoutActions.selectPlan({ templateId: id, duration }))
+    applyActionResult(
+      await workoutActions.selectPlan({ templateId: id, duration }),
+    )
   )
     document.querySelector('[data-view="workout"]').click();
 }
-function clearActivePlan() {
-  applyActionResult(workoutActions.clearPlan());
+async function clearActivePlan() {
+  applyActionResult(await workoutActions.clearPlan());
 }
 function renderToday() {
   const d = fDate.value || today();
@@ -698,9 +774,9 @@ function renderInboxDraft() {
   commitInboxBtn.disabled = dup || issues.length > 0;
   inboxReview.querySelectorAll("label.label").forEach(explainAcronyms);
 }
-function commitInbox() {
+async function commitInbox() {
   if (!inboxDraft) return;
-  const result = workoutActions.commitImport(inboxDraft);
+  const result = await workoutActions.commitImport(inboxDraft);
   if (!applyActionResult(result)) return;
   clearInbox(false);
   inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${result.count} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
@@ -832,20 +908,24 @@ function editTemplate(id) {
       "",
     )}</div><div style="margin-top:12px"><div class="label">Add exercise</div><div class="formgrid"><div class="span3"><input id="addEx_${esc(id)}" list="exerciseList" placeholder="Exercise"></div><div class="span2"><select id="addRole_${esc(id)}"><option value="accessory">Accessory</option><option value="core">Core</option><option value="substitute">Substitute</option></select></div><div><button onclick="addSlot(${jsArg(id)})">Add</button></div></div></div>`;
 }
-function toggleShort(id, i) {
+async function toggleShort(id, i) {
   applyActionResult(
-    workoutActions.toggleSlotShort({ templateId: id, index: i }),
+    await workoutActions.toggleSlotShort({ templateId: id, index: i }),
   );
 }
-function cycleRole(id, i) {
-  applyActionResult(workoutActions.cycleSlotRole({ templateId: id, index: i }));
-}
-function removeSlot(id, i) {
-  applyActionResult(workoutActions.removeSlot({ templateId: id, index: i }));
-}
-function addSlot(id) {
+async function cycleRole(id, i) {
   applyActionResult(
-    workoutActions.addSlot({
+    await workoutActions.cycleSlotRole({ templateId: id, index: i }),
+  );
+}
+async function removeSlot(id, i) {
+  applyActionResult(
+    await workoutActions.removeSlot({ templateId: id, index: i }),
+  );
+}
+async function addSlot(id) {
+  applyActionResult(
+    await workoutActions.addSlot({
       templateId: id,
       exercise: document.getElementById("addEx_" + id).value.trim(),
       role: document.getElementById("addRole_" + id).value,
@@ -921,7 +1001,7 @@ function importJSON() {
   const mode = document.getElementById("backupMode").value;
   const reader = new FileReader();
   reader.onerror = () => alert("Could not read that file.");
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const restored = migrateData(JSON.parse(reader.result));
       let next = restored;
@@ -933,8 +1013,14 @@ function importJSON() {
         next = mergeHistoryData(db, restored);
       }
       if (!confirm(backupConfirmation(mode, restored, next, file.name))) return;
-      if (save(next, mode === "restore")) {
-        db = next;
+      if (
+        await saveAccountOperation(
+          mode,
+          connection.isLocal() ? next : restored,
+          mode === "restore",
+        )
+      ) {
+        if (connection.isLocal()) db = next;
         clearForm();
         clearInbox();
         selectedTemplateId = null;
@@ -953,27 +1039,35 @@ function importJSON() {
   };
   reader.readAsText(file);
 }
-function resetSeed() {
+async function resetSeed() {
+  if (!connection.isLocal()) {
+    alert(
+      "Original personal seed restoration is available only in local-only mode. Use a complete backup to restore account data.",
+    );
+    return;
+  }
   if (confirm("Restore the original seed and discard local changes?")) {
     const next = migrateData(seed);
-    if (save(next)) {
-      db = next;
+    if (await saveAccountOperation("reset", next)) {
+      if (connection.isLocal()) db = next;
       clearForm();
       clearInbox();
       renderAll();
     }
   }
 }
-function clearAll() {
+async function clearAll() {
   if (
     confirm(
-      "Erase ALL local workout data and restore default program settings?",
+      connection.isLocal()
+        ? "Erase ALL local workout data and restore default program settings?"
+        : "Erase ALL connected account workout data and restore default program settings?",
     )
   ) {
     const next = emptyData();
     next.preferences = {};
-    if (save(next)) {
-      db = next;
+    if (await saveAccountOperation("reset", next)) {
+      if (connection.isLocal()) db = next;
       clearForm();
       clearInbox();
       renderAll();
@@ -996,3 +1090,34 @@ document.getElementById("helpVersion").textContent =
   `GymBro ${APP_VERSION.version}`;
 
 renderBackupOperation();
+
+// Guard the whole UI operation, including awaits and post-save form effects.
+let uiMutationBusy = false;
+for (const [name, handler] of Object.entries({
+  addSet,
+  addBodyweight,
+  deleteSet,
+  startTemplate,
+  clearActivePlan,
+  commitInbox,
+  toggleShort,
+  cycleRole,
+  removeSlot,
+  addSlot,
+  resetSeed,
+  clearAll,
+  startGuidedWorkout,
+  enableGuidedWorkout,
+  guidedCommand,
+  finishManualSession,
+})) {
+  globalThis[name] = async (...args) => {
+    if (uiMutationBusy) return;
+    uiMutationBusy = true;
+    try {
+      return await handler(...args);
+    } finally {
+      uiMutationBusy = false;
+    }
+  };
+}

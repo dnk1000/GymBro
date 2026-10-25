@@ -39,3 +39,7 @@ The initial session-model extraction was [1062a60](https://github.com/dnk1000/Gy
 - Documentation-only release-history updates do not change the application version or schema.
 - Update this file for each accepted release, recording the exact canonical version, schema, application revision, PR and meaningful changes. Keep preview builds distinct from accepted releases. The linked PR records the final merge commit; record production verification only after it succeeds.
 - Automated testing and production deployment checks are not physical iPhone acceptance. Record actual device/browser/results separately in [REAL_PHONE_SMOKE_TEST.md](REAL_PHONE_SMOKE_TEST.md).
+
+## V3.0 review candidate — not an accepted production release
+
+`3.0.0-20261025T232240Z`, data schema 7, branch `v3/integration-architecture`, based on `d2e6223`. Integration infrastructure only. Staging acceptance and production deployment are not established. Existing V2 acceptance gates remain open. See V3_RELEASE.md.

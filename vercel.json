@@ -1,0 +1,26 @@
+{
+  "functions": {
+    "api/gymbro.js": {
+      "includeFiles": "{server/**,contracts/**,seed.js,workout-data.js,workout-sessions.js,guided-workouts.js,performance-context.js,workout-actions.js}",
+      "maxDuration": 30
+    },
+    "api/sdk.js": {
+      "includeFiles": "node_modules/@supabase/supabase-js/dist/umd/supabase.js"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/server/:path*",
+      "destination": "/api/not-found"
+    },
+    {
+      "source": "/migrations/:path*",
+      "destination": "/api/not-found"
+    },
+    {
+      "source": "/node_modules/:path*",
+      "destination": "/api/not-found"
+    }
+  ],
+  "ignoreCommand": "node scripts/vercel-build-guard.cjs"
+}

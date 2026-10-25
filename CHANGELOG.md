@@ -1,3 +1,11 @@
+## 3.0.0 — Integration architecture (review candidate)
+
+- Shared synchronous/asynchronous workout actions with durable-before-success persistence.
+- Supabase identity and OAuth-backed, per-user trainer grants; default-deny application permissions.
+- PostgreSQL schema-7 JSONB authority, independent revisions, RLS and durable mutation receipts.
+- Explicit account/data modes, reviewed migration with read-back verification, retained local data and connected cache on signout.
+- No conversational trainer, voice, live adaptation or production rollout.
+
 # Changes
 
 ## 2.7.0 — Milestone 7 (preparation; not released)

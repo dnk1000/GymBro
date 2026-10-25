@@ -1,5 +1,5 @@
 // Domain actions: no document, window, event, controls, dialogs, or rendering.
-// Inject synchronous persistence so a failed write cannot commit candidate state.
+// Persistence may be synchronous or asynchronous; commit only after durable success.
 function createWorkoutActions({
   getState,
   setState,
@@ -40,26 +40,34 @@ function createWorkoutActions({
         ...details,
         state: getWorkoutState(),
       };
-    try {
-      const saved = persist(next);
+    function committed(saved) {
       if (!saved || saved.ok !== true)
         return failure(
           "PERSISTENCE_ERROR",
           saved?.errors || ["Changes were not saved."],
         );
+      // Persist first, commit second. setState is a trusted synchronous adapter.
+      setState(next);
+      return {
+        ok: true,
+        code: "OK",
+        errors: [],
+        ...details,
+        state: getWorkoutState(),
+      };
+    }
+    try {
+      const saved = persist(next, details);
+      if (saved && typeof saved.then === "function")
+        return Promise.resolve(saved).then(committed, (error) =>
+          failure("PERSISTENCE_ERROR", [error.message]),
+        );
+      return committed(saved);
     } catch (error) {
       return failure("PERSISTENCE_ERROR", [error.message]);
     }
-    // Persist first, commit second. UI effects happen only after this returns.
-    setState(next);
-    return {
-      ok: true,
-      code: "OK",
-      errors: [],
-      ...details,
-      state: getWorkoutState(),
-    };
   }
+
   const cleanText = (value) =>
     typeof value === "string" ? value.trim() : value;
   function record(input, previous) {
@@ -200,7 +208,7 @@ function createWorkoutActions({
     next.activeSessionId = null;
     return { sessionId: id, changes: ["sessions", "activeSessionId"] };
   }
-  return {
+  const actions = {
     ...createPerformanceSelectors(getWorkoutState),
     ...createGuidedActions({
       transaction,
@@ -473,4 +481,37 @@ function createWorkoutActions({
       });
     },
   };
+  let pending = false;
+  const selectors = new Set([
+    "getWorkoutState",
+    "getSession",
+    "getActiveSession",
+    "getGuidedWorkoutState",
+    "getExercisePerformanceContext",
+    "compareExercisePerformance",
+    "getTrainerWorkoutContext",
+  ]);
+  for (const [name, action] of Object.entries(actions)) {
+    if (selectors.has(name)) continue;
+    actions[name] = (...args) => {
+      if (pending)
+        return failure("PERSISTENCE_BUSY", [
+          "A save is in progress. Wait for its result.",
+        ]);
+      pending = true;
+      try {
+        const result = action(...structuredClone(args));
+        if (result && typeof result.then === "function")
+          return result.finally(() => {
+            pending = false;
+          });
+        pending = false;
+        return result;
+      } catch (error) {
+        pending = false;
+        throw error;
+      }
+    };
+  }
+  return actions;
 }

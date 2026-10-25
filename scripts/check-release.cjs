@@ -11,8 +11,8 @@ function checkRelease(root) {
   const version = vm.runInContext("APP_VERSION", runtime);
   assert.deepEqual(
     [version.major, version.minor, version.patch],
-    [2, 7, 0],
-    "Expected Milestone 7 application version 2.7.0",
+    [3, 0, 0],
+    "Expected V3.0 application version 3.0.0",
   );
   assert.ok(Object.isFrozen(version), "Canonical version must be immutable");
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
@@ -27,12 +27,12 @@ function checkRelease(root) {
     iso.replace("Z", ".000Z"),
     "Build must be a valid UTC date/time",
   );
-  assert.equal(version.version, `2.7.0-${b}`);
+  assert.equal(version.version, `3.0.0-${b}`);
   const schemaRuntime = vm.createContext({});
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);
-  assert.equal(schema, 7, "Milestone 7 must not increment the schema");
-  const release = read("V2_RELEASE.md");
+  assert.equal(schema, 7, "V3.0 must not increment the schema");
+  const release = read("V3_RELEASE.md");
   assert.ok(
     release.includes(`Application version: \`${version.version}\``),
     "Release artifact has a stale application version",
@@ -48,8 +48,8 @@ function checkRelease(root) {
   );
   assert.match(
     read("CHANGELOG.md"),
-    /^## 2\.7\.0\b/m,
-    "Changelog is missing Milestone 7",
+    /^## 3\.0\.0\b/m,
+    "Changelog is missing V3.0",
   );
   const html = read("index.html");
   assert.equal(

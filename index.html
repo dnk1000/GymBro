@@ -46,6 +46,37 @@
       </div>
     </header>
     <main>
+      <section class="card account-panel" aria-label="Account and data authority">
+        <strong id="authorityStatus">local-only</strong>
+        <details><summary>Account and trainer applications</summary>
+          <p id="accountStatus">Local-only GymBro works without a backend.</p>
+          <div class="formgrid">
+            <label>Email<input id="accountEmail" type="email" autocomplete="username"></label>
+            <label>Password<input id="accountPassword" type="password" autocomplete="current-password"></label>
+          </div>
+          <div class="account-controls">
+            <button onclick="accountSignIn(false)">Sign in</button><button onclick="accountSignIn(true)">Create account</button>
+            <button onclick="accountSignOut()">Sign out</button>
+            <button onclick="accountUseLocal()">Use local-only GymBro</button>
+            <button onclick="accountUseServer()">Use connected account data</button>
+            <button onclick="accountRefresh()">Refresh connected data</button>
+            <button onclick="accountPreview()">Preview local V2 import</button>
+            <button onclick="accountPreviewEmpty()">Preview empty connected account</button>
+            <button onclick="accountRetry()">Resolve pending save</button>
+          </div>
+          <p>Signing in never uploads local history. Signing out keeps the displayed connected dataset as a read-only cache. Local-only data remains separate.</p>
+          <div id="accountImport" hidden><p id="accountImportSummary"></p><button onclick="accountCommit()">Commit reviewed import and use verified connected data</button></div>
+          <p id="accountMessage" role="status"></p>
+          <div id="trainerConsent" hidden><h3 id="trainerConsentTitle"></h3><p id="trainerIdentityScopes"></p>
+            <label><input type="checkbox" id="scopeRead"> Read training data and trainer context</label>
+            <label><input type="checkbox" id="scopeWrite"> Write workouts</label>
+            <label><input type="checkbox" id="scopeHistory"> Separately allow historical corrections and deletions</label>
+            <p>No trainer permission permits account reset, complete restore, migration, or grant administration.</p>
+            <button onclick="accountConsent(true)">Authorize selected permissions</button><button onclick="accountConsent(false)">Deny</button>
+          </div>
+          <button onclick="accountGrants()">Show trainer authorizations</button><div id="trainerGrants"></div>
+        </details>
+      </section>
       <div id="storageNotice" class="notice status-bad" role="alert" hidden>
         <p id="storageMessage"></p>
         <p class="sub">
@@ -651,6 +682,8 @@
     <script src="ui-acronyms.js"></script>
     <script src="history-view.js"></script>
     <script src="guided-ui.js"></script>
+    <script src="connection-core.js"></script>
     <script src="app.js"></script>
+    <script src="account-ui.js"></script>
   </body>
 </html>
