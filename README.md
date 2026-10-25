@@ -10,7 +10,7 @@ Open `index.html` in a modern browser, or serve this directory locally:
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-There is no backend, account, API key, or application build. Keep `index.html`, `app.js`, `seed.js`, `workout-data.js`, `workout-sessions.js`, `workout-actions.js`, `storage.js`, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
+There is no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
 
 ## Data and backups
 
@@ -45,6 +45,9 @@ Session lifecycle actions were introduced programmatically in Milestone 2; Miles
 
 ```sh
 npm ci
+npm run check:syntax
+npm run check:release
+npm run check:diff
 npm test
 ```
 
@@ -107,3 +110,14 @@ Results contain exact exercise/unit context, ordered records, provenance, pain, 
 ## iPhone reliability
 
 Each successful workout action is persisted before it reports success; background/unload events do not save workouts. On page restoration or return to the foreground, GymBro checks for missed storage changes. A stale tab warns and pauses editing until deliberate reload; it never adopts or merges another tab’s data automatically. Unsaved form values remain transient and are not restored after reload. Use one editing tab at a time. See [the Milestone 6 audit](IPHONE_HARDENING.md) and [physical Safari checklist](REAL_PHONE_SMOKE_TEST.md#milestone-6--physical-iphone-acceptance-pending).
+
+## V2 production-delivery preparation (Milestone 7)
+
+The 2.7.0 candidate prepares completion of V2 trainer infrastructure; **M7 and V2 are not yet complete**. No AI/voice or backend is introduced. Use Node from `.nvmrc`; CI installs Chromium through the pinned playwright-core version and runs the complete suite plus syntax, release metadata and committed-range whitespace checks. The existing GitHub→Vercel static deployment path is preserved; CI does not deploy.
+
+- [V2 architecture and supported trainer APIs](V2_ARCHITECTURE.md)
+- [PRD compliance: implemented, V3, accepted limitations and actual discrepancies](PRD_COMPLIANCE.md)
+- [Production, backup, smoke-test and rollback procedure](PRODUCTION_DELIVERY.md)
+- [V2 release candidate and open acceptance gates](V2_RELEASE.md)
+
+M6 is merged at `7548553`; recorded physical Safari results remain outstanding. Preparation is authorized, but physical results, explicit PRD-gap disposition, a verified production JSON backup and user merge approval are required before M7 production delivery. Preview and production have separate storage origins. Do not infer personal-data safety from seeded preview data or Chromium tests.

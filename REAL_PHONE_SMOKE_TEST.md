@@ -97,3 +97,8 @@ Record **Pass / Fail / Not tested**, observations, failures and retest results i
 
 
 Milestone 6 acceptance update: the user accepted PR #7 and explicitly authorized merge. No device model, iOS/browser version, test date or individual physical-test outcomes were supplied; the unfilled checklist above remains unfilled and is not evidence of agent-run device testing. Application release: `2.6.0-20261023T220541Z`, application revision `c87ca06`.
+
+
+## Milestone 7 — release gate remains open
+
+The user authorized CI/documentation/release-engineering preparation before the missing M6 physical results are recorded. This does not waive physical acceptance, authorize merge/final production acceptance or declare V2 complete. Reuse the required M6 device/iOS/browser/build/commit/date and individual test rows above; record actual outcomes and resolve defects. Retest the M7 Help wording/scrolling on physical Safari if it changes. Chromium is not acceptance. Production backup and final production smoke are separate gates in [PRODUCTION_DELIVERY.md](PRODUCTION_DELIVERY.md); no new physical results are claimed here.
