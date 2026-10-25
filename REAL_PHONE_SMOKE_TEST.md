@@ -94,3 +94,6 @@ Record **Pass / Fail / Not tested**, observations, failures and retest results i
 - Additional physical findings/fixes/retest commit: pending. Fix any reported defects on the same milestone branch/PR.
 - Limitations: no cloud sync or offline shell; browser storage can be evicted or quota-limited; simultaneous localStorage writes lack atomic compare-and-swap; use one editing tab. Unsaved forms remain transient. Automated Chromium does not reproduce real phone suspension, OS termination, keyboard, safe-area or Safari chrome behavior.
 - Acceptance: **Pending all required physical checks and documented results.** Do not merge or declare the hardening milestone accepted based only on automated tests.
+
+
+Milestone 6 acceptance update: the user accepted PR #7 and explicitly authorized merge. No device model, iOS/browser version, test date or individual physical-test outcomes were supplied; the unfilled checklist above remains unfilled and is not evidence of agent-run device testing. Application release: `2.6.0-20261023T220541Z`, application revision `c87ca06`.
