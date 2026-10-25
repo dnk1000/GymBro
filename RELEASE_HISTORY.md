@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## In review
+
+`2.7.0-20261025T002624Z` · schema 7 · Milestone 7 on `v2/milestone-7-production-delivery`: CI, canonical release validation, architecture/API baseline, PRD audit and delivery/rollback preparation. Not merged, not released, and V2 is not complete. Physical iPhone acceptance and other release gates remain open; see [V2_RELEASE.md](V2_RELEASE.md).
+
 ## Milestone releases
 
 | Application release            | Data schema | Source and approval                                                                                                                                                                                                             | Changes                                                                                                                                                                                                                |

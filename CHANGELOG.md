@@ -1,5 +1,11 @@
 # Changes
 
+## 2.7.0 — Milestone 7 (preparation; not released)
+
+- Prepare GitHub PR/main CI with pinned Node/browser tooling, complete regressions, syntax, committed-range whitespace and canonical release checks; retain failed-test output.
+- Document the V2 trainer/API boundary, four-category PRD audit, accepted limitations, production backup/smoke/rollback procedure and pending V2 release artifact. Clarify Help without changing workout controls.
+- Keep schema 7 and all workout/domain modules unchanged. Physical iPhone results, PRD discrepancy disposition, verified production backup and explicit merge approval remain release gates. No production acceptance or V2 completion is claimed.
+
 ## 2.6.0 — Milestone 6 (preview; physical iPhone acceptance pending)
 
 - Detect missed cross-tab storage changes when a page becomes visible or is restored. Warn and pause stale writes without adopting new data, saving drafts, or overwriting committed state. Storage read failures require reload rather than offering an empty reset.

@@ -183,3 +183,12 @@ The app has no runtime package installation or build step. Serve the repository 
 - Preserve DOM-free guided/trainer/action APIs, schema 7, revision/request contracts and manual fallback. Any proposed persistence schema change requires explicit approval before implementation.
 - Maintain 16px mobile entry text and at least 44px primary workout action heights. Compact History icons retain their existing contract.
 - Physical iPhone Safari acceptance is mandatory and separate from automated Chromium. Record the actual device, iOS, browser, build, commit, date and individual outcomes in REAL_PHONE_SMOKE_TEST.md; leave unavailable results pending. No Milestone 7 without authorization.
+
+## Production delivery — Milestone 7
+
+- Follow PRODUCTION_DELIVERY.md, V2_ARCHITECTURE.md, PRD_COMPLIANCE.md and the current V2_RELEASE.md. CI runs the complete suite and npm run check:syntax/check:release/check:diff; committed-range whitespace matters even on clean CI checkouts. Use .nvmrc, npm ci and the lockfile-pinned browser.
+- Classify PRD requirements as implemented in V2, intentionally deferred to V3, accepted V2 limitation or actual V2 discrepancy. Future trainer reasoning/voice is V3; explicit underlying V2 action gaps must be reported, not silently deferred or implemented out of scope.
+- Preparation may proceed before physical acceptance. Do not merge M7, perform final production acceptance or declare M7/V2 complete until physical iPhone results and defects, production backup verification, PRD gap dispositions and explicit merge approval are resolved.
+- Keep schema 7 and workout/domain modules unchanged unless a verified production-blocking defect is separately approved. No AI, voice, transport, backend or speculative V3 infrastructure.
+- Vercel remains branch→Preview, accepted main→Production. CI does not deploy, and a green preview is not production acceptance. Verify required GitHub checks/Vercel settings; do not claim branch protection from inaccessible settings.
+- V2_RELEASE.md is a preparation artifact until the final production SHA/deployment/smoke and physical/backup gates are actually recorded. No release tag or V3 start is implied. Code rollback never automatically restores or downgrades browser data.
