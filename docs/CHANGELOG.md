@@ -1,5 +1,9 @@
 # Changes
 
+## 3.1.1 — Preview verification fix
+
+- Pass the pinned CLI's required `--linked` flag for metadata queries while retaining explicit Preview project targeting; use one read-only metadata query compatible with local prepared execution and hosted execution. No schema change.
+
 ## 3.1.0 — Infrastructure foundation (Preview candidate)
 
 - Issue #38: explicit Preview/Production project boundaries, fail-closed diagnostic configuration, pinned Supabase migration tooling and disposable SQL/RLS replay CI.

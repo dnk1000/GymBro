@@ -36,5 +36,7 @@ test("remote migration tools require an operator and an explicit reviewed apply 
 test("plan/list/verify support inspection without enabling an apply", () => {
   assert.ok(commandsFor("plan", env, revision)[0].includes("--dry-run"));
   assert.equal(commandsFor("list", env, revision)[0][0], "migration");
+  assert.ok(commandsFor("verify", env, revision)[0].includes("--linked"));
+  assert.ok(commandsFor("verify", env, revision)[0].includes(environments.preview.projectRef));
   assert.deepEqual(commandsFor("verify", env, revision)[0].slice(-2), ["--file", "supabase/verify-infrastructure.sql"]);
 });

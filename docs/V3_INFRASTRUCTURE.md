@@ -97,6 +97,6 @@ Migrations should be transactional where PostgreSQL permits. On failure inspect 
 
 ## Evidence
 
-Baseline: main `a0e9698`; staging showed **No tables or views** in `public` and **No migrations**. Future Production's **Deploy to production** was OFF. Vercel showed inherited URL/key and the old-branch-only flag. No credential values were recorded. Actual checks are in [V3_RELEASE.md](V3_RELEASE.md). Pending checks remain pending; mocked HTTP/local replay is not live integration. M0 physical-iPhone/personal-backup gates remain before workout migration.
+Baseline: main `a0e9698`; staging showed **No tables or views** in `public` and **No migrations**. Future Production's **Deploy to production** was OFF; staging's was ON and was disabled in #38, with the saved OFF state verified. Vercel initially showed inherited URL/key and an old-branch-only flag; #38 adds branch-only Preview overrides. No credentials are recorded in this document. Actual checks are in [V3_RELEASE.md](V3_RELEASE.md). Pending checks remain pending; mocked HTTP/local replay is not live integration. M0 physical-iPhone/personal-backup gates remain before workout migration.
 
 References: [Supabase migrations](https://supabase.com/docs/guides/local-development/database-migrations), [CLI](https://supabase.com/docs/reference/cli/supabase-db-push), [GitHub integration](https://supabase.com/docs/guides/deployment/branching/github-integration), [Vercel scopes](https://vercel.com/docs/environment-variables).

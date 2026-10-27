@@ -4,7 +4,7 @@ This file records accepted milestone releases and the preview builds that led to
 
 ## V3 infrastructure candidate — not yet accepted
 
-`3.1.0-20261027T212930Z`, workout schema 7, implements #38 alone. See [V3_RELEASE.md](V3_RELEASE.md) for Preview/CI evidence and [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) for environment/migration contracts. This is candidate lineage, not a shipped Production entry.
+`3.1.1-20261027T214344Z`, workout schema 7, implements #38 alone; initial Preview build was `3.1.0-20261027T212930Z`. See [V3_RELEASE.md](V3_RELEASE.md) for Preview/CI evidence and [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) for environment/migration contracts. This is candidate lineage, not a shipped Production entry.
 
 ## Delivered connection checkpoint and documentation organization
 

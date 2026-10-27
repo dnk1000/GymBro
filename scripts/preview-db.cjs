@@ -15,7 +15,7 @@ function commandsFor(action, env, revision) {
   const plan = ["db", "push", ...target, "--skip-vault", "--dry-run"];
   if (action === "plan") return [plan];
   if (action === "list") return [["migration", "list", ...target]];
-  if (action === "verify") return [["db", "query", ...target, "--file", "supabase/verify-infrastructure.sql"]];
+  if (action === "verify") return [["db", "query", "--linked", ...target, "--file", "supabase/verify-infrastructure.sql"]];
   if (!/^[a-f0-9]{40}$/.test(revision) || env.GYMBRO_DB_APPLY_REVISION !== revision)
     throw Error("Apply requires GYMBRO_DB_APPLY_REVISION equal to the reviewed full HEAD SHA.");
   return [plan, ["db", "push", ...target, "--skip-vault", "--yes"]];
