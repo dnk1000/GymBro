@@ -52,7 +52,7 @@ Required evidence normally includes:
 - links, paths, issue references and filenames;
 - confirmation that no runtime code, executable configuration, schema, or Production data changed.
 
-Do **not** manually rerun the full application regression suite, Vercel acceptance, or device tests solely for documentation changes. If CI triggers automatically, let it run, but Codex does not need to duplicate unrelated suites manually.
+Do **not** manually rerun the full application regression suite, Vercel acceptance, browser/device tests, or migration tests solely for documentation changes. If CI triggers automatically, let it run, but Codex does not need to duplicate unrelated suites manually.
 
 ### Level 2 — UI/behavioral
 
