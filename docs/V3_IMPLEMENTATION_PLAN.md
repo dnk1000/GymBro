@@ -49,97 +49,124 @@ The order below is recommended by dependency first, then product value. Independ
 
 ### Phase A — Infrastructure, ownership, identity and schema
 
-**#38 — V3 Infrastructure: Preview/Production Environment and Database Migration Pipeline**  
+**#38 — V3 Infrastructure: Preview/Production Environment and Database Migration Pipeline**
+
 Establish reproducible Preview/Production Supabase/Vercel boundaries, source-controlled database migrations, safe configuration/secrets handling and a disposable test strategy.
 
-**#27 — V3 Foundation: Recoverable User Access and Private Data Ownership**  
+**#27 — V3 Foundation: Recoverable User Access and Private Data Ownership**
+
 Provide sign-in/sign-out/recovery plus database-enforced user isolation/RLS. This issue does not migrate personal workout history.
 
-**#16 — V3.0: Exercise Identity Architecture**  
+**#16 — V3.0: Exercise Identity Architecture**
+
 Introduce immutable canonical exercise IDs, aliases/provenance and the separation between intrinsic exercise metadata and contextual template/session role.
 
-**#25 — Data Model: Distinguish Session, Exercise, and Set Notes**  
+**#25 — Data Model: Distinguish Session, Exercise, and Set Notes**
+
 Define note scope before the relational schema is finalized. Preserve historical text conservatively; do not guess old note scope.
 
-**#39 — V3 Data: Authoritative Relational Schema and Persistence Boundary**  
+**#39 — V3 Data: Authoritative Relational Schema and Persistence Boundary**
+
 Define/implement the V3 relational model for users, exercises/aliases, templates, sessions/snapshots, sets, bodyweights, guided/request state, imports, preferences and notes. Establish one persistence boundary under the existing domain actions.
 
-**#40 — V3 Data: Concurrency, Revision, and Retry Contract**  
+**#40 — V3 Data: Concurrency, Revision, and Retry Contract**
+
 Define stale-write, optimistic revision, retry/idempotency, delayed-response and two-device behavior before migration acceptance.
 
 ### Phase B — Backup/recovery semantics and Preview migration
 
-**#41 — V3 Data: Cloud Backup, Restore, Reset, and Account Data Lifecycle**  
+**#41 — V3 Data: Cloud Backup, Restore, Reset, and Account Data Lifecycle**
+
 Define cloud-authority export, complete restore, history merge, local recovery-copy cleanup, cloud reset and account/data deletion semantics.
 
-**#28 — V3 Foundation: Full Workout Migration and Preview Parity Verification**  
+**#28 — V3 Foundation: Full Workout Migration and Preview Parity Verification**
+
 Migrate a deliberate verified test copy onto the established V3 platform and prove complete data/relationship/behavior parity. This issue no longer owns infrastructure, target schema design or concurrency-policy design.
 
-**#42 — V3 Operations: Diagnostics and Recoverable Error States**  
+**#42 — V3 Operations: Diagnostics and Recoverable Error States**
+
 Provide supportable failure states for auth, network, database, stale writes, migration/schema mismatches and failed initial loads without adding broad analytics/telemetry.
 
 ### Phase C — Controlled Production cutover
 
-**#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**  
+**#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**
+
 After accepted Preview migration and explicit Production approval, make Supabase/PostgreSQL the sole active workout store. Do not keep indefinite dual writes or automatic local-only fallback. Retain legacy local data only as deliberately managed recovery material until cleanup is separately approved.
 
 ### Phase D — Exercise/catalog/import maturity
 
-**#17 — V3.1: Exercise Catalog Management**  
+**#17 — V3.1: Exercise Catalog Management**
+
 Canonical metadata editing, aliases, archive/restore, duplicate suggestions and explicit safe Merge Exercises workflow.
 
-**#18 — V3.2: Smart Import Resolution**  
+**#18 — V3.2: Smart Import Resolution**
+
 Exact canonical/alias matches map automatically; unknown/ambiguous labels require review. Approved mappings become remembered aliases. Fuzzy similarity is suggestion-only.
 
-**#35 — Exercises: Move Taxonomy and Categorization out of Program**  
+**#35 — Exercises: Move Taxonomy and Categorization out of Program**
+
 Make Exercises the owner of taxonomy/catalog metadata and keep Program focused on template structure.
 
-**#23 — Exercise: Detail and Performance History View**  
+**#23 — Exercise: Detail and Performance History View**
+
 One canonical exercise gets one longitudinal history/detail experience.
 
-**#37 — Exercises: Mobile-Friendly Library Layout**  
+**#37 — Exercises: Mobile-Friendly Library Layout**
+
 Use a phone-friendly card/list presentation rather than squeezing the desktop table into narrow widths.
 
 ### Phase E — History and dashboard/program usability
 
-**#20 — History: Collapsible Workout Sessions**  
+**#20 — History: Collapsible Workout Sessions**
+
 Collapsed-by-default session/date cards with concise summaries.
 
-**#21 — History: Group Sets by Exercise with Progressive Disclosure**  
+**#21 — History: Group Sets by Exercise with Progressive Disclosure**
+
 Exercise-level summaries inside expanded sessions, with individual set rows revealed only when needed.
 
-**#36 — History: Mobile-Friendly Set Layout**  
+**#36 — History: Mobile-Friendly Set Layout**
+
 Phone-friendly stacked set presentation while preserving efficient desktop tables.
 
-**#22 — History: Search and Filters**  
+**#22 — History: Search and Filters**
+
 Exercise/workout/date filtering, with optional reliable pain/discomfort filtering.
 
-**#24 — History: Friendlier Legacy and Source Presentation**  
+**#24 — History: Friendlier Legacy and Source Presentation**
+
 Keep provenance true but reduce internal `legacy/sessionless` language in the normal user experience.
 
-**#26 — History: Deterministic Session Highlights and Last-Time Comparison**  
+**#26 — History: Deterministic Session Highlights and Last-Time Comparison**
+
 Surface factual highlights and comparable prior performance without an AI provider.
 
-**#32 — Dashboard: Desktop Layout and Information Hierarchy**  
+**#32 — Dashboard: Desktop Layout and Information Hierarchy**
+
 Use desktop space better, simplify the header, remove low-value KPI cards, align charts and improve deterministic Problems/Flags copy while preserving the good phone layout.
 
-**#33 — Backlog: Revisit Performance Calculation and Dashboard Metric**  
+**#33 — Backlog: Revisit Performance Calculation and Dashboard Metric**
+
 Analysis-only decision issue: document the current calculation, define what question the metric should answer and create follow-on implementation issue(s) if the metric changes.
 
-**#34 — Program: Improve Split and Template Editing UX**  
+**#34 — Program: Improve Split and Template Editing UX**
+
 Clarify split/template selection and selected 30/60-minute context while preserving existing functionality discovered during implementation.
 
 ### Phase F — Remaining live-workout behavior
 
-**#30 — V3 Core: Complete Live-Workout Reordering and Duration Adaptation**  
+**#30 — V3 Core: Complete Live-Workout Reordering and Duration Adaptation**
+
 Persist temporary reordering and changes to the remaining workout/duration while preserving original plan intent, completed work and permanent templates.
 
 ### Phase G — Release/version decision and V3 acceptance
 
-**#43 — V3 Release: Version Numbering and Issue-to-Release Mapping Decision**  
+**#43 — V3 Release: Version Numbering and Issue-to-Release Mapping Decision**
+
 Resolve the collision between capability labels and application `3.x` minor versions. Issue order and release numbers remain independent; multiple accepted issues may ship in one minor release.
 
-**#31 — V3 Release: Core Product Completeness and Acceptance Review**  
+**#31 — V3 Release: Core Product Completeness and Acceptance Review**
+
 Review selected V3 scope, migration integrity, account recovery/isolation, cloud authority, catalog/import behavior, backup/recovery, core UX/workout behavior, diagnostics and physical iPhone evidence. Close V3 only when included issues have evidence or explicit disposition.
 
 ## Recommended execution sequence
