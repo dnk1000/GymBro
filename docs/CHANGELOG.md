@@ -1,5 +1,9 @@
 # Changes
 
+## 3.2.1 — callback verification feedback
+
+Report an actionable retry state if the SDK cannot verify an emailed session. No schema or ownership-policy changes.
+
 ## 3.2.0 — account access candidate
 
 Issue #27: Preview email-code sign-in, sign-out and recovery; database-enforced private access markers. Workouts remain local, schema 7. Production rollout and acceptance remain pending.

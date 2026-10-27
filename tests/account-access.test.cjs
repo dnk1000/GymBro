@@ -132,7 +132,7 @@ test('an expired callback offers a fresh link and never displays authenticated a
 test('a failed server identity verification never presents the callback as signed in', async t => {
   const f=await fixture(t,{userError:true});
   await f.page.goto(f.callback);
-  await f.page.waitForFunction(()=>document.getElementById('accountStatus').textContent.startsWith('Account request failed'));
+  await f.page.waitForFunction(()=>document.getElementById('accountStatus').textContent.includes('could not be verified'));
   assert.equal(await f.page.locator('#accountIdentity').textContent(),'Signed out');
   assert.equal(await f.page.locator('#accountCheck').isVisible(),false);
 });

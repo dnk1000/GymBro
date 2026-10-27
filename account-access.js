@@ -4,6 +4,7 @@
   const card = el("accountAccess"), status = el("accountStatus");
   const email = el("accountEmail");
   const callbackError = /(?:^#|&)error=/.test(location.hash);
+  const callbackSession = /(?:^#|&)access_token=/.test(location.hash);
   let client, config, initializing, busy = false, user = null, generation = 0, refreshPending = false;
 
   async function timedFetch(url, options = {}) {
@@ -64,8 +65,11 @@
   function refresh() {
     if (busy) { refreshPending = true; return; }
     return run(async () => {
-      await restore(); status.textContent = user ? "Account restored." : "Request an email link to sign in or recover access.";
+      await restore(); status.textContent = restoredMessage();
     });
+  }
+  function restoredMessage() {
+    return user ? "Account restored." : callbackError ? "That sign-in link is invalid or expired. Request a fresh link." : callbackSession ? "Sign-in could not be verified. Check your connection, then refresh account or request a fresh link." : "Request an email link to sign in or recover access.";
   }
   async function initialize() {
     if (initializing || !/^https?:$/.test(location.protocol)) return;
@@ -102,7 +106,7 @@
         }
       });
       await run(async () => {
-        await restore(); status.textContent = user ? "Account restored." : callbackError ? "That sign-in link is invalid or expired. Request a fresh link." : "Request an email link to sign in or recover access.";
+        await restore(); status.textContent = restoredMessage();
       });
     } catch { status.textContent = "Account access could not load. Reopen Data to retry. Workouts remain available."; }
     finally { initializing = !!client; }
