@@ -2,13 +2,15 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
-## Current connection checkpoint candidate
+## Delivered connection checkpoint and documentation organization
 
 - Application version: `2.7.2-20261027T152907Z`; data schema: `7`.
 - Branch: [v3/supabase-connection-check](https://github.com/dnk1000/GymBro/tree/v3/supabase-connection-check), from main `38624d46268b638b78a37212453b075576f93cc2`.
 - The subsequent standalone documentation baseline `e5f87a538dc2be8212d723024718e283816c748b` is incorporated; accepted workflow/quarantine guidance remains intact with only the narrow diagnostic exception documented.
 - Optional Preview/local diagnostic only: one separate test value, anonymous Auth and owner-only RLS; normal workout persistence remains local. No archived V3 code is merged.
-- Live Save -> reload -> fresh Read and matching Supabase row were verified on 2026-10-27 after user-applied setup. RLS is enabled and the expected policies are present. [PR #12](https://github.com/dnk1000/GymBro/pull/12) remains unmerged; no workout migration or Production configuration change. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md).
+- Live Save -> reload -> fresh Read and matching Supabase row were verified on 2026-10-27 after user-applied setup. RLS is enabled and the expected policies are present. [PR #12](https://github.com/dnk1000/GymBro/pull/12) merged at `9db26f36626a0073d4939b28e2f93d4e54953e17`; its final-head [CI run](https://github.com/dnk1000/GymBro/actions/runs/40536834968) passed. The checkpoint adds no workout migration and remains disabled in Production. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md).
+- [PR #13](https://github.com/dnk1000/GymBro/pull/13) moved project guides into `docs/`, adjusted links and release-tool paths, and merged at `ffd556e154ec19752c9f44031a95890d5954f200`. App build/schema did not change. [PR CI](https://github.com/dnk1000/GymBro/actions/runs/40539985324) and [main CI](https://github.com/dnk1000/GymBro/actions/runs/40540523451) passed; [Vercel deployment](https://vercel.com/dnk-9999/gymbro/HGXbWFL3JAXcQBm6vkXyf5wxbkUk) reports success. M0 read-only checks confirmed the existing Production homepage/version asset return HTTP 200 and serve 2.7.2. They are not physical-device or personal-data smoke evidence.
+- [V3 M0](V3_M0_SCOPE_AND_ACCEPTANCE.md) records approved future cloud scope and the explicit deferral of physical-iPhone/personal-backup evidence through M1 Preview-only work to before M2 migration testing. No V3 application build is produced by this documentation milestone.
 
 ## Delivered workflow verification patch
 

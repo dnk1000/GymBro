@@ -1,5 +1,13 @@
 # V2 PRD compliance audit — Milestone 7 preparation
 
+## Current disposition — October 27, 2026
+
+Accepted main is `ffd556e154ec19752c9f44031a95890d5954f200`: PR #12's diagnostic and PR #13's documentation move are merged, current-main CI passed and Vercel reports a successful deployment. Production serves application `2.7.2-20261027T152907Z`, schema 7. Earlier statements below about unmerged preparation are historical audit evidence, not current branch/deployment status.
+
+The user explicitly assigned temporary exercise reordering and live-session duration/remaining-plan adaptation to V3 M4, accepting their absence for the intervening baseline milestones. Their historical classifications remain intact; neither feature is implemented by this disposition. Physical-iPhone and verified personal JSON-backup evidence remains missing, with explicit deferral through Preview-only M1 account work and a requirement to satisfy both before M2 migration testing. V2 final acceptance is not claimed. See [M0 scope and acceptance](V3_M0_SCOPE_AND_ACCEPTANCE.md) for approved cloud/access scope, exact remaining evidence and M1 readiness.
+
+## Historical audit
+
 Current scope: standalone GymBro on GitHub `main`, with Git branches/PRs, GitHub CI and Vercel previews/production. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** Accepted V2 trainer evidence/context, guided actions and manual interchange remain supported without an external runtime. PR #9's integration experiment is abandoned and must not be imported into `main`.
 
 The matrix below is a historical Milestone 7 audit, retained without rewriting its classifications or evidence. Its phrase "intentionally deferred to V3" records the roadmap at that time; it is not a current schedule or active integration commitment. The standalone scope does not silently close previously recorded domain discrepancies, physical-device, backup or final acceptance gaps.
