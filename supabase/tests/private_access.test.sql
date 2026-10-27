@@ -35,7 +35,7 @@ select is_empty('select * from public.gymbro_private_access', 'anonymous Auth id
 select is_empty('delete from public.gymbro_private_access returning *', 'anonymous Auth identity cannot delete');
 select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
 select throws_ok($$insert into public.gymbro_private_access values ('44444444-4444-4444-8444-444444444444', 'anonymous')$$, '42501',
-  'new row violates row-level security policy for table "gymbro_private_access"', 'anonymous Auth insert denied');
+  'new row violates row-level security policy "private_access_permanent" for table "gymbro_private_access"', 'anonymous Auth insert denied');
 select set_config('request.jwt.claims', '{}', true);
 select is_empty('select * from public.gymbro_private_access', 'missing permanent claim fails closed');
 reset role;
