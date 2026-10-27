@@ -11,8 +11,8 @@ function checkRelease(root) {
   const version = vm.runInContext("APP_VERSION", runtime);
   assert.deepEqual(
     [version.major, version.minor, version.patch],
-    [2, 7, 1],
-    "Expected workflow verification application version 2.7.1",
+    [2, 7, 2],
+    "Expected Preview connection checkpoint application version 2.7.2",
   );
   assert.ok(Object.isFrozen(version), "Canonical version must be immutable");
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
@@ -27,7 +27,7 @@ function checkRelease(root) {
     iso.replace("Z", ".000Z"),
     "Build must be a valid UTC date/time",
   );
-  assert.equal(version.version, `2.7.1-${b}`);
+  assert.equal(version.version, `2.7.2-${b}`);
   const schemaRuntime = vm.createContext({});
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);
@@ -48,8 +48,8 @@ function checkRelease(root) {
   );
   assert.match(
     read("CHANGELOG.md"),
-    /^## 2\.7\.1\b/m,
-    "Changelog is missing the workflow verification patch",
+    /^## 2\.7\.2\b/m,
+    "Changelog is missing the Preview connection checkpoint",
   );
   const html = read("index.html");
   assert.equal(

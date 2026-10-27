@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "start": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "dev:probe": "node --env-file-if-exists=.env.local scripts/serve-probe.cjs",
     "test": "node --test tests/*.test.cjs",
     "check:syntax": "node scripts/check-syntax.cjs",
     "check:release": "node scripts/check-release.cjs",

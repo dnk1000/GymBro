@@ -8,6 +8,8 @@ GitHub `main` is the only authoritative code baseline. Fetch and inspect it befo
 
 The current focus is standalone GymBro and its accepted V2 functionality. No Supabase/PostgreSQL persistence, OAuth, MCP, provider connection, account UI or external trainer runtime is active or required. Do not reintroduce the abandoned implementation from PR #9 or its `v3/integration-architecture` branch. Keep that branch unmodified as historical reference until separately authorized for deletion; do not push new work to it. See PRODUCTION_DELIVERY.md for manual staging quarantine.
 
+User-authorized exception: the optional Preview/local Supabase connection checkpoint in SUPABASE_CONNECTION_TEST.md may store/read one short diagnostic value with a separate anonymous test identity and owner-only RLS. It must remain disabled in Production and must never migrate or replace workout localStorage, add mandatory accounts or reintroduce the abandoned integration. Live setup/acceptance and any production merge remain explicit separate steps.
+
 External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** This scope supersedes older roadmap wording below and in historical milestone records. Preserve accepted workout actions, sessions, guidance, trainer evidence/context, manual ChatGPT Inbox/interchange, history, backups, tests, release tooling and CI. Never remove functionality merely because a name mentions trainer, context or ChatGPT.
 
 ## Product and scope

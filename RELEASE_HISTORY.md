@@ -2,12 +2,20 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
-## Current workflow verification candidate
+## Current connection checkpoint candidate
+
+- Application version: `2.7.2-20261027T152907Z`; data schema: `7`.
+- Branch: [v3/supabase-connection-check](https://github.com/dnk1000/GymBro/tree/v3/supabase-connection-check), from main `38624d46268b638b78a37212453b075576f93cc2`.
+- The subsequent standalone documentation baseline `e5f87a538dc2be8212d723024718e283816c748b` is incorporated; accepted workflow/quarantine guidance remains intact with only the narrow diagnostic exception documented.
+- Optional Preview/local diagnostic only: one separate test value, anonymous Auth and owner-only RLS; normal workout persistence remains local. No archived V3 code is merged.
+- Live Save -> reload -> fresh Read and matching Supabase row were verified on 2026-10-27 after user-applied setup. RLS is enabled and the expected policies are present. [PR #12](https://github.com/dnk1000/GymBro/pull/12) remains unmerged; no workout migration or Production configuration change. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md).
+
+## Delivered workflow verification patch
 
 - Application version: `2.7.1-20261027T142145Z`; data schema: `7`.
 - Branch: [v2/patch-2.7.1-workflow-verification](https://github.com/dnk1000/GymBro/tree/v2/patch-2.7.1-workflow-verification), from main `d2e6223f5d6020cb63c249ade4c02acaa7fe7cbd`.
 - Scope: canonical version/build, matching version-check expectations and release notes only. The PR records its exact tested revision and hosted CI/preview results.
-- Acceptance: preview candidate; merge approval and production verification pending. This patch does not close the outstanding V2 acceptance evidence or start the Supabase migration.
+- Delivery: [PR #11](https://github.com/dnk1000/GymBro/pull/11), approved and merged at `38624d46268b638b78a37212453b075576f93cc2`; main CI and automatic Vercel production deployment passed. Live smoke at the usual production origin passed in a disposable context, including export/restore/export. Personal data and physical iPhone acceptance remain separately unverified. This patch does not close the outstanding V2 acceptance evidence or start the Supabase migration.
 
 ## Milestone releases
 

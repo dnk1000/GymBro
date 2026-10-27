@@ -6,9 +6,13 @@ A local-first, mobile-friendly personal workout log with an editable five-workou
 
 GitHub `main` is the authoritative GymBro source. Start new work from freshly fetched `main`, make changes on a feature branch, and review them through a GitHub pull request. GitHub Actions runs CI; Vercel supplies feature previews and the existing production deployment from approved merges to `main`. Do not merge without explicit approval. A developer checkout is a working copy of the repository, not a separate source of truth or application-hosting environment.
 
-The current product is the standalone GymBro application. No Supabase, PostgreSQL, OAuth, MCP server, external trainer API, provider login, OpenAI key, or ChatGPT-hosted/provider-hosted GymBro runtime is part of the supported application. ChatGPT Inbox remains manual JSON interchange and requires no provider account.
+The current product is the standalone GymBro application. Normal workout operation requires no Supabase, PostgreSQL, OAuth, MCP server, external trainer API, provider login, OpenAI key, or ChatGPT-hosted/provider-hosted GymBro runtime. ChatGPT Inbox remains manual JSON interchange and requires no provider account. The only authorized external test is the optional Preview connection checkpoint below.
 
 External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The unmerged integration experiment in [PR #9](https://github.com/dnk1000/GymBro/pull/9) is abandoned; its branch is retained temporarily as historical reference and must not be merged or used for deployments. See [deployment and quarantine instructions](PRODUCTION_DELIVERY.md#abandoned-integration-quarantine).
+
+## Optional Supabase connection test
+
+The current Preview checkpoint adds only a one-value connection diagnostic in Data. It never uploads or migrates workouts; localStorage remains authoritative. Production always disables the test. Follow [Supabase/Vercel setup and manual verification](SUPABASE_CONNECTION_TEST.md) for the isolated test table, Preview variables and Save -> reload -> Read check. Ordinary static use remains supported. The pinned diagnostic client is loaded only after an enabled test action; no app build or CDN is required.
 
 ## Run
 
@@ -18,7 +22,7 @@ Open `index.html` in a modern browser, or serve this directory locally:
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-There is no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
+Normal workout operation needs no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. The optional enabled diagnostic additionally uses its public configuration route, vendored SDK and separate anonymous test identity. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is needed for development tests or the optional local diagnostic server.
 
 ## Data and backups
 
