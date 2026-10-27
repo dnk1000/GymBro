@@ -208,9 +208,11 @@ Do not weaken assertions, remove validation, or delete tests merely to obtain gr
 
 ## Version/release policy
 
-Application version format is `MAJOR.MINOR.PATCH-BUILD` with a committed UTC timestamp build. `app-version.js` is the canonical application-version source. Data schema version is independent.
+Follow [docs/VERSION_POLICY.md](docs/VERSION_POLICY.md), the issue #43 decision, for V3 versioning. Keep `MAJOR.MINOR.PATCH-BUILD`: product generation, accepted release increment, non-feature bugfix/non-functional release, and committed UTC timestamp. `app-version.js` remains the only canonical application-version source; data schemas and migration identifiers are independent.
 
-The older M0 plan mapped milestone numbers directly to V3 minor versions. The issue-driven workflow now separates issue order from release numbering. Do not assign concrete V3 release numbers until the release mapping is explicitly decided; never create two meanings for the same `3.x` version.
+The first planned V3 release is `3.1.0-BUILD` for #38 infrastructure foundation alone. This mapping does not authorize starting #38 or a deployment. One or several accepted issues may form a release only through an explicit approved mapping. The `V3.0`, `V3.1` and `V3.2` prefixes on #16, #17 and #18 are capability labels, not application release numbers. This supersedes the older M0 milestone-to-minor mapping.
+
+Documentation-only and development-only tooling changes do not bump the app or BUILD. New deployable builds receive a committed UTC BUILD; fixes within a release increment PATCH. Reload/redeployment of the same build retains its version. Keep release-check expectations aligned with the actual canonical build; the first V3 code PR must update the current V2-specific expectations and tests without weakening checks.
 
 Update `docs/RELEASE_HISTORY.md` for accepted shipped releases with actual application version, schema, revision/PR, and meaningful evidence. Do not record previews or unperformed physical tests as accepted Production results.
 

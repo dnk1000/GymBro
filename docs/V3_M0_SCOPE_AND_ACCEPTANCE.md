@@ -2,6 +2,8 @@
 
 Decision date: October 27, 2026 (America/New_York).
 
+**Later version-policy decision:** [issue #43 / VERSION_POLICY.md](VERSION_POLICY.md) supersedes only this record's milestone-to-minor mapping. The first planned `3.1.0-BUILD` now maps to #38 infrastructure foundation alone, not M1/#27 account access. The original approval below remains historical evidence; its storage, backup and physical-device gates are unchanged. Use current GitHub issues for implementation scope.
+
 **M0 product decisions and documentation work: complete.** The user explicitly approved the scope below, connectivity-required saves, and deferral of physical-iPhone/personal-backup gates through M1 Preview-only work to before M2 migration testing. Documentation delivery remains subject to PR review/merge. This record does not declare V2 physically accepted or authorize execution of M1 in the M0 task.
 
 **M1 readiness:** ready for a separately requested Preview-only account milestone after the M0 record is accepted into main. The user must explicitly launch M1; no account implementation, live configuration or production change was performed in M0. M2 remains blocked until its deferred evidence gates are satisfied.

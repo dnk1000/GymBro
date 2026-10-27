@@ -163,7 +163,7 @@ Persist temporary reordering and changes to the remaining workout/duration while
 
 **#43 — V3 Release: Version Numbering and Issue-to-Release Mapping Decision**
 
-Resolve the collision between capability labels and application `3.x` minor versions. Issue order and release numbers remain independent; multiple accepted issues may ship in one minor release.
+The user-approved [version policy](VERSION_POLICY.md) separates capability labels from application `3.x` minor releases and maps the first planned `3.1.0-BUILD` to #38 infrastructure foundation alone. Documentation delivery still requires PR acceptance; no implementation or deployment follows automatically.
 
 **#31 — V3 Release: Core Product Completeness and Acceptance Review**
 
@@ -283,9 +283,9 @@ The next trainer generation should be planned against the stable V3 database/dom
 
 ## Version numbering
 
-The earlier M0 plan mapped milestone numbers directly to application versions (`3.1`, `3.2`, etc.). The issue-driven workflow deliberately separates implementation-unit order from release numbering.
+Follow [VERSION_POLICY.md](VERSION_POLICY.md), the issue #43 decision, in place of the earlier M0 milestone-to-minor mapping. MINOR is an accepted release increment; one or several accepted issues may ship under an explicitly approved mapping.
 
-Until #43 is accepted, do not assign a concrete V3 application minor version merely because an issue title contains `V3.0`, `V3.1`, or `V3.2`. Those exercise issue titles are capability labels inherited from product discussion, not automatic release numbers.
+The first planned application release is `3.1.0-BUILD` for #38 infrastructure foundation alone. #27 and later issues are not bundled into it or assigned another minor here. The `V3.0/#16`, `V3.1/#17`, and `V3.2/#18` titles remain inherited capability labels, not application-release numbers. This decision changes no application build or data schema and does not start another issue.
 
 ## Execution rule
 

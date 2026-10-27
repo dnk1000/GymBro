@@ -141,6 +141,10 @@ Product generations describe architectural/product eras, not individual issues.
 
 Minor/patch application releases may bundle one or several accepted issues. Do not assume one issue equals one release.
 
+Use [VERSION_POLICY.md](VERSION_POLICY.md) for version components, BUILD changes, capability-label distinctions and approved release mappings. Issue #43 assigns the first planned `3.1.0-BUILD` to #38 infrastructure foundation alone. Other issues need their own release mapping; selecting a version does not authorize implementation, merge or deployment. Documentation-only work leaves the canonical application version unchanged.
+
+For each deployable code PR, identify its approved release mapping and update `app-version.js`, applicable release records and release-check expectations together. Keep Preview candidates distinct from accepted releases. The first V3 code PR must replace the checker's current V2-specific expectations with the actual V3 build/record and update focused tests while preserving all integrity checks.
+
 ## Documentation ownership
 
 Use documents for durable cross-cutting contracts and history:
@@ -152,6 +156,7 @@ Use documents for durable cross-cutting contracts and history:
 - `docs/CURRENT_ARCHITECTURE.md` — deployed V2 versus approved V3 target architecture.
 - `docs/V3_IMPLEMENTATION_PLAN.md` — ordered V3 phase/backlog view and dependencies.
 - `docs/RELEASE_HISTORY.md` — accepted shipped releases and evidence.
+- `docs/VERSION_POLICY.md` — application-version semantics and approved issue-to-release mappings; `app-version.js` remains the canonical build source.
 - milestone/architecture documents — historical or subsystem-specific contracts; retain their historical context rather than rewriting the past.
 
 When an issue changes a cross-cutting contract, update the relevant durable document in the same PR. Do not duplicate the full issue body into several documents.

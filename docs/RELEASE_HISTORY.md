@@ -50,7 +50,7 @@ The initial session-model extraction was [1062a60](https://github.com/dnk1000/Gy
 
 ## Compatibility and maintenance
 
-- Use MAJOR.MINOR.PATCH-BUILD: product generation, milestone, non-feature/bugfix release, committed UTC build timestamp.
+- Use MAJOR.MINOR.PATCH-BUILD. Historical V2 MINOR values represented milestones; V3 MINOR represents an accepted release increment under [VERSION_POLICY.md](VERSION_POLICY.md). Issue #43's planned `3.1.0` mapping is not a shipped release entry. PATCH identifies non-feature bugfix/non-functional releases; BUILD is a committed UTC timestamp.
 - Data schema 5 upgrades conservatively to 6; legacy sets stay sessionless with their original fields and IDs. Keep the storage key `daveGymTrackerV1`.
 - Schema 6 backups include sessions and active state. `appVersion` identifies the exporting build; the existing `version` field controls data compatibility. Older backups without application metadata remain supported. Version-5 applications cannot read schema-6 databases; retain pre-upgrade backups rather than forcing a downgrade.
 - Documentation-only release-history updates do not change the application version or schema.

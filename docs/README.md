@@ -12,6 +12,8 @@ This directory contains both **current authorities** and **historical milestone 
 6. Root [AGENTS.md](../AGENTS.md) — mandatory repository/Codex rules.
 7. Root [README.md](../README.md) — concise current product/run/data summary.
 
+For application numbering and release mapping, use [VERSION_POLICY.md](VERSION_POLICY.md), the issue #43 decision. It supersedes older milestone-to-minor wording; `app-version.js` remains the canonical application-version source.
+
 For new implementation work, the **target GitHub issue is the executable specification**. Documents provide durable cross-cutting rules and context; a roadmap paragraph alone does not authorize implementation.
 
 ## Current subsystem contracts
