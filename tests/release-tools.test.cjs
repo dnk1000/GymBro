@@ -34,21 +34,21 @@ function replace(dir, file, change) {
 
 test("current release metadata validates independently from historical version references", () => {
   const result = checkRelease(root);
-  assert.match(result.version, /^2\.7\.0-\d{8}T\d{6}Z$/);
+  assert.match(result.version, /^2\.7\.1-\d{8}T\d{6}Z$/);
   assert.equal(result.schema, 7);
 });
 
 test("stale current release documentation fails validation", (t) => {
   for (const file of ["V2_RELEASE.md", "RELEASE_HISTORY.md", "CHANGELOG.md"]) {
     const dir = releaseCopy(t);
-    replace(dir, file, (source) => source.replaceAll("2.7.0", "2.6.0"));
+    replace(dir, file, (source) => source.replaceAll("2.7.1", "2.7.0"));
     assert.throws(() => checkRelease(dir), undefined, file);
   }
 });
 
 test("runtime-generated or invalid UTC build identifiers are rejected", (t) => {
   for (const replacement of [
-    '["20261025T002624Z"].join("")',
+    '["20261027T142145Z"].join("")',
     '"20261301T250000Z"',
   ]) {
     const dir = releaseCopy(t);
