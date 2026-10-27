@@ -17,6 +17,13 @@ select jsonb_build_object(
     'grants', (select coalesce(jsonb_agg(g order by grantee, privilege_type), '[]'::jsonb)
       from (select grantee, privilege_type from information_schema.role_table_grants
         where table_schema = 'public' and table_name = 'gymbro_private_access') g)),
+  'exercise_identity', jsonb_build_object(
+    'tables', (select coalesce(jsonb_agg(t order by relname), '[]'::jsonb)
+      from (select relname, relrowsecurity from pg_class where oid in
+        (to_regclass('public.gymbro_exercises'), to_regclass('public.gymbro_exercise_aliases'))) t),
+    'policies', (select coalesce(jsonb_agg(p order by tablename, policyname), '[]'::jsonb)
+      from (select tablename, policyname, permissive, roles, cmd, qual, with_check from pg_policies
+        where schemaname = 'public' and tablename in ('gymbro_exercises', 'gymbro_exercise_aliases')) p)),
   'grants', (select coalesce(jsonb_agg(g order by grantee, privilege_type), '[]'::jsonb)
     from (select grantee, privilege_type from information_schema.role_table_grants
       where table_schema = 'public' and table_name = 'gymbro_connection_probe') g)

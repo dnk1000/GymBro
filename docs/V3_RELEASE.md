@@ -1,10 +1,16 @@
-# V3 account-access release candidate
+# V3 exercise-identity release candidate
 
 Release status: **preparation**
-Application version: `3.2.2-20261027T225348Z`
+Application version: `3.3.0-20261027T233414Z`
 Data schema: `7`
 
-Issue #27 only, based on accepted main `1631253ba092af2ad7e3a017ccdcbb40fb5dd0cf`. The user approved 3.2.0 for #27 on October 27, 2026. See [account contract and evidence](V3_ACCOUNT_ACCESS.md). No workout migration, Production schema/data operation, merge or physical iPhone acceptance is claimed.
+Issue #16 only, based on accepted main `b40156bd943d230bdfa2e636390b85f5be1fd639`; branch `codex/issue-16-exercise-identity`. The user approved 3.3.0 for #16 on October 27, 2026. See [identity contract](EXERCISE_IDENTITY.md). Identity document version 1 and SQL migration `20261027233000` are independent of the unchanged active workout schema 7.
+
+Level 3 evidence: focused identity tests passed 10/10; full local regression passed 177/177 using desktop Chrome with disposable localhost storage. The initial sandboxed full run failed due to localhost/temp-Git restrictions; the authorized unsandboxed rerun passed. Local Supabase start was unavailable, so local SQL replay is not claimed. Staging dry-run succeeded and listed only the new migration. CI disposable replay, hosted apply/retry and live Preview evidence will be recorded after completion. Physical iPhone, personal backup and full relational/personal migration remain pending/outside this foundation; M0 gates remain before #28. No Production schema/data operation or merge is claimed.
+
+## Earlier #27 candidate evidence
+
+Historical application version: `3.2.2-20261027T225348Z`, schema 7; based on main `1631253ba092af2ad7e3a017ccdcbb40fb5dd0cf`. The user approved 3.2.0 for #27. See [account contract and evidence](V3_ACCOUNT_ACCESS.md).
 
 ## Earlier #38 candidate evidence
 

@@ -18,8 +18,10 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
+- [EXERCISE_IDENTITY.md](EXERCISE_IDENTITY.md) — #16 canonical IDs/aliases, lossless V2 conversion, SQL ownership/constraints and downstream #39/#28 boundary.
+
 - [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) — #38 environment inventory, Vercel variable contract, migrations, disposable replay, promotion and recovery.
-- [V3_RELEASE.md](V3_RELEASE.md) — current V3 infrastructure candidate and actual acceptance evidence; not a Production release declaration.
+- [V3_RELEASE.md](V3_RELEASE.md) — current V3 candidate and actual acceptance evidence; not a Production release declaration.
 
 These remain relevant to the deployed V2 baseline and must be preserved or deliberately migrated by V3 issues:
 

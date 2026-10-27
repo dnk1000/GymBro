@@ -34,10 +34,13 @@ jobs:
           npm run db:local:start
           npm run db:local:apply
           npm run db:local:test
+          node scripts/exercise-identity-db-fixture.cjs
+          npx --no-install supabase test db --local test-results/exercise-identity-migration.test.sql
       - name: Replay from empty local database and verify retry
         run: |
           npx --no-install supabase db reset --local --no-seed
           npm run db:local:test
+          npx --no-install supabase test db --local test-results/exercise-identity-migration.test.sql
           npm run db:local:apply
           npx --no-install supabase db query --local --file supabase/verify-infrastructure.sql
       - name: Stop only this job's disposable stack
