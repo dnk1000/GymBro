@@ -32,7 +32,7 @@ function checkRelease(root) {
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);
   assert.equal(schema, 7, "Milestone 7 must not increment the schema");
-  const release = read("V2_RELEASE.md");
+  const release = read("docs/V2_RELEASE.md");
   assert.ok(
     release.includes(`Application version: \`${version.version}\``),
     "Release artifact has a stale application version",
@@ -43,11 +43,11 @@ function checkRelease(root) {
   );
   assert.match(release, /^Release status: \*\*(preparation|released)\*\*$/m);
   assert.ok(
-    read("RELEASE_HISTORY.md").includes(`\`${version.version}\``),
+    read("docs/RELEASE_HISTORY.md").includes(`\`${version.version}\``),
     "Release history is missing this build",
   );
   assert.match(
-    read("CHANGELOG.md"),
+    read("docs/CHANGELOG.md"),
     /^## 2\.7\.2\b/m,
     "Changelog is missing the Preview connection checkpoint",
   );

@@ -15,14 +15,15 @@ function temporary(t) {
 }
 function releaseCopy(t) {
   const dir = temporary(t);
+  fs.mkdirSync(path.join(dir, "docs"));
   for (const file of [
     "app-version.js",
     "workout-data.js",
     "index.html",
     "app.js",
-    "V2_RELEASE.md",
-    "RELEASE_HISTORY.md",
-    "CHANGELOG.md",
+    "docs/V2_RELEASE.md",
+    "docs/RELEASE_HISTORY.md",
+    "docs/CHANGELOG.md",
   ])
     fs.copyFileSync(path.join(root, file), path.join(dir, file));
   return dir;
@@ -39,7 +40,11 @@ test("current release metadata validates independently from historical version r
 });
 
 test("stale current release documentation fails validation", (t) => {
-  for (const file of ["V2_RELEASE.md", "RELEASE_HISTORY.md", "CHANGELOG.md"]) {
+  for (const file of [
+    "docs/V2_RELEASE.md",
+    "docs/RELEASE_HISTORY.md",
+    "docs/CHANGELOG.md",
+  ]) {
     const dir = releaseCopy(t);
     replace(dir, file, (source) => source.replaceAll("2.7.2", "2.7.1"));
     assert.throws(() => checkRelease(dir), undefined, file);

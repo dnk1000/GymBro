@@ -84,7 +84,7 @@ The database validator checks IDs, timestamps, mode, snapshot slots, both direct
 
 1. **Export and verify the production JSON backup first.** Use only the milestone preview address and disposable data for the following checks; preview storage is a different origin.
 2. Import a copy of the production/version-5 backup into the preview. Verify history, program edits, notes and imports remain visible. Export JSON: expect version 6, empty `sessions`, null active pointer, and unchanged historical set IDs/fields.
-3. Download the synthetic [active-session fixture](tests/fixtures/session-v6.json) to Files and restore it on the preview only. It contains no real workout history; its fixed workout date is **2026-10-23**.
+3. Download the synthetic [active-session fixture](../tests/fixtures/session-v6.json) to Files and restore it on the preview only. It contains no real workout history; its fixed workout date is **2026-10-23**.
 4. Log a test set with that date using the existing manual form. Reload, close/reopen the tab, and export JSON. Confirm the same active session ID, a set `sessionId` reference, and the set ID in the session's `setIds`.
 5. Verify JSON export/restore/export retains this session and its snapshot. Check phone file-download/import behavior and existing manual logging/history controls.
 6. If Safari Web Inspector is available, exercise completion and a second same-date session using the calls below, then reload/export to verify the first remains completed and the second has a different ID. Otherwise record this action-level check as covered by automated tests, not physically executed.

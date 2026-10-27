@@ -6,9 +6,9 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 GitHub `main` is the only authoritative code baseline. Fetch and inspect it before new work, use a feature branch, and submit a GitHub PR. GitHub Actions provides CI; Vercel is the supported preview/production platform. Approved merges to `main` use the existing production integration. Do not maintain another source tree or ChatGPT/Codex-hosted runtime as a second authority, and do not merge without explicit user approval.
 
-The current focus is standalone GymBro and its accepted V2 functionality. No Supabase/PostgreSQL persistence, OAuth, MCP, provider connection, account UI or external trainer runtime is active or required. Do not reintroduce the abandoned implementation from PR #9 or its `v3/integration-architecture` branch. Keep that branch unmodified as historical reference until separately authorized for deletion; do not push new work to it. See PRODUCTION_DELIVERY.md for manual staging quarantine.
+The current focus is standalone GymBro and its accepted V2 functionality. No Supabase/PostgreSQL persistence, OAuth, MCP, provider connection, account UI or external trainer runtime is active or required. Do not reintroduce the abandoned implementation from PR #9 or its `v3/integration-architecture` branch. Keep that branch unmodified as historical reference until separately authorized for deletion; do not push new work to it. See docs/PRODUCTION_DELIVERY.md for manual staging quarantine.
 
-User-authorized exception: the optional Preview/local Supabase connection checkpoint in SUPABASE_CONNECTION_TEST.md may store/read one short diagnostic value with a separate anonymous test identity and owner-only RLS. It must remain disabled in Production and must never migrate or replace workout localStorage, add mandatory accounts or reintroduce the abandoned integration. Live setup/acceptance and any production merge remain explicit separate steps.
+User-authorized exception: the optional Preview/local Supabase connection checkpoint in docs/SUPABASE_CONNECTION_TEST.md may store/read one short diagnostic value with a separate anonymous test identity and owner-only RLS. It must remain disabled in Production and must never migrate or replace workout localStorage, add mandatory accounts or reintroduce the abandoned integration. Live setup/acceptance and any production merge remain explicit separate steps.
 
 External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** This scope supersedes older roadmap wording below and in historical milestone records. Preserve accepted workout actions, sessions, guidance, trainer evidence/context, manual ChatGPT Inbox/interchange, history, backups, tests, release tooling and CI. Never remove functionality merely because a name mentions trainer, context or ChatGPT.
 
@@ -35,17 +35,19 @@ External AI/provider runtime integration is **Future/optional integration concep
 
 ## Repository guide
 
+Keep project Markdown documentation in `docs/`. Keep `README.md` and `AGENTS.md` at the repository root, and keep vendor documentation beside its vendored files. Update links and release-tool paths when moving documentation.
+
 The app has no runtime package installation or build step. Serve the repository with `python3 -m http.server 8000 --bind 127.0.0.1` (also available as `npm start`). Keep the static assets together.
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `performance-context.js`            | Read-only trainer context, record comparability, referenced arithmetic and conservative evidence-review policy.                                             |
-| `TRAINER_EVIDENCE.md`               | Milestone 5 API/output contracts, approved evidence policy and acceptance checklist.                                                                        |
+| `docs/TRAINER_EVIDENCE.md`               | Milestone 5 API/output contracts, approved evidence policy and acceptance checklist.                                                                        |
 | `guided-workouts.js`                | DOM-free guided validation, state selectors and transaction-backed guided action extension.                                                                 |
 | `guided-ui.js`                      | Guided Workout DOM adapter and transient form context; no committed draft persistence.                                                                      |
-| `GUIDED_WORKOUTS.md`                | Schema-7 guidance contracts, action API, migration and iPhone acceptance steps.                                                                             |
+| `docs/GUIDED_WORKOUTS.md`                | Schema-7 guidance contracts, action API, migration and iPhone acceptance steps.                                                                             |
 | `history-view.js`                   | Detached DOM-free History presentation selector: explicit sessions in setIds order, sessionless date groups for display only, source filters.               |
-| `HISTORY_AND_BACKUPS.md`            | History/recovery presentation contracts and Milestone 3 acceptance checklist.                                                                               |
+| `docs/HISTORY_AND_BACKUPS.md`            | History/recovery presentation contracts and Milestone 3 acceptance checklist.                                                                               |
 | `ui-acronyms.js`                    | Presentation-only shared acronym glossary and native hover tooltips; never changes stored data.                                                             |
 | `app-version.js`                    | Canonical immutable application version and export metadata helper; independent of data schema version.                                                     |
 | `index.html`                        | Application shell, seven views, form markup, and script loading.                                                                                            |
@@ -60,17 +62,17 @@ The app has no runtime package installation or build step. Serve the repository 
 | `tests/app.test.cjs`                | Chromium regression tests using Node's test runner and Playwright Core; starts an isolated local server and disposable browser contexts.                    |
 | `tests/workout-actions.test.cjs`    | Action/state tests in a JavaScript runtime without DOM or browser globals, including persistence failure and compatibility cases.                           |
 | `tests/workout-sessions.test.cjs`   | Session/migration/snapshot/relationship and merge tests.                                                                                                    |
-| `WORKOUT_SESSIONS.md`               | Exact schema-6 model, session actions, version-5 compatibility, and preview acceptance checklist.                                                           |
+| `docs/WORKOUT_SESSIONS.md`               | Exact schema-6 model, session actions, version-5 compatibility, and preview acceptance checklist.                                                           |
 | `package.json`, `package-lock.json` | Development commands and pinned test dependencies.                                                                                                          |
 | `README.md`                         | Run instructions, product behavior, data storage, backup semantics, and development workflow.                                                               |
-| `CHATGPT_IMPORT_SCHEMA.md`          | Supported workout JSON interchange format and validation rules.                                                                                             |
-| `CHANGELOG.md`                      | Meaningful version changes.                                                                                                                                 |
-| `REAL_PHONE_SMOKE_TEST.md`          | Physical-device validation checklist and release-gate status.                                                                                               |
+| `docs/CHATGPT_IMPORT_SCHEMA.md`          | Supported workout JSON interchange format and validation rules.                                                                                             |
+| `docs/CHANGELOG.md`                      | Meaningful version changes.                                                                                                                                 |
+| `docs/REAL_PHONE_SMOKE_TEST.md`          | Physical-device validation checklist and release-gate status.                                                                                               |
 | `AGENTS.md`                         | Project rules for future Codex work.                                                                                                                        |
 
 ## Read before editing
 
-- Read `README.md`, `CHATGPT_IMPORT_SCHEMA.md`, and the affected source and tests. For release readiness, also read `REAL_PHONE_SMOKE_TEST.md`.
+- Read `README.md`, `docs/CHATGPT_IMPORT_SCHEMA.md`, and the affected source and tests. For release readiness, also read `docs/REAL_PHONE_SMOKE_TEST.md`.
 - Inspect `git status` first. Preserve existing uncommitted/untracked work; do not reset, clean, or overwrite it blindly.
 - Use the existing checkout. Cloud tasks are already isolated; do not create a worktree unless requested.
 - Keep responsibilities separated: `index.html` for markup, `styles.css` for layout, `app.js` for actions/rendering/analytics, `storage.js` for validation/migration/persistence, and `seed.js` for the original dataset.
@@ -128,7 +130,7 @@ The app has no runtime package installation or build step. Serve the repository 
 
 - The user confirmed Milestone 1 acceptance and Vercel **Ready · Production · main · `6f10b49`** before authorizing Milestone 2. The user subsequently accepted merging Milestone 2 as main `14b12a8`; its regression suite passed and production served 2.2.5. Do not invent physical-device details. The user accepted Milestone 3 via PR #4 at `fd616fa`; its full regression suite passed and production served 2.3.0. Milestone 4 device acceptance remains pending.
 
-- V1.6 is **not yet frozen as the final stabilized baseline**. The physical-phone smoke test remains pending unless actual results have subsequently been recorded in `REAL_PHONE_SMOKE_TEST.md`.
+- V1.6 is **not yet frozen as the final stabilized baseline**. The physical-phone smoke test remains pending unless actual results have subsequently been recorded in `docs/REAL_PHONE_SMOKE_TEST.md`.
 - Do not mark the phone checklist complete from desktop/mobile emulation. Record the actual device, OS, browser, code revision, results, and remaining failures. Do not claim iPhone Safari support was tested using Chromium.
 - Do not freeze/tag the stabilized baseline or begin v2 until the requested real-phone validation is completed and failures are resolved, or the user explicitly changes this requirement.
 - Finish work with a concise account of changes, user-visible behavior changes, validation evidence, and remaining limitations. Distinguish implemented code, local validation, physical-device testing, and deployment/publication.
@@ -162,7 +164,7 @@ The app has no runtime package installation or build step. Serve the repository 
 - Keep per-set fields, corrections, compact icon controls and expandable raw record details available. Source filters may hide nonmatching sets but must not renumber session order or rewrite counts as full-session totals.
 - Complete restore replaces the validated database; history merge keeps the established merge semantics. Explain the operation and selected backup before confirmation. Cancellation and conflicts must leave storage unchanged.
 
-- Update `RELEASE_HISTORY.md` for accepted releases with exact canonical application version, independent schema, application revision, linked PR and meaningful changes. Distinguish preview lineage from accepted releases; do not invent past versions or physical-device results. Documentation-only updates do not bump the application build.
+- Update `docs/RELEASE_HISTORY.md` for accepted releases with exact canonical application version, independent schema, application revision, linked PR and meaningful changes. Distinguish preview lineage from accepted releases; do not invent past versions or physical-device results. Documentation-only updates do not bump the application build.
 
 ## Guided workouts — Milestone 4
 
@@ -176,13 +178,13 @@ The app has no runtime package installation or build step. Serve the repository 
 
 ## Product north star
 
-- Read the current-scope section of `GymBro_PRD.md` when assessing product or architecture changes. The standalone application owns structured workout memory, actions, local persistence and the dashboard. Preserve DOM-independent structured actions/state; historical trainer concepts are not active implementation requirements.
+- Read the current-scope section of `docs/GymBro_PRD.md` when assessing product or architecture changes. The standalone application owns structured workout memory, actions, local persistence and the dashboard. Preserve DOM-independent structured actions/state; historical trainer concepts are not active implementation requirements.
 - The PRD is a roadmap, not blanket authorization to expand a milestone. Follow the specifically approved scope; do not add autonomous training prescriptions, AI/voice or later features merely because the PRD describes future capabilities.
 
 ## Trainer evidence — Milestone 5
 
 - `performance-context.js` is read-only. Compose the existing guided selector for trainer workout context; never create parallel authoritative session/guidance state or persist derived evidence.
-- Follow `TRAINER_EVIDENCE.md` (`trainer-evidence-v1`): exact actual exercise and unit, referenced arithmetic, separate modes as context, no substitution equivalence/conversion/1RM/composite scores or automatic increase/maintain recommendations.
+- Follow `docs/TRAINER_EVIDENCE.md` (`trainer-evidence-v1`): exact actual exercise and unit, referenced arithmetic, separate modes as context, no substitution equivalence/conversion/1RM/composite scores or automatic increase/maintain recommendations.
 - Require explicit asOfDate; never use a runtime clock or arbitrary stale cutoff to change deterministic evidence. Preserve same-day chronology uncertainty and legacy display-only grouping.
 - Keep existing preference text unparsed; structured goals/constraints and working-set/failure classification are not modeled. Do not infer them from notes or add a trainer-profile schema without approval.
 - Evidence selectors must not write storage or change templates, current inputs, guided state, historical records or future prescriptions. The historical reasoning/coaching concept is not an active runtime integration. Milestone 6 remains a separate historical scope.
@@ -192,13 +194,13 @@ The app has no runtime package installation or build step. Serve the repository 
 - Lifecycle callbacks may check for stale storage and warn; never rely on them to save committed workout data or silently adopt another tab’s database. Resume checks preserve transient inputs; resolve stale tabs by deliberate reload.
 - Preserve DOM-free guided/trainer/action APIs, schema 7, revision/request contracts and manual fallback. Any proposed persistence schema change requires explicit approval before implementation.
 - Maintain 16px mobile entry text and at least 44px primary workout action heights. Compact History icons retain their existing contract.
-- Physical iPhone Safari acceptance is mandatory and separate from automated Chromium. Record the actual device, iOS, browser, build, commit, date and individual outcomes in REAL_PHONE_SMOKE_TEST.md; leave unavailable results pending. No Milestone 7 without authorization.
+- Physical iPhone Safari acceptance is mandatory and separate from automated Chromium. Record the actual device, iOS, browser, build, commit, date and individual outcomes in docs/REAL_PHONE_SMOKE_TEST.md; leave unavailable results pending. No Milestone 7 without authorization.
 
 ## Production delivery — Milestone 7
 
-- Follow PRODUCTION_DELIVERY.md, V2_ARCHITECTURE.md, PRD_COMPLIANCE.md and the current V2_RELEASE.md. CI runs the complete suite and npm run check:syntax/check:release/check:diff; committed-range whitespace matters even on clean CI checkouts. Use .nvmrc, npm ci and the lockfile-pinned browser.
+- Follow docs/PRODUCTION_DELIVERY.md, docs/V2_ARCHITECTURE.md, docs/PRD_COMPLIANCE.md and the current docs/V2_RELEASE.md. CI runs the complete suite and npm run check:syntax/check:release/check:diff; committed-range whitespace matters even on clean CI checkouts. Use .nvmrc, npm ci and the lockfile-pinned browser.
 - Classify PRD requirements as implemented in V2, intentionally deferred to V3, accepted V2 limitation or actual V2 discrepancy. External trainer reasoning/voice is optional and unscheduled; explicit underlying V2 action gaps must still be reported, not silently deferred or implemented out of scope.
 - Preparation may proceed before physical acceptance. Do not merge M7, perform final production acceptance or declare M7/V2 complete until physical iPhone results and defects, production backup verification, PRD gap dispositions and explicit merge approval are resolved.
 - Keep schema 7 and workout/domain modules unchanged unless a verified production-blocking defect is separately approved. No AI, voice, transport, backend or speculative V3 infrastructure.
 - Vercel remains branch→Preview, accepted main→Production. CI does not deploy, and a green preview is not production acceptance. Verify required GitHub checks/Vercel settings; do not claim branch protection from inaccessible settings.
-- V2_RELEASE.md is a preparation artifact until the final production SHA/deployment/smoke and physical/backup gates are actually recorded. No release tag or V3 start is implied. Code rollback never automatically restores or downgrades browser data.
+- docs/V2_RELEASE.md is a preparation artifact until the final production SHA/deployment/smoke and physical/backup gates are actually recorded. No release tag or V3 start is implied. Code rollback never automatically restores or downgrades browser data.
