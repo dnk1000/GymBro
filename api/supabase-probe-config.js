@@ -1,11 +1,15 @@
 // Only this public configuration crosses the server/browser boundary.
+const { previewEnvironment } = require("./_lib/supabase-environment.cjs");
 function probeConfig(env) {
   const preview = env.VERCEL_ENV === "preview";
   const local = !env.VERCEL && !env.VERCEL_ENV && env.GYMBRO_PROBE_LOCAL === "true";
   if ((!preview && !local) || env.GYMBRO_SUPABASE_PROBE !== "true")
     return { enabled: false };
   const environment = preview ? "preview" : "local";
-  const url = env.SUPABASE_URL || "";
+  const boundary = previewEnvironment(env);
+  if (!boundary.ok) return { enabled: true, configured: false, environment,
+    message: boundary.message };
+  const url = boundary.url;
   const key = env.SUPABASE_PUBLISHABLE_KEY || "";
   let parsed;
   try {

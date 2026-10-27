@@ -2,7 +2,7 @@
 
 Decision: [issue #43](https://github.com/dnk1000/GymBro/issues/43), October 27, 2026 (America/New_York). The user approved the policy and selected **`3.1.0` = #38 infrastructure foundation alone** in the implementation conversation. Documentation delivery remains subject to PR review and explicit merge approval.
 
-This policy supersedes the M0 milestone-to-minor mapping and older roadmap version wording for V3. It does not renumber historical releases, authorize another issue, approve a deployment, or change data compatibility. The current application remains `2.7.2-20261027T152907Z`, with workout data schema 7; this documentation decision produces no application build.
+This policy supersedes the M0 milestone-to-minor mapping and older roadmap version wording for V3. It does not renumber historical releases, authorize another issue, approve a deployment, or change data compatibility. The #43 documentation decision produced no application build: its baseline was `2.7.2-20261027T152907Z`, workout schema 7. The subsequent #38 candidate is tracked in [V3_RELEASE.md](V3_RELEASE.md); a candidate is not an accepted Production release.
 
 ## Version components
 
@@ -53,9 +53,9 @@ These are inherited capability labels, including references between those issues
 
 [app-version.js](../app-version.js), through its immutable `APP_VERSION`, remains the only canonical application-version source. The UI, Help version label, diagnostics and complete JSON exports consume it. This document defines policy and planned mappings; it is not a second runtime version source. Private npm tooling metadata must not introduce another application version.
 
-[scripts/check-release.cjs](../scripts/check-release.cjs) validates the current build against release records, timestamp format, immutability, schema expectations and the absence of duplicate runtime version literals. Its current `2.7.2`/schema-7 assertions and [tests/release-tools.test.cjs](../tests/release-tools.test.cjs) intentionally remain pinned to the unchanged V2 build in this documentation PR. They do not calculate a version from an issue number or a milestone.
+[scripts/check-release.cjs](../scripts/check-release.cjs) validates the current build against release records, timestamp format, immutability, schema expectations and the absence of duplicate runtime version literals. #43 retained its V2 expectations; #38 updates them and [tests/release-tools.test.cjs](../tests/release-tools.test.cjs) to the `3.1.0` candidate and independent schema 7, using [V3_RELEASE.md](V3_RELEASE.md). They do not calculate versions from issues or milestones.
 
-The first deployable V3 code PR must update those current-build expectations and their tests to its approved version, point the checker at the corresponding V3 release record instead of the historical [V2_RELEASE.md](V2_RELEASE.md), and update the changelog/build lineage together. Keep historical V2 records intact and retain validation of literal UTC BUILD, immutable metadata, documentation consistency, independent schema compatibility and single-source runtime consumption. Do not disable assertions to accept a new version. This issue adds no speculative release-tool implementation.
+Each deployable code PR must keep those expectations/tests, the corresponding release record and changelog/build lineage aligned. Keep historical [V2_RELEASE.md](V2_RELEASE.md) intact and retain literal UTC BUILD, immutable metadata, documentation consistency, independent schema compatibility and single-source runtime checks. Do not disable assertions to accept a new version.
 
 ## Independent schemas and migrations
 

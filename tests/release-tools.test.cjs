@@ -21,7 +21,7 @@ function releaseCopy(t) {
     "workout-data.js",
     "index.html",
     "app.js",
-    "docs/V2_RELEASE.md",
+    "docs/V3_RELEASE.md",
     "docs/RELEASE_HISTORY.md",
     "docs/CHANGELOG.md",
   ])
@@ -35,25 +35,25 @@ function replace(dir, file, change) {
 
 test("current release metadata validates independently from historical version references", () => {
   const result = checkRelease(root);
-  assert.match(result.version, /^2\.7\.2-\d{8}T\d{6}Z$/);
+  assert.match(result.version, /^3\.1\.0-\d{8}T\d{6}Z$/);
   assert.equal(result.schema, 7);
 });
 
 test("stale current release documentation fails validation", (t) => {
   for (const file of [
-    "docs/V2_RELEASE.md",
+    "docs/V3_RELEASE.md",
     "docs/RELEASE_HISTORY.md",
     "docs/CHANGELOG.md",
   ]) {
     const dir = releaseCopy(t);
-    replace(dir, file, (source) => source.replaceAll("2.7.2", "2.7.1"));
+    replace(dir, file, (source) => source.replaceAll("3.1.0", "3.0.0"));
     assert.throws(() => checkRelease(dir), undefined, file);
   }
 });
 
 test("runtime-generated or invalid UTC build identifiers are rejected", (t) => {
   for (const replacement of [
-    '["20261027T152907Z"].join("")',
+    '["20261027T212930Z"].join("")',
     '"20261301T250000Z"',
   ]) {
     const dir = releaseCopy(t);
@@ -64,9 +64,9 @@ test("runtime-generated or invalid UTC build identifiers are rejected", (t) => {
   }
 });
 
-test("wrong milestone and unapproved schema changes fail the release check", (t) => {
+test("wrong release and unapproved schema changes fail the release check", (t) => {
   for (const [file, from, to] of [
-    ["app-version.js", "const minor = 7", "const minor = 6"],
+    ["app-version.js", "const minor = 1", "const minor = 2"],
     ["workout-data.js", "const DATA_VERSION = 7", "const DATA_VERSION = 8"],
   ]) {
     const dir = releaseCopy(t);

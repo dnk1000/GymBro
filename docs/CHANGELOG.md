@@ -1,5 +1,10 @@
 # Changes
 
+## 3.1.0 — Infrastructure foundation (Preview candidate)
+
+- Issue #38: explicit Preview/Production project boundaries, fail-closed diagnostic configuration, pinned Supabase migration tooling and disposable SQL/RLS replay CI.
+- Workout schema remains 7 in localStorage. No account feature, workout migration or Production cutover.
+
 ## 2.7.2 — Supabase connection checkpoint (Preview only)
 
 - Add an optional Data-view test that saves and freshly retrieves one short diagnostic value using anonymous Supabase Auth and an owner-only RLS table. Workout data, schema 7 and localStorage persistence are unchanged.

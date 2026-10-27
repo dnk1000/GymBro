@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 infrastructure candidate — not yet accepted
+
+`3.1.0-20261027T212930Z`, workout schema 7, implements #38 alone. See [V3_RELEASE.md](V3_RELEASE.md) for Preview/CI evidence and [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) for environment/migration contracts. This is candidate lineage, not a shipped Production entry.
+
 ## Delivered connection checkpoint and documentation organization
 
 - Application version: `2.7.2-20261027T152907Z`; data schema: `7`.

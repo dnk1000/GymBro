@@ -14,6 +14,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  database:
+    name: Disposable database replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out tested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up pinned Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Create disposable local Postgres and apply migrations
+        run: |
+          npm run db:local:start
+          npm run db:local:apply
+          npm run db:local:test
+      - name: Replay from empty local database and verify retry
+        run: |
+          npx --no-install supabase db reset --local --no-seed
+          npm run db:local:test
+          npm run db:local:apply
+          npx --no-install supabase db query --local --file supabase/verify-infrastructure.sql
+      - name: Stop only this job's disposable stack
+        if: always()
+        run: npx --no-install supabase stop --no-backup
   regression:
     name: V2 regression
     runs-on: ubuntu-24.04
