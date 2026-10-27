@@ -1,5 +1,7 @@
 # GymBro physical-phone smoke tests
 
+October 27, 2026 M0 disposition: the user explicitly deferred the still-missing physical-iPhone and personal-production-backup evidence through M1 Preview-only account work, requiring it before M2 migration testing. No test result below is changed to Pass. The original cloud/device and build metadata is historical; record the actual device and current tested build/commit when completing the checklist. See [M0 acceptance and evidence owners](V3_M0_SCOPE_AND_ACCEPTANCE.md). The historical restriction on proceeding is superseded only by this narrow deferral; it does not establish final V2 acceptance.
+
 Status: **Milestones 1–5 were accepted/merged by the user; physical device/OS/browser details were not supplied.** Historical checklists below remain as records, not evidence of an agent-run phone test. **Milestone 6 physical iPhone Safari acceptance is pending.** The cloud workspace has no attached iPhone or remote-device testing connector. Automated Chromium and synthetic lifecycle events are not physical acceptance. Use the Milestone 6 checklist below for the current preview.
 
 Use a separate test copy/origin, not a browser profile containing real workout data. Open the complete app directory through a web server reachable from the phone. Keep its address unchanged throughout the test. No account or API key is needed.
