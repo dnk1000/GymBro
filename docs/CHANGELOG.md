@@ -1,5 +1,9 @@
 # Changes
 
+## 3.3.0 — exercise identity foundation candidate
+
+Issue #16: immutable canonical exercise UUIDs, exact aliases, metadata/provenance and owner-scoped SQL constraints/RLS. Lossless V2 identity conversion and ID-based performance boundary preserve original labels and historical relationships. Current schema-7 UI/storage/interchange stay active until the separately approved persistence/migration issues. No automatic workout conversion, catalog/merge/import UX or Production cutover.
+
 ## 3.2.2 — email-link rate-limit wording
 
 Use link terminology consistently in provider rate-limit feedback. No schema or ownership-policy changes.

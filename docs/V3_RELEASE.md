@@ -1,10 +1,28 @@
-# V3 account-access release candidate
+# V3 exercise-identity release candidate
 
 Release status: **preparation**
-Application version: `3.2.2-20261027T225348Z`
+Application version: `3.3.0-20261027T233414Z`
 Data schema: `7`
 
-Issue #27 only, based on accepted main `1631253ba092af2ad7e3a017ccdcbb40fb5dd0cf`. The user approved 3.2.0 for #27 on October 27, 2026. See [account contract and evidence](V3_ACCOUNT_ACCESS.md). No workout migration, Production schema/data operation, merge or physical iPhone acceptance is claimed.
+Issue #16 only, based on accepted main `b40156bd943d230bdfa2e636390b85f5be1fd639`; branch `codex/issue-16-exercise-identity`. The user approved 3.3.0 for #16 on October 27, 2026. See [identity contract](EXERCISE_IDENTITY.md). Identity document version 1 and SQL migration `20261027233000` are independent of the unchanged active workout schema 7.
+
+PR: [#48](https://github.com/dnk1000/GymBro/pull/48), unmerged. Runtime implementation `893fa703d1d0bf804948168d90cd5da1bb428a72`; development-only SQL-fixture correction `320f1a0cbbbbdc27bbe95890cf5434db65550bdf` retains the same build.
+
+| Level 3 evidence | Actual result |
+| --- | --- |
+| Focused identity and local regression | 10/10 identity tests and 177/177 full local tests passed using desktop Chrome and disposable localhost storage. Final focused identity/version tests: 11/11; release-tool tests: 8/8. Initial sandbox full run failed due to localhost/temp-Git restrictions; authorized rerun passed. |
+| [CI at 320f1a0](https://github.com/dnk1000/GymBro/actions/runs/40603575072) | Passed 177/177 regressions, syntax for 39 JS files, canonical release and committed-range whitespace. [Database job](https://github.com/dnk1000/GymBro/actions/runs/40603575072/job/122537427430) passed 71 SQL assertions plus 9 generated full-field seed/catalog/set-fact assertions on both fresh and reset databases, followed by no-op apply and metadata verification. |
+| Initial SQL-fixture failure | Schema/ownership tests passed 71/71, but the generated fixture used a temporary table referencing a permanent table, forbidden by PostgreSQL. Corrected only the development test to create a transaction-scoped fixture table that is rolled back. Assertions were retained; no runtime/SQL migration change. |
+| Existing staging apply/retry | Applied only `20261027233000` at clean reviewed `320f1a0` to `obebuvpsqapgevwivwho`. Repeat dry-run/apply reported up to date. PostgreSQL 17.11 ledger includes the migration; both exercise/alias tables have RLS enabled with owner PERMISSIVE and permanent-user RESTRICTIVE policies. No workout data was loaded. |
+| [Vercel deployment](https://vercel.com/dnk-9999/gymbro/2ucD2DLZ7THR3JXeTzzRH2ptwijA) and [Preview](https://gymbro-git-codex-issue-16-exercise-identity-dnk-9999.vercel.app/) | Deployment passed. Actual desktop Chrome Preview showed the exact build in title/footer; Dashboard and Data loaded, console warning/error log empty. This is a read-only smoke; no personal database or migration was exercised. Existing local browser regressions include 320/390/desktop widths; no live responsive or physical Safari claim. |
+| Documentation checks | 84 changed-document local link targets passed. |
+| Local database / physical device / personal data | Local Supabase start unavailable (`LocalDbRunningError`), so no local SQL pass. Physical iPhone, personal backup verification, full relational/personal migration and cloud workout parity not performed; M0 personal-data gates remain before #28. |
+
+No Production configuration/schema/data operation, local workout conversion, cutover, issue closure or merge is claimed. #16's identity foundation is available for #39/#28; acceptance of full cloud workout migration still belongs to those later issues.
+
+## Earlier #27 candidate evidence
+
+Historical application version: `3.2.2-20261027T225348Z`, schema 7; based on main `1631253ba092af2ad7e3a017ccdcbb40fb5dd0cf`. The user approved 3.2.0 for #27. See [account contract and evidence](V3_ACCOUNT_ACCESS.md).
 
 ## Earlier #38 candidate evidence
 
