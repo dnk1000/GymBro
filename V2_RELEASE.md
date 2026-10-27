@@ -8,7 +8,7 @@ Current authoritative source is GitHub `main`, baseline `e5f87a538dc2be8212d7230
 
 V2.7 was the intended completion release of the V2 trainer-infrastructure phase. **That phase is not yet declared complete.** Preserve the evidence and open gates below. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The later unmerged PR #9 experiment is abandoned, retained only as historical reference; it does not change this baseline or certify V2 acceptance.
 
-The 2.7.2 candidate saves/reads only one short test value in a separate RLS-protected table. Normal workout behavior, storage and schema remain unchanged. Production always disables the diagnostic. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md). Live Supabase acceptance requires actual setup and a verified round trip; simulated tests alone are insufficient.
+The 2.7.2 candidate saves/reads only one short test value in a separate RLS-protected table. Normal workout behavior, storage and schema remain unchanged. Production always disables the diagnostic. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md). The basic live Save/reload/Read checkpoint and matching database row were verified on 2026-10-27 after user-applied Supabase setup; this is not acceptance of a workout-storage migration or the outstanding V2 release gates.
 
 | Release evidence | Status |
 | --- | --- |
