@@ -1,5 +1,11 @@
 # Changes
 
+## 2.7.1 — Windows workflow verification (preview)
+
+- Update the canonical version/build to verify Windows development, GitHub PR/CI and the existing Vercel preview/production delivery path before starting V3.
+- Align version assertions and release records. Workout behavior, UI controls, dependencies, schema 7 and localStorage persistence are unchanged.
+- Production delivery awaits explicit approval to merge. Existing physical-iPhone, personal backup and V2 acceptance evidence remain open.
+
 ## 2.7.0 — Milestone 7 (preparation; not released)
 
 - Prepare GitHub PR/main CI with pinned Node/browser tooling, complete regressions, syntax, committed-range whitespace and canonical release checks; retain failed-test output.

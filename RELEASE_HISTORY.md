@@ -2,6 +2,13 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## Current workflow verification candidate
+
+- Application version: `2.7.1-20261027T142145Z`; data schema: `7`.
+- Branch: [v2/patch-2.7.1-workflow-verification](https://github.com/dnk1000/GymBro/tree/v2/patch-2.7.1-workflow-verification), from main `d2e6223f5d6020cb63c249ade4c02acaa7fe7cbd`.
+- Scope: canonical version/build, matching version-check expectations and release notes only. The PR records its exact tested revision and hosted CI/preview results.
+- Acceptance: preview candidate; merge approval and production verification pending. This patch does not close the outstanding V2 acceptance evidence or start the Supabase migration.
+
 ## Milestone releases
 
 | Application release            | Data schema | Source and approval                                                                                                                                                                                                             | Changes                                                                                                                                                                                                                |
