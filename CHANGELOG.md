@@ -1,5 +1,11 @@
 # Changes
 
+## 2.7.2 — Supabase connection checkpoint (Preview only)
+
+- Add an optional Data-view test that saves and freshly retrieves one short diagnostic value using anonymous Supabase Auth and an owner-only RLS table. Workout data, schema 7 and localStorage persistence are unchanged.
+- Gate public configuration to explicitly enabled Preview/local testing; Production is always disabled. Vendor the pinned official client for lazy loading without a runtime CDN or app build.
+- Provide a minimal test-table SQL script, local configuration server, focused tests and manual Supabase/Vercel setup/verification guide. Live integration acceptance remains pending the intended test project's setup and a verified real round trip. No production configuration or data migration.
+
 ## 2.7.1 — Windows workflow verification (preview)
 
 - Update the canonical version/build to verify Windows development, GitHub PR/CI and the existing Vercel preview/production delivery path before starting V3.

@@ -2,6 +2,10 @@
 
 A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
 
+## Optional Supabase connection test
+
+The current Preview checkpoint adds only a one-value connection diagnostic in Data. It never uploads or migrates workouts; localStorage remains authoritative. Production always disables the test. Follow [Supabase/Vercel setup and manual verification](SUPABASE_CONNECTION_TEST.md) for the isolated test table, Preview variables and Save -> reload -> Read check. Ordinary static use remains supported. The pinned diagnostic client is loaded only after an enabled test action; no app build or CDN is required.
+
 ## Run
 
 Open `index.html` in a modern browser, or serve this directory locally:
@@ -10,7 +14,7 @@ Open `index.html` in a modern browser, or serve this directory locally:
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-There is no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
+Normal workout operation needs no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. The optional enabled diagnostic additionally uses its public configuration route, vendored SDK and separate anonymous test identity. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is needed for development tests or the optional local diagnostic server.
 
 ## Data and backups
 

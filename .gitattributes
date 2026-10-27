@@ -1,0 +1,2 @@
+# Keep the upstream minified SDK byte-for-byte, including string whitespace.
+vendor/supabase-2.118.0.js -text -whitespace

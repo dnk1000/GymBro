@@ -479,6 +479,22 @@
             </div>
           </div>
         </div>
+        <div class="card probe-card" id="supabaseProbe" hidden>
+          <h2>Supabase connection test</h2>
+          <p class="sub">This optional Preview test stores one short value separately from your workouts. GymBro workout data stays in this browser.</p>
+          <p id="probeDetails" class="sub"></p>
+          <p id="probeStatus" role="status" aria-live="polite">Checking configuration…</p>
+          <label for="probeValue">Test value (up to 120 characters)</label>
+          <input id="probeValue" type="text" maxlength="120" autocomplete="off" />
+          <div class="actions">
+            <button id="probeSave" type="button" disabled>Save test value</button>
+            <button id="probeRead" class="btn secondary" type="button" disabled>Read test value</button>
+          </div>
+          <p class="sub">Retrieved from Supabase:</p>
+          <output id="probeResult" aria-live="polite"></output>
+          <p id="probeIdentity" class="sub"></p>
+          <p class="sub">This test uses an anonymous test identity for this browser. Reloading retains it; clearing browser data or changing Preview origins creates a different identity.</p>
+        </div>
         <div class="card" style="margin-top: 14px">
           <h2>Data management</h2>
           <div class="actions">
@@ -638,6 +654,7 @@
         compatibility depends on the separate data schema; older applications
         may not read newer-schema backups.
       </p>
+      <p>On an enabled Preview, Data also offers an optional Supabase connection test. Save and read a short test value there. It uses a separate anonymous test identity and never uploads your workout database.</p>
       <p class="sub" id="helpVersion"></p>
     </dialog>
     <script src="app-version.js"></script>
@@ -652,5 +669,6 @@
     <script src="history-view.js"></script>
     <script src="guided-ui.js"></script>
     <script src="app.js"></script>
+    <script src="supabase-probe.js"></script>
   </body>
 </html>

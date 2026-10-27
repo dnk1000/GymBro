@@ -10,6 +10,10 @@
   --bad: #ff7a7a;
   --line: #2b3654;
 }
+#supabaseProbe[hidden] { display: none; }
+.probe-card { margin-top: 14px; overflow-wrap: anywhere; }
+.probe-card output { display: block; white-space: pre-wrap; }
+.probe-card button { min-height: 44px; }
 * {
   box-sizing: border-box;
 }
