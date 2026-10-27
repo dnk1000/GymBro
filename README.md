@@ -2,17 +2,19 @@
 
 A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
 
+Project guides, the PRD, release history and setup instructions live in [docs/](docs/). Repository instructions remain in [AGENTS.md](AGENTS.md).
+
 ## Source of truth and supported workflow
 
 GitHub `main` is the authoritative GymBro source. Start new work from freshly fetched `main`, make changes on a feature branch, and review them through a GitHub pull request. GitHub Actions runs CI; Vercel supplies feature previews and the existing production deployment from approved merges to `main`. Do not merge without explicit approval. A developer checkout is a working copy of the repository, not a separate source of truth or application-hosting environment.
 
 The current product is the standalone GymBro application. Normal workout operation requires no Supabase, PostgreSQL, OAuth, MCP server, external trainer API, provider login, OpenAI key, or ChatGPT-hosted/provider-hosted GymBro runtime. ChatGPT Inbox remains manual JSON interchange and requires no provider account. The only authorized external test is the optional Preview connection checkpoint below.
 
-External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The unmerged integration experiment in [PR #9](https://github.com/dnk1000/GymBro/pull/9) is abandoned; its branch is retained temporarily as historical reference and must not be merged or used for deployments. See [deployment and quarantine instructions](PRODUCTION_DELIVERY.md#abandoned-integration-quarantine).
+External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The unmerged integration experiment in [PR #9](https://github.com/dnk1000/GymBro/pull/9) is abandoned; its branch is retained temporarily as historical reference and must not be merged or used for deployments. See [deployment and quarantine instructions](docs/PRODUCTION_DELIVERY.md#abandoned-integration-quarantine).
 
 ## Optional Supabase connection test
 
-The current Preview checkpoint adds only a one-value connection diagnostic in Data. It never uploads or migrates workouts; localStorage remains authoritative. Production always disables the test. Follow [Supabase/Vercel setup and manual verification](SUPABASE_CONNECTION_TEST.md) for the isolated test table, Preview variables and Save -> reload -> Read check. Ordinary static use remains supported. The pinned diagnostic client is loaded only after an enabled test action; no app build or CDN is required.
+The current Preview checkpoint adds only a one-value connection diagnostic in Data. It never uploads or migrates workouts; localStorage remains authoritative. Production always disables the test. Follow [Supabase/Vercel setup and manual verification](docs/SUPABASE_CONNECTION_TEST.md) for the isolated test table, Preview variables and Save -> reload -> Read check. Ordinary static use remains supported. The pinned diagnostic client is loaded only after an enabled test action; no app build or CDN is required.
 
 ## Run
 
@@ -43,7 +45,7 @@ Unreadable or unsupported newer data is left untouched. A recovery notice offers
 
 Choose a 30- or 60-minute plan, then log sets. Workout dates use the device's local date. History supports editing and deleting sets from all sources. The **Approximate / incomplete** checkbox preserves uncertainty even when numeric values are available.
 
-Paste structured workout JSON into **ChatGPT Inbox**, review it, then commit. A nested `exercises` array or a flat `sets` array is supported. See [the import format](CHATGPT_IMPORT_SCHEMA.md); an example is available through the Inbox's **Example file** button.
+Paste structured workout JSON into **ChatGPT Inbox**, review it, then commit. A nested `exercises` array or a flat `sets` array is supported. See [the import format](docs/CHATGPT_IMPORT_SCHEMA.md); an example is available through the Inbox's **Example file** button.
 
 Invalid dates, numbers, effort ranges, and unsupported units block commits. Missing load/reps and unknown exercise names produce review notes; incomplete records remain supported. Session notes and explicit `complete: false` survive commit and backup. Import IDs remain recorded when sets are corrected or deleted, preventing accidental reimport.
 
@@ -51,7 +53,7 @@ Performance charts and gains exclude incomplete records and compare positive ext
 
 Exercise detail's **Latest** shows the most recent set with recorded load and reps, including assisted, bodyweight, zero-load, and approximate records. It is independent of ranking eligibility.
 
-Session lifecycle actions were introduced programmatically in Milestone 2; Milestone 4 now exposes guided start/resume/finish controls, while retaining those APIs. With no active session, manual logging works as before. With one active, new manual sets link to it and must use its local date; explicit `sessionId: null` in the action API logs sessionless. ChatGPT imports remain sessionless. See [the session schema and acceptance guide](WORKOUT_SESSIONS.md).
+Session lifecycle actions were introduced programmatically in Milestone 2; Milestone 4 now exposes guided start/resume/finish controls, while retaining those APIs. With no active session, manual logging works as before. With one active, new manual sets link to it and must use its local date; explicit `sessionId: null` in the action API logs sessionless. ChatGPT imports remain sessionless. See [the session schema and acceptance guide](docs/WORKOUT_SESSIONS.md).
 
 ## Development
 
@@ -67,7 +69,7 @@ Tests use Node's test runner, `playwright-core`, and an installed Chromium execu
 
 Managed Chromium may block direct `file:` navigation by administrator policy. The direct-file test reports a skip in that case; use the local static server in that environment.
 
-A physical-phone smoke test is a separate release gate. See [the device checklist](REAL_PHONE_SMOKE_TEST.md). Responsive Chromium checks do not establish Safari or real-device readiness.
+A physical-phone smoke test is a separate release gate. See [the device checklist](docs/REAL_PHONE_SMOKE_TEST.md). Responsive Chromium checks do not establish Safari or real-device readiness.
 
 Files:
 
@@ -83,7 +85,7 @@ Files:
 - `tests/workout-actions.test.cjs`: action/state regression tests without a DOM or browser globals.
 - `tests/workout-sessions.test.cjs`: session lifecycle, migration, snapshot, relationship, rollback and merge regression tests.
 
-See [the workout action interface](WORKOUT_ACTIONS.md) for the Milestone 1 boundary and [workout sessions](WORKOUT_SESSIONS.md) for the additive Milestone 2 APIs, version-5 migration, and physical-iPhone acceptance steps.
+See [the workout action interface](docs/WORKOUT_ACTIONS.md) for the Milestone 1 boundary and [workout sessions](docs/WORKOUT_SESSIONS.md) for the additive Milestone 2 APIs, version-5 migration, and physical-iPhone acceptance steps.
 
 The existing vanilla JavaScript workflow and accepted session identities remain supported. This documentation cleanup adds no runtime feature, identity migration, framework or backend; further product changes require their own approved scope.
 
@@ -101,35 +103,35 @@ Hover over RPE and RIR in Workout and ChatGPT import entry labels for explanatio
 
 History presents explicit sessions separately with saved plan name, mode, status, exercises and ordered sets. Multiple workouts on one date remain separate. Legacy/sessionless records remain fully visible in clearly labelled date groups used only for display. Source filters retain their existing meanings. Each set has compact edit/delete actions and expandable Record details for every saved field; History has no acronym tooltips.
 
-Data explains complete JSON backup versus sets-only CSV, complete restore versus history merge, and shows a file/content/effect summary before the final native confirmation. Recovery explains the difference between original saved bytes and the open tab’s in-memory export. No schema, storage or workout-action changes are introduced. See [History and backup behavior](HISTORY_AND_BACKUPS.md) for exact semantics and iPhone acceptance steps.
+Data explains complete JSON backup versus sets-only CSV, complete restore versus history merge, and shows a file/content/effect summary before the final native confirmation. Recovery explains the difference between original saved bytes and the open tab’s in-memory export. No schema, storage or workout-action changes are introduced. See [History and backup behavior](docs/HISTORY_AND_BACKUPS.md) for exact semantics and iPhone acceptance steps.
 
-See [release history](RELEASE_HISTORY.md) for accepted milestones, exact application builds, schema compatibility and preview lineage.
+See [release history](docs/RELEASE_HISTORY.md) for accepted milestones, exact application builds, schema compatibility and preview lineage.
 
 ## Guided workouts (Milestone 4)
 
 Workout now offers Start workout with a saved template, local date and approximate 30/60-minute mode. Session snapshots retain existing slot selections. Log sets, explicitly choose Done/Skip, navigate, substitute locally, reload/resume and finish even with pending exercises after confirmation. Manual logging remains available. No training targets, rest timers, progression, AI or voice are introduced.
 
-Guided state and submission identities are persisted through the DOM-free action layer in schema 7. Failed writes commit neither progress nor request IDs. Exercise identity remains the existing exercise-library name key; no new ID system or equivalence policy is added. Read [guided-workout contracts and acceptance steps](GUIDED_WORKOUTS.md) before modifying this flow.
+Guided state and submission identities are persisted through the DOM-free action layer in schema 7. Failed writes commit neither progress nor request IDs. Exercise identity remains the existing exercise-library name key; no new ID system or equivalence policy is added. Read [guided-workout contracts and acceptance steps](docs/GUIDED_WORKOUTS.md) before modifying this flow.
 
-The current product scope is recorded in [GymBro_PRD.md](GymBro_PRD.md). The [guided action/state alignment audit](GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) preserves the historical design motivation for the DOM-independent controls; it does not schedule or activate an external integration. The accepted actions remain useful to the standalone application.
+The current product scope is recorded in [docs/GymBro_PRD.md](docs/GymBro_PRD.md). The [guided action/state alignment audit](docs/GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) preserves the historical design motivation for the DOM-independent controls; it does not schedule or activate an external integration. The accepted actions remain useful to the standalone application.
 
 ## Trainer evidence (Milestone 5)
 
 `workoutActions.getExercisePerformanceContext(...)`, `compareExercisePerformance(...)` and `getTrainerWorkoutContext(...)` expose read-only, detached JSON workout evidence within the standalone application. Their names do not imply an external trainer connection or provider runtime. Supply an explicit `asOfDate`. The workout context composes the existing guided selector; no new workout model or interaction screen is introduced.
 
-Results contain exact exercise/unit context, ordered records, provenance, pain, unparsed preference/notes, transparent arithmetic and supporting IDs. Only `review`/`insufficient_evidence` evidence summaries are returned, never increase/maintain commands. Working-set/failure classification and structured constraints remain unknown where not modeled. No schema increment, persisted scores or state mutations are needed. See [TRAINER_EVIDENCE.md](TRAINER_EVIDENCE.md) for the approved policy, API contracts and acceptance checks.
+Results contain exact exercise/unit context, ordered records, provenance, pain, unparsed preference/notes, transparent arithmetic and supporting IDs. Only `review`/`insufficient_evidence` evidence summaries are returned, never increase/maintain commands. Working-set/failure classification and structured constraints remain unknown where not modeled. No schema increment, persisted scores or state mutations are needed. See [docs/TRAINER_EVIDENCE.md](docs/TRAINER_EVIDENCE.md) for the approved policy, API contracts and acceptance checks.
 
 ## iPhone reliability
 
-Each successful workout action is persisted before it reports success; background/unload events do not save workouts. On page restoration or return to the foreground, GymBro checks for missed storage changes. A stale tab warns and pauses editing until deliberate reload; it never adopts or merges another tab’s data automatically. Unsaved form values remain transient and are not restored after reload. Use one editing tab at a time. See [the Milestone 6 audit](IPHONE_HARDENING.md) and [physical Safari checklist](REAL_PHONE_SMOKE_TEST.md#milestone-6--physical-iphone-acceptance-pending).
+Each successful workout action is persisted before it reports success; background/unload events do not save workouts. On page restoration or return to the foreground, GymBro checks for missed storage changes. A stale tab warns and pauses editing until deliberate reload; it never adopts or merges another tab’s data automatically. Unsaved form values remain transient and are not restored after reload. Use one editing tab at a time. See [the Milestone 6 audit](docs/IPHONE_HARDENING.md) and [physical Safari checklist](docs/REAL_PHONE_SMOKE_TEST.md#milestone-6--physical-iphone-acceptance-pending).
 
 ## V2 production-delivery preparation (Milestone 7)
 
 The 2.7.0 candidate prepares completion of V2 trainer infrastructure; **M7 and V2 are not yet complete**. No AI/voice or backend is introduced. Use Node from `.nvmrc`; CI installs Chromium through the pinned playwright-core version and runs the complete suite plus syntax, release metadata and committed-range whitespace checks. The existing GitHub→Vercel static deployment path is preserved; CI does not deploy.
 
-- [V2 architecture and supported trainer APIs](V2_ARCHITECTURE.md)
-- [PRD compliance: implemented, V3, accepted limitations and actual discrepancies](PRD_COMPLIANCE.md)
-- [Production, backup, smoke-test and rollback procedure](PRODUCTION_DELIVERY.md)
-- [V2 release candidate and open acceptance gates](V2_RELEASE.md)
+- [V2 architecture and supported trainer APIs](docs/V2_ARCHITECTURE.md)
+- [PRD compliance: implemented, V3, accepted limitations and actual discrepancies](docs/PRD_COMPLIANCE.md)
+- [Production, backup, smoke-test and rollback procedure](docs/PRODUCTION_DELIVERY.md)
+- [V2 release candidate and open acceptance gates](docs/V2_RELEASE.md)
 
 M6 is merged at `7548553`; recorded physical Safari results remain outstanding. Preparation is authorized, but physical results, explicit PRD-gap disposition, a verified production JSON backup and user merge approval are required before M7 production delivery. Preview and production have separate storage origins. Do not infer personal-data safety from seeded preview data or Chromium tests.
