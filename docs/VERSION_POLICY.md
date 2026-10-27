@@ -25,7 +25,7 @@ A release may contain one or several accepted issues. Each issue normally retain
 
 `BUILD` above is a placeholder, not a timestamp to commit. Choose the actual UTC timestamp when producing the first deployable #38 build. This initial generation/release assignment applies even though #38 is infrastructure work; later non-feature application releases use PATCH.
 
-Issue #43 is the documentation prerequisite, not a second bundled application feature. Issue #27 account access remains a separate implementation and release-mapping decision; it is not included in `3.1.0`. Issues #16–#18 and the remaining backlog have no application minor assigned by this decision. No `3.0.0` release is implied or invented.
+Issue #43 is the documentation prerequisite, not a second bundled application feature. Issue #27 account access remains separate from `3.1.0`. On October 27, 2026 the user explicitly approved `3.2.0` for #27 in its implementation conversation; this is an unmerged Preview candidate, not Production acceptance. Issues #16–#18 and the remaining backlog have no application minor assigned by this decision. No `3.0.0` release is implied or invented.
 
 If #38 ultimately produces only documentation/development tooling and no deployable application or deployment-configuration change, do not force a version bump to fill the reservation. Record that outcome and obtain an explicit revised mapping before another issue uses `3.1.0`. Starting #38, any merge, and any Production action still require their own authorization.
 

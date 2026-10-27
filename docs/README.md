@@ -53,3 +53,6 @@ The current V3 backlog is intentionally issue-driven rather than encoded as a lo
 Foundation/database work includes issues #27–#29 plus exercise identity issue #16. Core data/product work includes exercise/catalog/import issues #17–#18, History/UI issues #20–#26, note semantics #25, and live-workout adaptation #30. Release acceptance is issue #31.
 
 External AI/provider integration, conversational automatic logging, adaptive AI coaching, and voice are deferred beyond V3.x completion unless a later explicit product decision changes that boundary.
+## Issue #27 account candidate
+
+[V3_ACCOUNT_ACCESS.md](V3_ACCOUNT_ACCESS.md) defines Preview email-link recovery, private ownership requirements for #39, setup and pending acceptance evidence. Local workout schema remains 7.

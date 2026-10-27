@@ -1,5 +1,9 @@
 # Changes
 
+## 3.2.0 — account access candidate
+
+Issue #27: Preview email-code sign-in, sign-out and recovery; database-enforced private access markers. Workouts remain local, schema 7. Production rollout and acceptance remain pending.
+
 ## 3.1.1 — Preview verification fix
 
 - Pass the pinned CLI's required `--linked` flag for metadata queries while retaining explicit Preview project targeting; use one read-only metadata query compatible with local prepared execution and hosted execution. No schema change.

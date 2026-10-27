@@ -598,3 +598,9 @@ button:disabled {
     min-height: 44px;
   }
 }
+/* Preview account controls share the app's narrow-screen form behavior. */
+.account-card { margin-top: 14px; min-width: 0; }
+.account-card input { font-size: 16px; width: 100%; box-sizing: border-box; }
+.account-card button { min-height: 44px; white-space: normal; }
+.account-card p, .account-card output { overflow-wrap: anywhere; }
+.account-card[hidden], .account-card [hidden] { display: none; }
