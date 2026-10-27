@@ -1,6 +1,10 @@
 # V2 PRD compliance audit — Milestone 7 preparation
 
-Authority: [GymBro_PRD.md](GymBro_PRD.md), version 1.1. Audit baseline: accepted main `7548553`, plus Milestone 7 release-engineering preparation. This is not a claim that V2 is complete. The user authorized preparation while physical iPhone acceptance is outstanding.
+Current scope: standalone GymBro on GitHub `main`, with Git branches/PRs, GitHub CI and Vercel previews/production. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** Accepted V2 trainer evidence/context, guided actions and manual interchange remain supported without an external runtime. PR #9's integration experiment is abandoned and must not be imported into `main`.
+
+The matrix below is a historical Milestone 7 audit, retained without rewriting its classifications or evidence. Its phrase "intentionally deferred to V3" records the roadmap at that time; it is not a current schedule or active integration commitment. The standalone scope does not silently close previously recorded domain discrepancies, physical-device, backup or final acceptance gaps.
+
+Authority: [GymBro_PRD.md](GymBro_PRD.md), original version 1.1 with the current-scope clarification. Audit baseline: accepted main `7548553`, plus Milestone 7 release-engineering preparation. This is not a claim that V2 is complete. The user authorized preparation while physical iPhone acceptance is outstanding.
 
 Each row uses exactly one classification. Broad future-state outcomes do not become missing V2 features. Conversely, explicit V2 action/state requirements are not silently relabelled as future AI work. No functionality is added to resolve this matrix. Final acceptance must explicitly disposition actual discrepancies.
 
@@ -28,6 +32,6 @@ Each row uses exactly one classification. Broad future-state outcomes do not bec
 | 39: canonical application build independent of schema | implemented in V2 | Fixed committed APP_VERSION, UI/export matching and release checks; schema remains 7. |
 | 40–41: zero-loss durability under storage eviction or simultaneous browser writes | accepted V2 limitation | localStorage is quota/eviction-limited, no cross-tab atomic CAS, cloud recovery or draft recovery. Successful writes are synchronous and observed conflicts rejected; complete backups remain necessary. |
 
-## Release decision
+## Historical release decision
 
 Future ChatGPT/voice/coaching behavior is intentionally V3, not a V2 gap. Persisted reordering and live-session mode/plan adaptation are explicit underlying V2 discrepancies; they require a documented product decision (accepted exception or separately scoped work), not a release-engineering feature expansion. Missing physical results and M7 final deployment evidence are open gates. This audit must not be used to silently declare the PRD satisfied or V2 complete.

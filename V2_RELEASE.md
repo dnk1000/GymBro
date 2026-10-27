@@ -4,7 +4,9 @@ Application version: `2.7.0-20261025T002624Z`
 Data schema: `7`
 Release status: **preparation**
 
-V2.7 is the intended completion release of the V2 trainer-infrastructure phase. **That phase is not yet declared complete.** This document becomes the V3 baseline reference only after the gates below and final production verification pass. No V3 development is included.
+Current authoritative source is GitHub `main`, baseline `d2e6223f5d6020cb63c249ade4c02acaa7fe7cbd` (merged PR #8). Development uses feature branches, GitHub PRs/CI and Vercel preview/production deployments. The app remains standalone/localStorage-based; no Supabase/PostgreSQL/OAuth/MCP/provider runtime or ChatGPT-hosted/provider-hosted environment is required. This documentation/process cleanup changes neither application version/build nor schema.
+
+V2.7 was the intended completion release of the V2 trainer-infrastructure phase. **That phase is not yet declared complete.** Preserve the evidence and open gates below. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The later unmerged PR #9 experiment is abandoned, retained only as historical reference; it does not change this baseline or certify V2 acceptance.
 
 | Release evidence | Status |
 | --- | --- |
@@ -24,11 +26,11 @@ Explicit sessions and immutable plan intent; active recovery; ordered actual set
 
 ## Trainer-facing baseline
 
-See [V2_ARCHITECTURE.md](V2_ARCHITECTURE.md) for selectors, mutation contracts, result envelopes and replay/revision rules. getTrainerWorkoutContext composes existing guided state. ChatGPT supplies future intelligence; GymBro supplies factual memory, controls, persistence and dashboard. No AI/voice/transport exists in this release.
+See [V2_ARCHITECTURE.md](V2_ARCHITECTURE.md) for selectors, mutation contracts, result envelopes and replay/revision rules. getTrainerWorkoutContext composes existing guided state. GymBro supplies factual memory, controls, local persistence and the standalone dashboard. Trainer-named structured APIs and manual ChatGPT interchange remain accepted features. External AI/provider intelligence is an optional, unscheduled concept; no AI/voice/transport exists in this release.
 
 ## Accepted limitations and deferred work
 
-localStorage quota/eviction/concurrency limits; no cloud sync/accounts/offline shell; exercise identity by exact name key; no equipment or substitution equivalence; no inferred working/failure classification or structured trainer profile; transient unsaved inputs; no autonomous progression prescriptions. Future conversational reasoning, voice, workout generation and coaching are V3. Explicit V2 PRD gaps are separately classified in [PRD_COMPLIANCE.md](PRD_COMPLIANCE.md), not silently deferred.
+localStorage quota/eviction/concurrency limits; no cloud sync/accounts/offline shell; exercise identity by exact name key; no equipment or substitution equivalence; no inferred working/failure classification or structured trainer profile; transient unsaved inputs; no autonomous progression prescriptions. External conversational reasoning, voice, workout generation and coaching are future/optional integration concepts and are not currently scheduled. Explicit V2 PRD gaps are separately classified in [PRD_COMPLIANCE.md](PRD_COMPLIANCE.md), not silently deferred.
 
 ## Data safety and finalization
 
