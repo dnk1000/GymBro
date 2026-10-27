@@ -6,8 +6,9 @@ const vm = require("node:vm");
 const { chromium } = require("playwright-core");
 const handler = require("../api/supabase-probe-config.js");
 const { createServer } = require("../scripts/serve-probe.cjs");
-const project = "loowxditqikcwyeftfgx";
+const project = "obebuvpsqapgevwivwho";
 const env = { VERCEL_ENV: "preview", GYMBRO_SUPABASE_PROBE: "true",
+  GYMBRO_CLOUD_ENV: "preview", SUPABASE_PROJECT_REF: project,
   SUPABASE_URL: `https://${project}.supabase.co`,
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture_public_value_only" };
 const configured = handler.probeConfig(env);
@@ -40,6 +41,16 @@ test("public configuration validates URL/key and never emits rejected or unrelat
   }
   const response = handler.probeConfig({ ...env, SUPABASE_SERVICE_ROLE_KEY: "private_unrelated_fixture" });
   assert.equal(JSON.stringify(response).includes("private_unrelated_fixture"), false);
+});
+
+test("probe refuses all-environment Production defaults and mismatched Preview configuration", () => {
+  for (const change of [{ GYMBRO_CLOUD_ENV: "" }, { SUPABASE_PROJECT_REF: "" },
+    { SUPABASE_URL: "https://loowxditqikcwyeftfgx.supabase.co" },
+    { GYMBRO_CLOUD_ENV: "production" }, { SUPABASE_PROJECT_REF: "loowxditqikcwyeftfgx" }]) {
+    const response = handler.probeConfig({ ...env, ...change });
+    assert.equal(response.configured, false);
+    assert.equal("publishableKey" in response, false);
+  }
 });
 
 before(async () => {

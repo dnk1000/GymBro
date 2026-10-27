@@ -26,6 +26,8 @@ Read [current architecture](docs/CURRENT_ARCHITECTURE.md) and the [V3 implementa
 
 ## Development workflow
 
+Issue #38's `3.1.0` infrastructure candidate is described in [V3 infrastructure](docs/V3_INFRASTRUCTURE.md) and [release evidence](docs/V3_RELEASE.md). Its Preview diagnostic now requires the explicit staging project/environment variables; inherited Production configuration is rejected. The official Supabase CLI is a pinned development dependency for migrations/disposable DB tests, with no runtime package installation. Normal workouts remain local; Production database promotion requires separate approval.
+
 GymBro now uses an issue-driven implementation workflow:
 
 **Chat/product discussion → GitHub issue/specification → ordered backlog → Codex branch/PR → acceptance evidence → close issue**

@@ -18,6 +18,9 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
+- [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) — #38 environment inventory, Vercel variable contract, migrations, disposable replay, promotion and recovery.
+- [V3_RELEASE.md](V3_RELEASE.md) — current V3 infrastructure candidate and actual acceptance evidence; not a Production release declaration.
+
 These remain relevant to the deployed V2 baseline and must be preserved or deliberately migrated by V3 issues:
 
 - [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md) — guided-workout state/action contracts.

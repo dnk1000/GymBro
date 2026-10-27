@@ -23,6 +23,8 @@ The detailed accepted V2 module/action contracts remain in [V2_ARCHITECTURE.md](
 
 ## Approved V3.x direction
 
+Issue #38's infrastructure candidate adds an explicit staging boundary for the optional diagnostic and reproducible migration/CI mechanics. It does not migrate workouts or change the local workout authority above. See [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) and [candidate evidence](V3_RELEASE.md); candidate code is not evidence of Production cutover.
+
 V3.x is the **persistent-data and core-product-maturity generation**. It is not currently the AI-integration generation.
 
 Approved direction:

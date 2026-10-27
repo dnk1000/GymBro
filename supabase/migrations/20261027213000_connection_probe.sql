@@ -1,4 +1,4 @@
--- Run manually in the intended TEST project's SQL Editor. No workout data/schema.
+-- Versioned baseline of the existing optional diagnostic. No workout schema/data.
 begin;
 create table if not exists public.gymbro_connection_probe (
   owner_id uuid primary key references auth.users(id) on delete cascade,
