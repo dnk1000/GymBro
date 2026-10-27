@@ -4,7 +4,7 @@ Infrastructure only. #27 accounts, workout persistence/migration and Production 
 
 ## Approved environments
 
-The user approved these existing assignments on October 27, 2026. Public IDs live in [environments.json](../supabase/environments.json).
+The user approved these existing assignments on October 27, 2026, and later explicitly approved enabling anonymous sign-ins on the staging project for the diagnostic. Public IDs live in [environments.json](../supabase/environments.json). The anonymous setting was saved and live Save/reload/Read passed; it is not the recoverable-account feature from #27.
 
 | Environment | Supabase project | Data boundary |
 | --- | --- | --- |
