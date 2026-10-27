@@ -1,0 +1,43 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
+select plan(22);
+select has_table('public', 'gymbro_private_access', 'access marker exists');
+select col_is_fk('public', 'gymbro_private_access', 'owner_id', 'owner is Auth UUID');
+select ok((select relrowsecurity from pg_class where oid = 'public.gymbro_private_access'::regclass), 'RLS enabled');
+select ok(not has_table_privilege('anon', 'public.gymbro_private_access', 'SELECT'), 'signed-out read denied');
+select ok(not has_table_privilege('anon', 'public.gymbro_private_access', 'INSERT'), 'signed-out insert denied');
+select ok(not has_table_privilege('anon', 'public.gymbro_private_access', 'UPDATE'), 'signed-out update denied');
+select ok(not has_table_privilege('anon', 'public.gymbro_private_access', 'DELETE'), 'signed-out delete denied');
+insert into auth.users(id) values ('33333333-3333-4333-8333-333333333333'), ('44444444-4444-4444-8444-444444444444');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","is_anonymous":false}', true);
+select lives_ok($$insert into public.gymbro_private_access values ('33333333-3333-4333-8333-333333333333', 'a')$$, 'owner insert');
+select is((select value from public.gymbro_private_access), 'a', 'owner select');
+select lives_ok($$update public.gymbro_private_access set value = 'updated'$$, 'owner update');
+select throws_ok($$insert into public.gymbro_private_access values ('44444444-4444-4444-8444-444444444444', 'wrong')$$, '42501',
+  'new row violates row-level security policy for table "gymbro_private_access"', 'cross-owner insert rejected');
+select throws_ok($$update public.gymbro_private_access set owner_id = '44444444-4444-4444-8444-444444444444'$$, '42501',
+  'new row violates row-level security policy for table "gymbro_private_access"', 'owner transfer rejected');
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","is_anonymous":false}', true);
+select is_empty('select * from public.gymbro_private_access', 'second user sees no first-user data without UI filters');
+select is_empty($$update public.gymbro_private_access set value = 'forbidden' returning *$$, 'cross-owner update affects zero');
+select is_empty('delete from public.gymbro_private_access returning *', 'cross-owner delete affects zero');
+select lives_ok($$insert into public.gymbro_private_access values ('44444444-4444-4444-8444-444444444444', 'b')$$, 'second user can insert own data');
+select lives_ok('delete from public.gymbro_private_access', 'owner can delete own data');
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","is_anonymous":false}', true);
+select is((select value from public.gymbro_private_access), 'updated', 'first user data intact after attacks');
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","is_anonymous":true}', true);
+select is_empty('select * from public.gymbro_private_access', 'anonymous Auth identity cannot read even its own marker');
+select is_empty('delete from public.gymbro_private_access returning *', 'anonymous Auth identity cannot delete');
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
+select throws_ok($$insert into public.gymbro_private_access values ('44444444-4444-4444-8444-444444444444', 'anonymous')$$, '42501',
+  'new row violates row-level security policy "private_access_permanent" for table "gymbro_private_access"', 'anonymous Auth insert denied');
+select set_config('request.jwt.claims', '{}', true);
+select is_empty('select * from public.gymbro_private_access', 'missing permanent claim fails closed');
+reset role;
+select * from finish();
+rollback;

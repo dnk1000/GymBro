@@ -3,14 +3,15 @@ const http = require("node:http");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const config = require("../api/supabase-probe-config.js");
+const accountConfig = require("../api/account-config.js");
 const root = path.resolve(__dirname, "..");
 function createServer() {
   return http.createServer(async (req, res) => {
     const pathname = new URL(req.url, "http://localhost").pathname;
-    if (pathname === "/api/supabase-probe-config") {
+    if (["/api/supabase-probe-config", "/api/account-config"].includes(pathname)) {
       res.status = code => { res.statusCode = code; return res; };
       res.json = body => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(body)); };
-      return config(req, res);
+      return (pathname === "/api/account-config" ? accountConfig : config)(req, res);
     }
     try {
       if (!["GET", "HEAD"].includes(req.method)) throw Error("method");

@@ -479,6 +479,27 @@
             </div>
           </div>
         </div>
+        <div class="card account-card" id="accountAccess" hidden>
+          <h2>Account access</h2>
+          <p id="accountEnvironment" class="sub"></p>
+          <p class="sub">Sign in or recover access with a link sent to your email. Your workouts stay in this browser; signing in does not upload or sync them.</p>
+          <p id="accountIdentity">Signed out</p>
+          <p id="accountStatus" role="status" aria-live="polite">Checking account access…</p>
+          <div id="accountSignIn">
+            <label for="accountEmail">Email</label>
+            <input id="accountEmail" type="email" autocomplete="email" inputmode="email" required disabled />
+            <div class="actions"><button id="accountRequest" type="button" disabled>Send sign-in / recovery link</button></div>
+          </div>
+          <div id="accountSignedIn" hidden>
+            <div class="actions">
+              <button id="accountCheck" type="button" disabled>Check private access</button>
+              <button id="accountSignOut" class="btn secondary" type="button" disabled>Sign out of this browser</button>
+            </div>
+            <output id="accountCheckResult" aria-live="polite"></output>
+          </div>
+          <div class="actions"><button id="accountRefresh" class="btn secondary" type="button" disabled>Refresh account</button></div>
+          <p class="sub">On another browser, request a fresh link for the same email and open it in that browser. Recovery requires access to that mailbox. Sign-out does not erase local workouts or sign out other devices.</p>
+        </div>
         <div class="card probe-card" id="supabaseProbe" hidden>
           <h2>Supabase connection test</h2>
           <p class="sub">This optional Preview test stores one short value separately from your workouts. GymBro workout data stays in this browser.</p>
@@ -656,6 +677,7 @@
       </p>
       <p>On an enabled Preview, Data also offers an optional Supabase connection test. Save and read a short test value there. It uses a separate anonymous test identity and never uploads your workout database.</p>
       <p class="sub" id="helpVersion"></p>
+      <p>On an enabled account Preview, Data offers email-link sign-in and recovery. Request a fresh link for the same email to regain access in another browser. Sign-out only affects this browser's account session. Workouts remain local and are never uploaded by signing in.</p>
     </dialog>
     <script src="app-version.js"></script>
     <script src="seed.js"></script>
@@ -670,5 +692,6 @@
     <script src="guided-ui.js"></script>
     <script src="app.js"></script>
     <script src="supabase-probe.js"></script>
+    <script src="account-access.js"></script>
   </body>
 </html>

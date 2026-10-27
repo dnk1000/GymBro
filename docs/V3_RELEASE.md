@@ -1,8 +1,18 @@
-# V3 infrastructure release candidate
+# V3 account-access release candidate
 
 Release status: **preparation**
-Application version: `3.1.1-20261027T214344Z`
+Application version: `3.2.2-20261027T225348Z`
 Data schema: `7`
+
+Issue #27 only, based on accepted main `1631253ba092af2ad7e3a017ccdcbb40fb5dd0cf`. The user approved 3.2.0 for #27 on October 27, 2026. See [account contract and evidence](V3_ACCOUNT_ACCESS.md). No workout migration, Production schema/data operation, merge or physical iPhone acceptance is claimed.
+
+## Earlier #38 candidate evidence
+
+# V3 infrastructure release candidate
+
+Historical release status: **preparation**
+Historical application version: `3.1.1-20261027T214344Z`
+Historical data schema: `7`
 
 Scope: [issue #38](https://github.com/dnk1000/GymBro/issues/38) alone under [VERSION_POLICY.md](VERSION_POLICY.md). Preview environment enforcement and reproducible diagnostic-schema migration/replay tooling; no account feature or workout cloud persistence. Production remains the accepted local workout app until explicitly approved delivery through the existing Vercel integration.
 

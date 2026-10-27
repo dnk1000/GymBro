@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 account-access candidate — not yet accepted
+
+`3.2.2-20261027T225348Z` (earlier fix `3.2.1-20261027T224326Z`; initial Preview `3.2.0-20261027T222451Z`), workout schema 7; #27 only, approved release mapping in the October 27 implementation conversation. See [account evidence](V3_ACCOUNT_ACCESS.md). No Production acceptance, migration or cutover is claimed.
+
 ## V3 infrastructure candidate — not yet accepted
 
 `3.1.1-20261027T214344Z`, workout schema 7, implements #38 alone; initial Preview build was `3.1.0-20261027T212930Z`. See [V3_RELEASE.md](V3_RELEASE.md) for Preview/CI evidence and [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) for environment/migration contracts. This is candidate lineage, not a shipped Production entry.
