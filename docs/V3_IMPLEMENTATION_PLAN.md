@@ -8,125 +8,147 @@ The October 27 M0 decision approved staged cloud persistence. Subsequent product
 
 > **Make the data trustworthy → make the core product complete → expose it to AI later.**
 
-V3.x is therefore not the external-AI-integration generation. The mature conversational trainer remains the North Star, but provider/runtime AI, conversational automatic logging, adaptive AI coaching and voice are deferred until GymBro has a stable database-backed system of record and mature core domain behavior.
+V3.x is not the external-AI-integration generation. The mature conversational trainer remains the North Star, but provider/runtime AI, conversational automatic logging, adaptive AI coaching and voice are deferred until GymBro has a stable database-backed system of record and mature core domain behavior.
 
 Current deployed V2 remains localStorage-based until controlled cutover is accepted. See [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md) and [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md).
 
 ## Planning model
 
-GymBro now uses an issue-driven workflow. The roadmap groups work by phase/dependency; **the GitHub issue is the executable implementation specification**.
+GymBro uses an issue-driven workflow:
 
-Issue numbers do not equal application versions. A release may contain one or several accepted issues. Dependencies should be expressed explicitly in issue bodies rather than inferred from version-looking names.
+**Chat/product discussion → GitHub issue/specification → ordered backlog → Codex branch/PR → acceptance evidence → close issue**
 
-See [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
+The GitHub issue is the executable implementation specification. Issue numbers do not equal application versions. A release may contain one or several accepted issues. Dependencies are explicit in issue bodies. See [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
 
 ## V3.x completion definition
 
 V3.x should establish a trustworthy manual/guided product and durable system of record with:
 
-- recoverable personal access and private data ownership;
-- verified Supabase/PostgreSQL workout persistence;
+- recoverable personal access and database-enforced private data ownership;
+- reproducible Preview/Production infrastructure and source-controlled database migrations;
+- a reviewed authoritative relational schema and persistence boundary;
+- deterministic concurrency/revision/retry behavior for multi-device use;
+- verified Supabase/PostgreSQL workout migration and behavioral parity;
 - controlled retirement of localStorage as the active workout database;
+- complete cloud backup/restore/reset/recovery semantics;
+- supportable recoverable error states and safe diagnostics;
 - stable canonical exercise identity;
 - maintainable exercise catalog, aliases, archive/merge behavior;
 - robust import resolution for variant/unknown exercise labels;
 - correct note/data semantics;
-- usable long-term History and exercise-centric navigation;
-- preserved corrections, backup/restore, imports/exports and historical truth;
+- usable long-term History, Program, Dashboard and Exercises UX on desktop and iPhone;
 - complete live-workout reordering/duration adaptation;
-- documented physical iPhone and Production acceptance.
+- documented physical iPhone and Production acceptance;
+- an explicit V3 application-version/release mapping.
 
 External AI/provider runtime integration is not required for V3.x completion.
 
 ## Ordered backlog
 
-The order below is a recommended dependency/value order. Independent UI issues may be pulled earlier when they do not destabilize migration work.
+The order below is recommended by dependency first, then product value. Independent UI issues may be pulled earlier when they do not destabilize foundation work.
 
-### Phase A — Foundation and identity
+### Phase A — Infrastructure, ownership, identity and schema
 
-**#27 — V3 Foundation: Recoverable User Access and Private Data Ownership**
+**#38 — V3 Infrastructure: Preview/Production Environment and Database Migration Pipeline**  
+Establish reproducible Preview/Production Supabase/Vercel boundaries, source-controlled database migrations, safe configuration/secrets handling and a disposable test strategy.
 
-Establish sign-in/sign-out/recovery, user isolation and Preview/Production separation without migrating personal workout history yet.
+**#27 — V3 Foundation: Recoverable User Access and Private Data Ownership**  
+Provide sign-in/sign-out/recovery plus database-enforced user isolation/RLS. This issue does not migrate personal workout history.
 
-**#16 — V3.0: Exercise Identity Architecture**
+**#16 — V3.0: Exercise Identity Architecture**  
+Introduce immutable canonical exercise IDs, aliases/provenance and the separation between intrinsic exercise metadata and contextual template/session role.
 
-Establish immutable canonical exercise IDs, aliases/provenance and the separation between intrinsic exercise metadata and contextual template/session role. This must be reflected in the database migration before the V2 dataset is considered fully migrated.
+**#25 — Data Model: Distinguish Session, Exercise, and Set Notes**  
+Define note scope before the relational schema is finalized. Preserve historical text conservatively; do not guess old note scope.
 
-**#25 — Data Model: Distinguish Session, Exercise, and Set Notes**
+**#39 — V3 Data: Authoritative Relational Schema and Persistence Boundary**  
+Define/implement the V3 relational model for users, exercises/aliases, templates, sessions/snapshots, sets, bodyweights, guided/request state, imports, preferences and notes. Establish one persistence boundary under the existing domain actions.
 
-Resolve note scope before the database model is finalized. Existing historical text must be preserved conservatively; do not guess old note scope.
+**#40 — V3 Data: Concurrency, Revision, and Retry Contract**  
+Define stale-write, optimistic revision, retry/idempotency, delayed-response and two-device behavior before migration acceptance.
 
-Recommended dependency: #27 and #16 may proceed as separate foundation tracks, but #16 and #25 should be settled before #28 accepts the final migrated workout model.
+### Phase B — Backup/recovery semantics and Preview migration
 
-### Phase B — Preview database migration
+**#41 — V3 Data: Cloud Backup, Restore, Reset, and Account Data Lifecycle**  
+Define cloud-authority export, complete restore, history merge, local recovery-copy cleanup, cloud reset and account/data deletion semantics.
 
-**#28 — V3 Foundation: Full Workout Persistence and Preview Migration**
+**#28 — V3 Foundation: Full Workout Migration and Preview Parity Verification**  
+Migrate a deliberate verified test copy onto the established V3 platform and prove complete data/relationship/behavior parity. This issue no longer owns infrastructure, target schema design or concurrency-policy design.
 
-Depends on #27 and #16 and incorporates the approved V3 data model. Move a deliberate test copy of the complete dataset to Supabase/PostgreSQL on Preview, exercise all persisted workflows, compare data/relationships, and prove retry/failure safety. Required personal-backup/physical-evidence gates from M0 apply before personal migration testing.
+**#42 — V3 Operations: Diagnostics and Recoverable Error States**  
+Provide supportable failure states for auth, network, database, stale writes, migration/schema mismatches and failed initial loads without adding broad analytics/telemetry.
 
-### Phase C — Production cutover
+### Phase C — Controlled Production cutover
 
-**#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**
-
-Depends on accepted #28 and explicit Production rollout approval. After cutover, Supabase/PostgreSQL becomes the sole active workout store. No indefinite dual writes or automatic local-only workout fallback. Retain the legacy local copy only as deliberately managed recovery material until cleanup is separately approved.
+**#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**  
+After accepted Preview migration and explicit Production approval, make Supabase/PostgreSQL the sole active workout store. Do not keep indefinite dual writes or automatic local-only fallback. Retain legacy local data only as deliberately managed recovery material until cleanup is separately approved.
 
 ### Phase D — Exercise/catalog/import maturity
 
-**#17 — V3.1: Exercise Catalog Management**
+**#17 — V3.1: Exercise Catalog Management**  
+Canonical metadata editing, aliases, archive/restore, duplicate suggestions and explicit safe Merge Exercises workflow.
 
-Depends on #16. Provide canonical metadata editing, aliases, archive/restore, conservative duplicate detection and explicit Merge Exercises behavior without rewriting historical workout facts.
+**#18 — V3.2: Smart Import Resolution**  
+Exact canonical/alias matches map automatically; unknown/ambiguous labels require review. Approved mappings become remembered aliases. Fuzzy similarity is suggestion-only.
 
-**#18 — V3.2: Smart Import Resolution**
+**#35 — Exercises: Move Taxonomy and Categorization out of Program**  
+Make Exercises the owner of taxonomy/catalog metadata and keep Program focused on template structure.
 
-Depends on #16 and should reuse #17 catalog operations. Exact canonical/alias matches may map automatically; unknown/ambiguous labels require review. Intentional mappings become remembered aliases. Fuzzy similarity is suggestion-only unless an explicit deterministic rule is approved.
+**#23 — Exercise: Detail and Performance History View**  
+One canonical exercise gets one longitudinal history/detail experience.
 
-### Phase E — History and exercise usability
+**#37 — Exercises: Mobile-Friendly Library Layout**  
+Use a phone-friendly card/list presentation rather than squeezing the desktop table into narrow widths.
 
-These are core-product-maturity issues. Some can be implemented independently before database cutover; where practical, prefer stable exercise IDs for exercise-centric features.
+### Phase E — History and dashboard/program usability
 
-**#20 — History: Collapsible Workout Sessions**
+**#20 — History: Collapsible Workout Sessions**  
+Collapsed-by-default session/date cards with concise summaries.
 
-Collapsed-by-default session/date cards with summaries and Expand/Collapse All. Presentation only; no historical mutation.
+**#21 — History: Group Sets by Exercise with Progressive Disclosure**  
+Exercise-level summaries inside expanded sessions, with individual set rows revealed only when needed.
 
-**#21 — History: Group Sets by Exercise with Progressive Disclosure**
+**#36 — History: Mobile-Friendly Set Layout**  
+Phone-friendly stacked set presentation while preserving efficient desktop tables.
 
-Within an expanded session, show exercise-level summaries before individual set rows while preserving actual sequence and corrections.
+**#22 — History: Search and Filters**  
+Exercise/workout/date filtering, with optional reliable pain/discomfort filtering.
 
-**#22 — History: Search and Filters**
+**#24 — History: Friendlier Legacy and Source Presentation**  
+Keep provenance true but reduce internal `legacy/sessionless` language in the normal user experience.
 
-Exercise/workout/date filtering, with optional reliable pain/discomfort filtering. Canonical exercise identity improves correctness.
+**#26 — History: Deterministic Session Highlights and Last-Time Comparison**  
+Surface factual highlights and comparable prior performance without an AI provider.
 
-**#23 — Exercise: Detail and Performance History View**
+**#32 — Dashboard: Desktop Layout and Information Hierarchy**  
+Use desktop space better, simplify the header, remove low-value KPI cards, align charts and improve deterministic Problems/Flags copy while preserving the good phone layout.
 
-Depends on #16. One canonical exercise should have one navigable longitudinal history, including relevant setup metadata, pain context and deterministic performance context.
+**#33 — Backlog: Revisit Performance Calculation and Dashboard Metric**  
+Analysis-only decision issue: document the current calculation, define what question the metric should answer and create follow-on implementation issue(s) if the metric changes.
 
-**#24 — History: Friendlier Legacy and Source Presentation**
+**#34 — Program: Improve Split and Template Editing UX**  
+Clarify split/template selection and selected 30/60-minute context while preserving existing functionality discovered during implementation.
 
-Keep legacy/sessionless and provenance truth available without making implementation terminology dominate the normal UI. Never fabricate sessions.
+### Phase F — Remaining live-workout behavior
 
-**#26 — History: Deterministic Session Highlights and Last-Time Comparison**
+**#30 — V3 Core: Complete Live-Workout Reordering and Duration Adaptation**  
+Persist temporary reordering and changes to the remaining workout/duration while preserving original plan intent, completed work and permanent templates.
 
-Surface reliable facts and comparable prior performance without requiring an AI provider. Reuse existing comparison rules rather than inventing conflicting metrics.
+### Phase G — Release/version decision and V3 acceptance
 
-### Phase F — Remaining workout behavior
+**#43 — V3 Release: Version Numbering and Issue-to-Release Mapping Decision**  
+Resolve the collision between capability labels and application `3.x` minor versions. Issue order and release numbers remain independent; multiple accepted issues may ship in one minor release.
 
-**#30 — V3 Core: Complete Live-Workout Reordering and Duration Adaptation**
-
-Close the known V2 gaps: persist temporary reordering and changes to the remaining workout/duration while preserving original plan intent, completed work and permanent templates. Prefer implementation after authoritative persistence so new state does not require another migration.
-
-### Phase G — V3 acceptance
-
-**#31 — V3 Release: Core Product Completeness and Acceptance Review**
-
-Review the selected V3 release scope, migration integrity, account recovery, cloud authority, exercise identity/catalog/import behavior, History/core behavior, backup/recovery and physical iPhone evidence. Close V3 only when included issues have evidence or explicit disposition.
+**#31 — V3 Release: Core Product Completeness and Acceptance Review**  
+Review selected V3 scope, migration integrity, account recovery/isolation, cloud authority, catalog/import behavior, backup/recovery, core UX/workout behavior, diagnostics and physical iPhone evidence. Close V3 only when included issues have evidence or explicit disposition.
 
 ## Dependency summary
 
-Core path:
+Primary platform path:
 
-`#27 → #28 → #29`
+`#38 → #27 → #39 → #40 → #41 → #28 → #42 → #29`
 
-with `#16` and the approved V3 data semantics required before #28 migration acceptance.
+with `#16` and `#25` required before #39/#28 acceptance.
 
 Exercise path:
 
@@ -134,15 +156,19 @@ Exercise path:
 
 Exercise-centric History:
 
-`#16 → #23 → #26` (with #26 also reusing existing comparison contracts)
+`#16 → #23 → #26`
+
+Responsive/catalog work should build on final dependencies rather than create parallel UI/data paths:
+
+`#35/#37` reuse #16/#17/#23 as available; `#20/#21/#36` should compose rather than compete.
 
 Workout adaptation:
 
-`#29 → #30` is the preferred order, though final dependency should remain in the issue if architecture changes.
+`#29 → #30` is the preferred order so the new active-workout state does not require a second persistence migration.
 
-Release:
+Release management:
 
-selected V3 issues → `#31`.
+`#43` before the first deployable V3 version; selected V3 issues → `#31` final acceptance.
 
 ## Data and migration principles
 
@@ -156,7 +182,10 @@ V3 migration must preserve historical truth and be conservative:
 - make migration retry-safe/idempotent;
 - never make a cloud-load failure look like an empty account;
 - require durable acknowledgement before reporting a cloud write saved;
-- maintain complete JSON backup/export capability and explicit recovery procedures.
+- maintain complete JSON backup/export capability and explicit recovery procedures;
+- keep Preview and Production data/configuration boundaries explicit;
+- keep database schema changes reproducible from reviewed migration state;
+- do not expose privileged credentials to browser code.
 
 ## Exercise identity rule
 
@@ -184,7 +213,7 @@ The next trainer generation should be planned against the stable V3 database/dom
 
 The earlier M0 plan mapped milestone numbers directly to application versions (`3.1`, `3.2`, etc.). The issue-driven workflow deliberately separates implementation-unit order from release numbering.
 
-Do not assign a concrete V3 application minor version merely because an issue title contains `V3.0`, `V3.1`, or `V3.2`. Those exercise issue titles are capability labels inherited from the product discussion. Decide the concrete release mapping before the first affected V3 deployable build and then use `MAJOR.MINOR.PATCH-BUILD` consistently.
+Until #43 is accepted, do not assign a concrete V3 application minor version merely because an issue title contains `V3.0`, `V3.1`, or `V3.2`. Those exercise issue titles are capability labels inherited from product discussion, not automatic release numbers.
 
 ## Execution rule
 
