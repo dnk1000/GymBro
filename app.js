@@ -81,6 +81,8 @@ const {
   ].map((id) => [id, document.getElementById(id)]),
 );
 let db = load();
+legacySnapshot = structuredClone(db);
+restoreDatabaseView();
 let editingSetId = null;
 let selectedExercise = "Seated Row";
 let selectedTemplateId = null;
@@ -88,6 +90,7 @@ const workoutActions = createWorkoutActions({
   getState: () => db,
   setState: (next) => {
     db = next;
+    cacheDatabaseView(next);
   },
   persist: (next) => persistData(next),
   createId: newId,
@@ -166,7 +169,7 @@ document.querySelectorAll(".tab").forEach(
     }),
 );
 
-function addSet() {
+async function addSet() {
   const input = {
     date: fDate.value,
     exercise: fExercise.value.trim(),
@@ -183,7 +186,7 @@ function addSet() {
   if (guidedFormContext && !editingSetId) {
     if (guidedFormContext.committed) return;
     const context = guidedFormContext;
-    const result = workoutActions.logGuidedSet({
+    const result = await workoutActions.logGuidedSet({
       ...input,
       sessionId: context.sessionId,
       planSlotId: context.planSlotId,
@@ -200,8 +203,8 @@ function addSet() {
     return;
   }
   const result = editingSetId
-    ? workoutActions.editSet(editingSetId, input)
-    : workoutActions.logSet(input);
+    ? await workoutActions.editSet(editingSetId, input)
+    : await workoutActions.logSet(input);
   if (applyActionResult(result)) clearForm(false);
 }
 function clearForm(clearEx = true) {
@@ -264,16 +267,19 @@ function markEditedSetComplete() {
   message.textContent =
     "Marked complete in this form. Save changes to update the record; nothing has been saved yet.";
 }
-function addBodyweight() {
-  const result = workoutActions.logBodyweight({
+async function addBodyweight() {
+  const result = await workoutActions.logBodyweight({
     date: bwDate.value,
     value: numeric(bwValue.value),
   });
   if (applyActionResult(result)) bwValue.value = "";
 }
-function deleteSet(id) {
+async function deleteSet(id) {
   if (!confirm("Delete this set?")) return;
-  if (applyActionResult(workoutActions.deleteSet(id)) && editingSetId === id)
+  if (
+    applyActionResult(await workoutActions.deleteSet(id)) &&
+    editingSetId === id
+  )
     clearForm();
 }
 function renderAll() {
@@ -518,14 +524,16 @@ function loadExerciseToForm(ex) {
   document.querySelector('[data-view=\"workout\"]').click();
   fReps.focus();
 }
-function startTemplate(id, duration = 60) {
+async function startTemplate(id, duration = 60) {
   if (
-    applyActionResult(workoutActions.selectPlan({ templateId: id, duration }))
+    applyActionResult(
+      await workoutActions.selectPlan({ templateId: id, duration }),
+    )
   )
     document.querySelector('[data-view="workout"]').click();
 }
-function clearActivePlan() {
-  applyActionResult(workoutActions.clearPlan());
+async function clearActivePlan() {
+  applyActionResult(await workoutActions.clearPlan());
 }
 function renderToday() {
   const d = fDate.value || today();
@@ -698,9 +706,9 @@ function renderInboxDraft() {
   commitInboxBtn.disabled = dup || issues.length > 0;
   inboxReview.querySelectorAll("label.label").forEach(explainAcronyms);
 }
-function commitInbox() {
+async function commitInbox() {
   if (!inboxDraft) return;
-  const result = workoutActions.commitImport(inboxDraft);
+  const result = await workoutActions.commitImport(inboxDraft);
   if (!applyActionResult(result)) return;
   clearInbox(false);
   inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${result.count} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
@@ -832,20 +840,24 @@ function editTemplate(id) {
       "",
     )}</div><div style="margin-top:12px"><div class="label">Add exercise</div><div class="formgrid"><div class="span3"><input id="addEx_${esc(id)}" list="exerciseList" placeholder="Exercise"></div><div class="span2"><select id="addRole_${esc(id)}"><option value="accessory">Accessory</option><option value="core">Core</option><option value="substitute">Substitute</option></select></div><div><button onclick="addSlot(${jsArg(id)})">Add</button></div></div></div>`;
 }
-function toggleShort(id, i) {
+async function toggleShort(id, i) {
   applyActionResult(
-    workoutActions.toggleSlotShort({ templateId: id, index: i }),
+    await workoutActions.toggleSlotShort({ templateId: id, index: i }),
   );
 }
-function cycleRole(id, i) {
-  applyActionResult(workoutActions.cycleSlotRole({ templateId: id, index: i }));
-}
-function removeSlot(id, i) {
-  applyActionResult(workoutActions.removeSlot({ templateId: id, index: i }));
-}
-function addSlot(id) {
+async function cycleRole(id, i) {
   applyActionResult(
-    workoutActions.addSlot({
+    await workoutActions.cycleSlotRole({ templateId: id, index: i }),
+  );
+}
+async function removeSlot(id, i) {
+  applyActionResult(
+    await workoutActions.removeSlot({ templateId: id, index: i }),
+  );
+}
+async function addSlot(id) {
+  applyActionResult(
+    await workoutActions.addSlot({
       templateId: id,
       exercise: document.getElementById("addEx_" + id).value.trim(),
       role: document.getElementById("addRole_" + id).value,
@@ -921,20 +933,26 @@ function importJSON() {
   const mode = document.getElementById("backupMode").value;
   const reader = new FileReader();
   reader.onerror = () => alert("Could not read that file.");
-  reader.onload = () => {
+  reader.onload = async () => {
+    if (uiSaveBusy || databaseUIBusy || storageState.remote?.busy) {
+      alert("Wait for the current save before importing a backup.");
+      return;
+    }
+    uiSaveBusy = true;
     try {
       const restored = migrateData(JSON.parse(reader.result));
       let next = restored;
       if (mode === "merge") {
-        if (storageState.blocked)
+        if (storageState.mode === "local" && storageState.blocked)
           throw Error(
             "Restore a complete backup to recover unreadable storage.",
           );
         next = mergeHistoryData(db, restored);
       }
       if (!confirm(backupConfirmation(mode, restored, next, file.name))) return;
-      if (save(next, mode === "restore")) {
+      if (await save(next, mode === "restore")) {
         db = next;
+        cacheDatabaseView(next);
         clearForm();
         clearInbox();
         selectedTemplateId = null;
@@ -949,31 +967,43 @@ function importJSON() {
       }
     } catch (error) {
       alert("Backup was not imported: " + error.message);
+    } finally {
+      uiSaveBusy = false;
     }
   };
   reader.readAsText(file);
 }
-function resetSeed() {
-  if (confirm("Restore the original seed and discard local changes?")) {
+async function resetSeed() {
+  if (
+    confirm(
+      storageState.mode === "cloud"
+        ? "Replace ALL workout data in your signed-in database account with the original repository seed, including its historical records? Export a complete JSON backup first."
+        : "Restore the original seed and discard local changes?",
+    )
+  ) {
     const next = migrateData(seed);
-    if (save(next)) {
+    if (await save(next)) {
       db = next;
+      cacheDatabaseView(next);
       clearForm();
       clearInbox();
       renderAll();
     }
   }
 }
-function clearAll() {
+async function clearAll() {
   if (
     confirm(
-      "Erase ALL local workout data and restore default program settings?",
+      storageState.mode === "cloud"
+        ? "Erase ALL workout data in your signed-in database account and restore default program settings?"
+        : "Erase ALL local workout data and restore default program settings?",
     )
   ) {
     const next = emptyData();
     next.preferences = {};
-    if (save(next)) {
+    if (await save(next)) {
       db = next;
+      cacheDatabaseView(next);
       clearForm();
       clearInbox();
       renderAll();
@@ -996,3 +1026,44 @@ document.getElementById("helpVersion").textContent =
   `GymBro ${APP_VERSION.version}`;
 
 renderBackupOperation();
+
+// Cover async persistence and post-save effects with one UI operation guard.
+let uiSaveBusy = false;
+for (const [name, handler] of Object.entries({
+  addSet,
+  addBodyweight,
+  deleteSet,
+  startTemplate,
+  clearActivePlan,
+  commitInbox,
+  toggleShort,
+  cycleRole,
+  removeSlot,
+  addSlot,
+  resetSeed,
+  clearAll,
+  startGuidedWorkout,
+  enableGuidedWorkout,
+  guidedCommand,
+  finishManualSession,
+  recoverStorage,
+})) {
+  globalThis[name] = async (...args) => {
+    if (uiSaveBusy || (typeof databaseUIBusy !== "undefined" && databaseUIBusy))
+      return;
+    uiSaveBusy = true;
+    const editingControls = Array.from(
+      document.querySelectorAll(
+        "#workout input,#workout select,#workout textarea",
+      ),
+    );
+    const disabled = editingControls.map((el) => el.disabled);
+    editingControls.forEach((el) => (el.disabled = true));
+    try {
+      return await handler(...args);
+    } finally {
+      editingControls.forEach((el, i) => (el.disabled = disabled[i]));
+      uiSaveBusy = false;
+    }
+  };
+}

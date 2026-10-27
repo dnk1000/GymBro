@@ -1,4 +1,44 @@
-const storageState = { raw: null, blocked: false, stale: false, message: "" };
+const storageState = {
+  raw: null,
+  blocked: false,
+  stale: false,
+  message: "",
+  mode: "loading",
+  remote: null,
+};
+let legacySnapshot = null;
+const cloudViewKey = "gymbroDatabaseView";
+function restoreDatabaseView() {
+  let raw;
+  try {
+    raw = sessionStorage.getItem(cloudViewKey);
+  } catch {
+    return;
+  }
+  if (!raw) return;
+  storageState.mode = "cloud";
+  try {
+    const cached = JSON.parse(raw);
+    validateData(cached.state);
+    db = structuredClone(cached.state);
+  } catch {
+    storageState.mode = "cloud";
+    storageState.message =
+      "The database view cache could not be loaded. Sign in and reload database data.";
+    db = emptyData();
+    db.preferences = {};
+  }
+}
+function cacheDatabaseView(state) {
+  if (storageState.mode !== "cloud") return;
+  try {
+    sessionStorage.setItem(cloudViewKey, JSON.stringify({ state }));
+  } catch {
+    storageState.message =
+      "Database save confirmed, but this tab could not cache the displayed state. Export a backup before closing.";
+  }
+}
+
 function load() {
   try {
     storageState.raw = localStorage.getItem(KEY);
@@ -12,6 +52,25 @@ function load() {
   }
 }
 function persistData(next, recovery = false) {
+  if (storageState.mode === "loading")
+    return {
+      ok: false,
+      errors: ["Storage is starting. Wait a moment before saving."],
+    };
+  if (storageState.mode === "cloud") {
+    if (!storageState.remote)
+      return {
+        ok: false,
+        errors: [
+          "Sign in to load your Supabase database. Local data has not been changed.",
+        ],
+      };
+    return storageState.remote.write(next).then((result) => {
+      storageState.message = result.ok ? "" : result.errors.join("\n");
+      renderStorageNotice();
+      return result;
+    });
+  }
   try {
     if ((storageState.blocked && !recovery) || storageState.stale)
       throw Error("Saving is paused. Resolve the storage notice first.");
@@ -35,8 +94,8 @@ function persistData(next, recovery = false) {
   }
 }
 // Legacy UI adapter for backup/restore/reset paths not extracted in Milestone 1.
-function save(next, recovery = false) {
-  const result = persistData(next, recovery);
+async function save(next, recovery = false) {
+  const result = await persistData(next, recovery);
   renderStorageNotice();
   if (!result.ok) alert(result.errors.join("\n"));
   return result.ok;
@@ -46,7 +105,9 @@ function renderStorageNotice() {
   notice.hidden = !storageState.message;
   document.getElementById("storageMessage").textContent = storageState.message;
   document.getElementById("recoverStorage").hidden =
-    !storageState.blocked || storageState.stale;
+    storageState.mode !== "local" ||
+    !storageState.blocked ||
+    storageState.stale;
 }
 function downloadStoredData() {
   if (storageState.raw === null) {
@@ -55,7 +116,13 @@ function downloadStoredData() {
   }
   download("gymbro-original-data.json", "application/json", storageState.raw);
 }
-function recoverStorage() {
+async function recoverStorage() {
+  if (storageState.mode !== "local") {
+    alert(
+      "Use Reload database for cloud recovery. The original local backup is retained.",
+    );
+    return;
+  }
   if (
     !confirm(
       "Replace the unreadable saved data with an empty workout history? Download the original first.",
@@ -63,13 +130,14 @@ function recoverStorage() {
   )
     return;
   const next = emptyData();
-  if (save(next, true)) {
+  if (await save(next, true)) {
     db = next;
     clearInbox();
     renderAll();
   }
 }
 window.addEventListener("storage", (event) => {
+  if (storageState.mode !== "local") return;
   if (
     event.storageArea === localStorage &&
     (event.key === KEY || event.key === null)
@@ -84,6 +152,7 @@ window.addEventListener("storage", (event) => {
 // Safari may restore a suspended page without delivering a storage event.
 // Recheck on return, but never reload/adopt data or save transient inputs here.
 function checkStoredDataOnResume() {
+  if (storageState.mode !== "local") return;
   if (
     document.visibilityState !== "visible" ||
     storageState.blocked ||

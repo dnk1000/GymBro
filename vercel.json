@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/supabase-sdk.js": {
+      "includeFiles": "node_modules/@supabase/supabase-js/dist/umd/supabase.js"
+    }
+  }
+}

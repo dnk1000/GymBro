@@ -39,3 +39,7 @@ The initial session-model extraction was [1062a60](https://github.com/dnk1000/Gy
 - Documentation-only release-history updates do not change the application version or schema.
 - Update this file for each accepted release, recording the exact canonical version, schema, application revision, PR and meaningful changes. Keep preview builds distinct from accepted releases. The linked PR records the final merge commit; record production verification only after it succeeds.
 - Automated testing and production deployment checks are not physical iPhone acceptance. Record actual device/browser/results separately in [REAL_PHONE_SMOKE_TEST.md](REAL_PHONE_SMOKE_TEST.md).
+
+## Supabase storage review candidate — not accepted production
+
+`3.0.0-20261027T022348Z`, workout schema 7, branch `v3/supabase-storage`, from main `d2e6223`. This is a fresh storage-only implementation, separate from the abandoned unmerged PR #9. Deployment/physical-device/production acceptance must be recorded separately; the candidate is not an accepted production release.

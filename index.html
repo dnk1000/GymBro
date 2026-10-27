@@ -46,6 +46,17 @@
       </div>
     </header>
     <main>
+      <section class="card" id="databaseAccount" aria-label="Workout database">
+        <strong id="databaseStatus">Starting workout storage…</strong>
+        <details><summary>Database account and local-data import</summary>
+          <p id="databaseMessage" role="status"></p>
+          <div class="formgrid"><label>Email<input type="email" id="databaseEmail" autocomplete="username"></label><label>Password<input type="password" id="databasePassword" autocomplete="current-password"></label></div>
+          <div class="database-buttons"><button onclick="databaseLogin(false)">Sign in</button><button onclick="databaseLogin(true)">Create account</button><button onclick="databaseLogout()">Sign out</button><button onclick="databaseReload()">Reload database</button><button onclick="databaseResolve()">Resolve save</button></div>
+          <p>Supabase stores your workouts after you sign in and explicitly choose or import a dataset. Your original V2 local data is retained. Signout leaves the displayed data read-only; it never swaps histories.</p>
+          <div class="database-buttons"><button onclick="databasePreview(false)">Preview V2 local import</button><button onclick="databasePreview(true)">Preview empty account</button><button onclick="databaseDownloadLocal()">Download original local data</button></div>
+          <div id="databasePreview" hidden><p id="databasePreviewSummary"></p><button onclick="databaseCommit()">Confirm import and use database</button></div>
+        </details>
+      </section>
       <div id="storageNotice" class="notice status-bad" role="alert" hidden>
         <p id="storageMessage"></p>
         <p class="sub">
@@ -484,15 +495,15 @@
           <div class="actions">
             <button class="btn secondary" onclick="resetSeed()">
               Restore original seed</button
-            ><button class="btn danger" onclick="clearAll()">
+            ><button id="eraseDataButton" class="btn danger" onclick="clearAll()">
               Erase all local data
             </button>
           </div>
         </div>
         <div class="footer">
-          GymBro keeps the workout database local, while the ChatGPT Inbox
-          provides reviewed conversational imports. Cloud sync can be added
-          later without changing the workout schema.
+          The database status above identifies the active storage mode. Configured
+          accounts save to Supabase; legacy mode saves locally. The ChatGPT Inbox
+          remains a reviewed manual JSON interchange workflow.
         </div>
       </section>
       <footer
@@ -547,6 +558,8 @@
         the flag. Add set saves a new record; Save changes updates the record
         you are editing.
       </p>
+      <h3>Database storage</h3>
+      <p>When Supabase is configured, sign in using the Database account controls. An empty account requires an explicit reviewed local import or empty start. Original local V2 data remains downloadable and unchanged. Workouts save to the database before success; unavailable or conflicting writes preserve your input and require inspection/retry. Signout keeps the displayed dataset read-only. Use Reload database to read current account data and Resolve save to resolve an uncertain response. Export JSON backs up the displayed complete dataset; Restore/Merge applies to your signed-in account. Unconfigured static development mode retains legacy local storage.</p>
       <h3>Guided workouts</h3>
       <p>
         In Workout, choose a saved workout, date and approximate 30/60-minute
@@ -651,6 +664,8 @@
     <script src="ui-acronyms.js"></script>
     <script src="history-view.js"></script>
     <script src="guided-ui.js"></script>
+    <script src="supabase-storage.js"></script>
     <script src="app.js"></script>
+    <script src="database-ui.js"></script>
   </body>
 </html>

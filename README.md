@@ -1,8 +1,16 @@
 # GymBro
 
-A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
+A mobile-friendly personal workout log with Supabase database storage when configured, an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
 
-## Run
+## Supabase storage (3.0.0 candidate)
+
+Use the same GitHub repository, feature branches/PRs and existing Vercel project. This storage-only release uses Supabase Auth and a per-user database record protected by RLS; it adds no external trainer, AI or provider integration. See [setup and storage contracts](SUPABASE_STORAGE.md) and [candidate status](V3_RELEASE.md).
+
+Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY securely in the existing Vercel project's Preview environment, apply supabase/001_workout_storage.sql in the intended GymBro Supabase project, and configure Auth redirects for the preview origin. Do not change V2 production settings during review. The publishable key is intentionally browser-visible; never use a secret/service-role key.
+
+Run `npm ci` then `npm run dev` to exercise the Node config/SDK routes locally. Sign in, then explicitly preview/confirm an import of retained local data or an empty account. Saves await database confirmation; failed or conflicting saves preserve input. Signout does not replace the displayed history. The original local V2 data is retained and downloadable. Connected backup restore/merge/reset operates on the database, not that local original.
+
+## Legacy local run
 
 Open `index.html` in a modern browser, or serve this directory locally:
 
@@ -10,13 +18,13 @@ Open `index.html` in a modern browser, or serve this directory locally:
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-There is no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is only needed for development tests.
+Unconfigured static/development mode requires no backend, account, API key or application build. Configured deployments use Supabase storage; they never fall back to local writes when cloud access fails. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. JavaScript, browser storage, Canvas, and modern browser APIs are required. Node runs development tools and the two Vercel public configuration/SDK functions; the workout frontend remains uncompiled vanilla JavaScript.
 
 ## Data and backups
 
-The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The application uses independent data version **7**, supporting explicit sessions and guided progress while preserving legacy history and manual logging. Version-5 databases upgrade with empty sessions and a null active pointer; version-6 databases advance to 7 without adding guidance to existing sessions. All migration happens in memory; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older applications that support only schema 5 or 6 cannot read version-7 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
+Configured deployments save the whole validated workout database in Supabase. Legacy mode and preserved V2 originals use the existing `daveGymTrackerV1` localStorage key. A separate tab-session display cache/auth session is not the workout authority. The application uses independent data version **7**, supporting explicit sessions and guided progress while preserving legacy history and manual logging. Version-5 databases upgrade with empty sessions and a null active pointer; version-6 databases advance to 7 without adding guidance to existing sessions. All migration happens in memory; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older applications that support only schema 5 or 6 cannot read version-7 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
 
-Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
+Legacy local data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Connected data belongs to the signed-in Supabase account and can be loaded from another device after sign-in. There is no background/offline synchronization or installed offline service worker. Keep complete JSON backups independently of either storage mode; this candidate does not establish a managed server-backup policy.
 
 Before testing any milestone that touches persistence, export a complete JSON backup from production and verify the saved file. A Vercel preview has separate browser storage; empty or seeded preview data does not indicate missing production history. Keep production and preview addresses/data distinct. Automated tests use disposable storage only.
 
@@ -79,7 +87,7 @@ The existing vanilla JavaScript workflow is retained. V2 can introduce explicit 
 
 `app-version.js` is the canonical release source. The format is **MAJOR.MINOR.PATCH-BUILD**: product generation, milestone, non-feature/bugfix release, and a fixed UTC build timestamp (`YYYYMMDDTHHmmssZ`). Milestone 2 starts at 2.2.0. Update the committed timestamp for each deployable build; do not derive it from the browser clock. The normal footer and page title show the complete version, also available as `APP_VERSION` for diagnostics.
 
-Application releases and `DATA_VERSION` are independent. Complete JSON backups include `appVersion` and the existing `version: 7` schema field (no redundant `dataVersion` field). Export metadata does not mutate workout state. Restore uses only schema compatibility: missing or different application versions are accepted. Re-export identifies the exporting build. CSV and ChatGPT interchange remain unchanged. The private npm package contains tooling only and has no separate application version.
+Application releases and `DATA_VERSION` are independent. Complete JSON backups include `appVersion` and the existing `version: 7` schema field (no redundant `dataVersion` field). Export metadata does not mutate workout state. Restore uses only schema compatibility: missing or different application versions are accepted. Re-export identifies the exporting build. CSV and ChatGPT interchange remain unchanged. The private npm package pins tooling and the Supabase SDK; it has no separate application version.
 
 The header Help button opens the application user guide, including logging, history icon actions, program modes, imports and local backup/restore. Update the relevant help text when user-facing workflows change. History uses labelled pencil/trash controls with compact 28px buttons; wide tables scroll within their cards.
 

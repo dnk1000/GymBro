@@ -594,3 +594,8 @@ button:disabled {
     min-height: 44px;
   }
 }
+
+.database-buttons { display:flex; flex-wrap:wrap; gap:8px; margin-block:12px; }
+#databaseAccount button { min-height:44px; }
+#databaseAccount input { font-size:16px; width:100%; min-width:0; }
+#databaseAccount p { overflow-wrap:anywhere; }

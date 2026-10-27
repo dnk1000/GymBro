@@ -1,6 +1,6 @@
 # GymBro V2 architecture and trainer API baseline
 
-This describes the accepted V2 runtime, not an implemented V3 integration. Milestone 7 release completion remains gated by [V2_RELEASE.md](V2_RELEASE.md).
+This is the historical accepted V2 runtime contract. The new storage-only V3 candidate preserves these workout rules while adding an awaited Supabase persistence adapter; see SUPABASE_STORAGE.md. Milestone 7 release completion remains gated by [V2_RELEASE.md](V2_RELEASE.md).
 
 **User voice/text → ChatGPT virtual trainer → GymBro structured actions/state → persistent workout data → GymBro dashboard**
 

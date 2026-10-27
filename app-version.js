@@ -1,10 +1,10 @@
 // Canonical application release metadata. Update once per deployable commit,
 // never from the browser clock. Persistence compatibility uses DATA_VERSION.
 const APP_VERSION = (() => {
-  const major = 2;
-  const minor = 7;
+  const major = 3;
+  const minor = 0;
   const patch = 0;
-  const build = "20261025T002624Z";
+  const build = "20261027T022348Z";
   return Object.freeze({
     major,
     minor,

@@ -2,12 +2,25 @@
 
 These rules apply throughout this repository. Preserve the product contracts below unless the user explicitly requests a change to them. Routine fixes within these contracts do not require renewed approval. If a requested change affects a contract, explain the behavior and compatibility impact before implementing it; do not treat adjacent cleanup as authorization to redesign the app.
 
+## Current authorized Supabase storage scope
+
+The user explicitly authorized a first V3.0 that replaces local workout persistence with the existing GymBro Supabase database, on a branch from current GitHub main. This overrides older V2-only restrictions on the specifically necessary Auth/storage/UI changes. It does not authorize reviving PR #9, external trainer/provider authorization, AI, MCP, or a new repository/project.
+
+- GitHub main remains authoritative; work on feature branches and reviewed PRs, deploy previews through the existing Vercel project, and do not merge or deploy production without approval.
+- Read SUPABASE_STORAGE.md and V3_RELEASE.md. Configured deployments use Supabase Auth + direct PostgREST/RPC + RLS. No custom workout server, service-role key or runtime DATABASE_URL is needed. Vercel functions expose only public configuration and the pinned browser SDK.
+- Preserve the seven views and all accepted V2 domain rules, schema 7, IDs, snapshots, order, metadata, incompleteness, guided revisions and request tombstones. Do not create a second workout engine.
+- The shared action layer supports sync local adapters and async database saves. Commit/clear input only after persistence succeeds. Guard whole mutations, including replay lookups; selectors remain synchronous/detached. Unknown outcomes retain one explicit retry identity, not an offline queue.
+- Never silently upload or delete existing local data. Import only after preview/confirmation, database commit, read-back and integrity verification. Initial import cannot replace a nonempty account. Reset/restore/merge operate on the authenticated database account when configured.
+- Cloud errors cannot fall back to localStorage writes. Signout retains the displayed dataset read-only. Tab-session caches are not authoritative storage; original local V2 bytes stay separate and exportable. Unconfigured static/development serving retains legacy local behavior for compatibility.
+- Store only the intended publishable key in public browser config; do not expose secret/service-role keys or passwords. RLS binds reads to auth.uid(); only the authenticated save RPC can mutate records. The database is user-owned state, not a third-party trainer API.
+- Keep historical milestones and unresolved V2 acceptance gates honest. Validate existing tests plus database adapter/browser/RLS tests, actual Supabase SDK bootstrap and the real deployed preview where access permits. Distinguish simulated services/local PostgreSQL from live acceptance.
+
 ## Product and scope
 
 - GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestones 2 and 3 used schema **6**; Milestone 4 uses independent data schema **7**.
 - **iPhone usability is the primary UX target.** Prioritize readable screens, reachable controls, touch input, on-screen keyboard behavior, and Safari compatibility; retain working desktop behavior.
 - Preserve working functionality unless the task explicitly requires changing it. **Do not redesign the UI unless specifically requested.**
-- Retain the vanilla JavaScript, static-file, no-build application. Node dependencies are development tooling, not runtime requirements.
+- Retain the vanilla JavaScript, static-file, no-build frontend. The authorized Supabase candidate additionally packages the pinned browser SDK through two small Node functions; do not introduce a compiled frontend.
 - Do not replace the architecture because another framework is fashionable. Avoid unnecessary dependencies; use existing capabilities when practical and justify dependencies needed by the task.
 - Do not introduce a framework, mandatory account, backend, cloud synchronization, analytics/telemetry, API dependency, or service worker without an explicit request.
 - Preserve all seven views: Dashboard, Program, Workout, History, ChatGPT Inbox, Exercises, and Data. Do not remove working controls or narrow supported workflows to simplify implementation.
@@ -25,7 +38,7 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 ## Repository guide
 
-The app has no runtime package installation or build step. Serve the repository with `python3 -m http.server 8000 --bind 127.0.0.1` (also available as `npm start`). Keep the static assets together.
+The frontend remains vanilla static JavaScript. `npm start` serves legacy local mode. `npm run dev` serves the same app plus public config/SDK functions using Vercel-style settings. Run npm ci for the pinned SDK and test dependencies. Keep static assets together; see SUPABASE_STORAGE.md.
 
 | File                                | Responsibility                                                                                                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |

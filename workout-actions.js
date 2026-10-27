@@ -1,5 +1,5 @@
 // Domain actions: no document, window, event, controls, dialogs, or rendering.
-// Inject synchronous persistence so a failed write cannot commit candidate state.
+// Local adapters may be synchronous; remote adapters commit only after awaiting persistence.
 function createWorkoutActions({
   getState,
   setState,
@@ -40,26 +40,33 @@ function createWorkoutActions({
         ...details,
         state: getWorkoutState(),
       };
-    try {
-      const saved = persist(next);
+    function finish(saved) {
       if (!saved || saved.ok !== true)
         return failure(
           "PERSISTENCE_ERROR",
           saved?.errors || ["Changes were not saved."],
         );
+      setState(next);
+      return {
+        ok: true,
+        code: "OK",
+        errors: [],
+        ...details,
+        state: getWorkoutState(),
+      };
+    }
+    try {
+      const saved = persist(next);
+      return saved && typeof saved.then === "function"
+        ? Promise.resolve(saved).then(finish, (error) =>
+            failure("PERSISTENCE_ERROR", [error.message]),
+          )
+        : finish(saved);
     } catch (error) {
       return failure("PERSISTENCE_ERROR", [error.message]);
     }
-    // Persist first, commit second. UI effects happen only after this returns.
-    setState(next);
-    return {
-      ok: true,
-      code: "OK",
-      errors: [],
-      ...details,
-      state: getWorkoutState(),
-    };
   }
+
   const cleanText = (value) =>
     typeof value === "string" ? value.trim() : value;
   function record(input, previous) {
@@ -200,7 +207,7 @@ function createWorkoutActions({
     next.activeSessionId = null;
     return { sessionId: id, changes: ["sessions", "activeSessionId"] };
   }
-  return {
+  const actions = {
     ...createPerformanceSelectors(getWorkoutState),
     ...createGuidedActions({
       transaction,
@@ -473,4 +480,36 @@ function createWorkoutActions({
       });
     },
   };
+  // Guard the complete mutation, including guided pre-transaction replay checks.
+  const reads = new Set([
+    "getWorkoutState",
+    "getSession",
+    "getActiveSession",
+    "getGuidedWorkoutState",
+    "getExercisePerformanceContext",
+    "compareExercisePerformance",
+    "getTrainerWorkoutContext",
+  ]);
+  let saving = false;
+  for (const [name, action] of Object.entries(actions)) {
+    if (reads.has(name)) continue;
+    actions[name] = (...args) => {
+      if (saving)
+        return failure("PERSISTENCE_BUSY", ["A save is in progress."]);
+      saving = true;
+      try {
+        const result = action(...structuredClone(args));
+        if (result && typeof result.then === "function")
+          return result.finally(() => {
+            saving = false;
+          });
+        saving = false;
+        return result;
+      } catch (error) {
+        saving = false;
+        return failure("VALIDATION_ERROR", [error.message]);
+      }
+    };
+  }
+  return actions;
 }

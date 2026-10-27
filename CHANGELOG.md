@@ -1,3 +1,10 @@
+## 3.0.0 — Supabase workout storage (review candidate)
+
+- Supabase database persistence replaces local workout storage when configured, with per-user authentication/RLS and atomic revision/idempotency guards.
+- Shared workout actions await durable saves; existing history, guidance, evidence and backup/interchange behavior stays supported in schema 7.
+- Explicit local import preview, confirmation and database read-back verification preserve original V2 data.
+- No new project, external trainer/provider integration, AI or production rollout.
+
 # Changes
 
 ## 2.7.0 — Milestone 7 (preparation; not released)
