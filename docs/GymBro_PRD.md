@@ -1170,6 +1170,8 @@ It should not become the primary set-by-set interaction mechanism once V3 exists
 
 # 39. Versioning
 
+**Historical wording below:** for V3, [VERSION_POLICY.md](VERSION_POLICY.md) supersedes this section's generation/minor/build descriptions. V3 is the persistent-data/core-product-maturity generation; MINOR is an accepted release increment, and BUILD is a required committed UTC timestamp for each deployable code build. Issue #43 maps the first planned `3.1.0-BUILD` to #38 infrastructure foundation alone. Capability labels and historical milestones do not assign application versions. Documentation-only changes do not bump the app.
+
 GymBro uses:
 
 **MAJOR.MINOR.PATCH-BUILD**

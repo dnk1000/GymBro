@@ -125,9 +125,9 @@ Detailed V2 documents such as `V2_ARCHITECTURE.md`, `HISTORY_AND_BACKUPS.md`, `G
 
 ## Product/version policy
 
-Application version format remains `MAJOR.MINOR.PATCH-BUILD`, with a committed UTC timestamp build. Application version and workout data schema are independent. Do not infer migration compatibility from the application version alone.
+Follow the [version and release policy](docs/VERSION_POLICY.md) approved in issue #43. `MAJOR.MINOR.PATCH-BUILD` means product generation, accepted release increment, non-feature bugfix/non-functional release, and committed UTC build timestamp. [app-version.js](app-version.js) remains the only canonical application-version source. Documentation-only changes do not bump it; application versions and data schemas remain independent.
 
-The older M0 roadmap used milestone numbers directly as V3 minor versions. The new issue-driven workflow intentionally separates issue order from release numbering. Concrete V3 release-number mapping must be decided before the first affected V3 deployable release; do not use the same `3.x` label for two different meanings.
+The first planned V3 release, `3.1.0-BUILD`, maps to #38 infrastructure foundation alone. It is a planning assignment, not a shipped release or authorization to start another issue. Releases may contain one or several accepted issues through an approved mapping. The `V3.0/#16`, `V3.1/#17`, and `V3.2/#18` issue-title prefixes are capability labels, not application-release numbers. This replaces the older M0 milestone-to-minor mapping.
 
 ## Primary UX target
 

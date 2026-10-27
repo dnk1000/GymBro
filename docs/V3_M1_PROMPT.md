@@ -1,5 +1,7 @@
 # Draft prompt — V3 M1 recoverable access and private ownership
 
+**Historical draft; not the current execution contract.** Use [issue #27](https://github.com/dnk1000/GymBro/issues/27), the [current workflow](DEVELOPMENT_WORKFLOW.md) and [VERSION_POLICY.md](VERSION_POLICY.md). Issue #43 supersedes this draft's `3.N`/`3.1.0` assignment: the first planned `3.1.0-BUILD` belongs to #38 infrastructure foundation alone. #27's release mapping remains a separate decision. The original prompt below is retained as historical context, not authorization to implement it.
+
 Recommended development model from the planning baseline: GPT-6 Astra, high reasoning. This is a prompt for a separately requested future task; saving or merging this document does not execute it.
 
 ---
