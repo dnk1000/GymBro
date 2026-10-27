@@ -34,9 +34,9 @@ Approved direction:
 5. Supabase/PostgreSQL becomes the sole active workout store after accepted cutover;
 6. no indefinite dual writes or automatic local-only workout fallback after cutover;
 7. preserve JSON backup/import/export and historical truth;
-8. mature exercise catalog/import normalization, History and remaining core workout behavior before external AI/provider integration.
+8. mature exercise catalog/import normalization, History/data semantics, and remaining core workout behavior before external AI/provider integration.
 
-The approved scope and migration gates are recorded in [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md). Ordered implementation work is tracked through GitHub issues and summarized in [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md).
+The approved scope and migration gates are recorded in [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md). New implementation work is specified by GitHub issues and summarized in [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md).
 
 ## Target V3.x data boundaries
 
@@ -51,6 +51,8 @@ V3 should make these identities explicit and durable:
 GymBro owns these identities. Imported/provider-supplied labels are input/provenance, not persistent identity keys.
 
 Exercise metadata intrinsic to the exercise belongs to canonical exercise identity (for example canonical name, aliases, muscles/equipment/status). Contextual use belongs to the template/session relationship (for example core/accessory/substitute role, order, short-workout inclusion, and session-local substitutions).
+
+Notes should preserve scope rather than collapsing all free text into one concept: workout/session context, exercise-within-session context, durable exercise setup metadata, and set-specific observations are distinct when the V3 data model supports them.
 
 ## Persistence transition rules
 
@@ -77,15 +79,32 @@ V3 should prepare clean, deterministic domain boundaries that a future trainer c
 
 Future provider integrations must consume GymBro's canonical identities and authoritative records. They must not establish their own parallel exercise taxonomy, session truth, or persistence store.
 
+## Implementation units
+
+The executable work is tracked as GitHub issues. Core dependencies currently include:
+
+- #27 recoverable user access/private ownership;
+- #16 stable exercise identity;
+- #28 full Preview persistence/migration;
+- #29 controlled Production cutover/local workout-store retirement;
+- #17 exercise catalog management;
+- #18 smart import resolution;
+- #20–#26 History/exercise-detail/note/highlight improvements;
+- #30 live-workout reordering/duration adaptation;
+- #31 V3 core-product release acceptance.
+
+Issue ordering is dependency/product priority, not application-version numbering.
+
 ## Source-of-truth hierarchy
 
-For current work, read documents in this order when they overlap:
+When documents overlap, distinguish **product vision** from **current implementation authority**:
 
-1. [GymBro_PRD.md](GymBro_PRD.md) current-scope authority and North Star;
-2. [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md) approved V3 transition decisions;
-3. this current architecture summary;
-4. [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md) ordered V3 issue/backlog view;
-5. [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md) implementation process;
-6. subsystem and historical milestone documents for detailed accepted contracts/evidence.
+1. [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md) for approved V3 transition decisions/gates;
+2. this current architecture summary for deployed-versus-target architecture;
+3. the target GitHub issue and dependency issues for executable implementation scope;
+4. [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md) for ordered backlog context;
+5. [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md) for implementation process;
+6. [GymBro_PRD.md](GymBro_PRD.md) for product North Star and durable product requirements; older scheduling/hosting statements in the PRD are superseded by the newer approved transition decisions above when they conflict;
+7. subsystem and historical milestone documents for detailed accepted contracts/evidence.
 
 Historical documents do not authorize new implementation merely because they describe a future idea. GitHub issues are the implementation specification for newly approved work.
