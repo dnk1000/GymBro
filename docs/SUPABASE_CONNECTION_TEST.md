@@ -26,4 +26,3 @@ The SDK remains vendored unchanged with its [license/provenance](../vendor/READM
 ## Historical checkpoint evidence
 
 Live checkpoint verified on 2026-10-27 in [PR #12's Preview](https://gymbro-git-v3-supabase-connection-check-dnk-9999.vercel.app/), build `2.7.2-20261027T152907Z`, project `loowxditqikcwyeftfgx`. After the user enabled anonymous sign-ins and ran the supplied SQL, a real Save succeeded, the page was fully reloaded, and a fresh Read returned the matching value with the same identity. Supabase Table Editor showed the matching single row; RLS was enabled, the three expected authenticated policies were present, and the SELECT owner predicate was inspected. This verifies the basic live connection checkpoint, not a workout migration or a comprehensive cross-user security audit. Production and workout storage remain unchanged. CI/mock tests alone are not substitutes for repeating this live check when configuration changes.
-
