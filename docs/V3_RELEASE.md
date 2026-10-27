@@ -1,7 +1,7 @@
 # V3 account-access release candidate
 
 Release status: **preparation**
-Application version: `3.2.1-20261027T224326Z`
+Application version: `3.2.2-20261027T225348Z`
 Data schema: `7`
 
 Issue #27 only, based on accepted main `1631253ba092af2ad7e3a017ccdcbb40fb5dd0cf`. The user approved 3.2.0 for #27 on October 27, 2026. See [account contract and evidence](V3_ACCOUNT_ACCESS.md). No workout migration, Production schema/data operation, merge or physical iPhone acceptance is claimed.

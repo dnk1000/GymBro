@@ -46,8 +46,7 @@
     if (error.code === "logout_unconfirmed")
       return "Signed out locally, but server session revocation could not be confirmed. Check your connection and request a fresh link before using this account again.";
     if (error.status === 429 || /rate_limit/.test(error.code || ""))
-      return "Too many requests. Wait before requesting another code.";
-    if (error.code === "otp_expired") return "That code is invalid or expired. Check the email or request a new code.";
+      return "Too many requests. Wait before requesting another sign-in link.";
     return "Account request failed. Check your connection and try again. Your workouts are unchanged.";
   }
   async function run(action) {

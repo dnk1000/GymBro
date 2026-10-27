@@ -4,7 +4,7 @@ This file records accepted milestone releases and the preview builds that led to
 
 ## V3 account-access candidate — not yet accepted
 
-`3.2.1-20261027T224326Z` (initial Preview `3.2.0-20261027T222451Z`), workout schema 7; #27 only, approved release mapping in the October 27 implementation conversation. See [account evidence](V3_ACCOUNT_ACCESS.md). No Production acceptance, migration or cutover is claimed.
+`3.2.2-20261027T225348Z` (earlier fix `3.2.1-20261027T224326Z`; initial Preview `3.2.0-20261027T222451Z`), workout schema 7; #27 only, approved release mapping in the October 27 implementation conversation. See [account evidence](V3_ACCOUNT_ACCESS.md). No Production acceptance, migration or cutover is claimed.
 
 ## V3 infrastructure candidate — not yet accepted
 

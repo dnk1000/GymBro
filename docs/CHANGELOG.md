@@ -1,5 +1,9 @@
 # Changes
 
+## 3.2.2 — email-link rate-limit wording
+
+Use link terminology consistently in provider rate-limit feedback. No schema or ownership-policy changes.
+
 ## 3.2.1 — callback verification feedback
 
 Report an actionable retry state if the SDK cannot verify an emailed session. No schema or ownership-policy changes.
