@@ -1,61 +1,52 @@
 # GymBro
 
-A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
+GymBro is a mobile-first personal workout tracker/coaching application. The deployed V2 product is a static vanilla JavaScript app with guided workouts, explicit sessions, set-level history, bodyweight/performance context, corrections, reviewed JSON import, and complete JSON backup/restore.
 
-Project guides, the PRD, release history and setup instructions live in [docs/](docs/). Repository instructions remain in [AGENTS.md](AGENTS.md).
+The product North Star remains a frictionless virtual trainer, but the approved **V3.x generation is focused first on making GymBro a trustworthy database-backed system of record and completing core product behavior before external AI/provider integration.**
 
-## Source of truth and supported workflow
+## Current status
 
-GitHub `main` is the authoritative GymBro source. Start new work from freshly fetched `main`, make changes on a feature branch, and review them through a GitHub pull request. GitHub Actions runs CI; Vercel supplies feature previews and the existing production deployment from approved merges to `main`. Do not merge without explicit approval. A developer checkout is a working copy of the repository, not a separate source of truth or application-hosting environment.
+### Deployed V2 today
 
-The current product is the standalone GymBro application. Normal workout operation requires no Supabase, PostgreSQL, OAuth, MCP server, external trainer API, provider login, OpenAI key, or ChatGPT-hosted/provider-hosted GymBro runtime. ChatGPT Inbox remains manual JSON interchange and requires no provider account. The only authorized external test is the optional Preview connection checkpoint below.
+The accepted runtime remains:
 
-External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The unmerged integration experiment in [PR #9](https://github.com/dnk1000/GymBro/pull/9) is abandoned; its branch is retained temporarily as historical reference and must not be merged or used for deployments. See [deployment and quarantine instructions](docs/PRODUCTION_DELIVERY.md#abandoned-integration-quarantine).
+**UI / reviewed JSON import → DOM-independent workout actions → browser localStorage → History / analytics / backup**
 
-## Optional Supabase connection test
+Current workout data uses browser `localStorage` key `daveGymTrackerV1` and data schema **7**. Normal V2 operation requires no account, backend, provider login, AI API, or voice runtime.
 
-The current Preview checkpoint adds only a one-value connection diagnostic in Data. It never uploads or migrates workouts; localStorage remains authoritative. Production always disables the test. Follow [Supabase/Vercel setup and manual verification](docs/SUPABASE_CONNECTION_TEST.md) for the isolated test table, Preview variables and Save -> reload -> Read check. Ordinary static use remains supported. The pinned diagnostic client is loaded only after an enabled test action; no app build or CDN is required.
+### Approved V3.x direction
 
-## Run
+V3.x is the persistent-data/core-product-maturity generation. The approved transition introduces recoverable personal access, canonical exercise identity, verified Supabase/PostgreSQL migration, controlled Production cutover, exercise catalog/import normalization, History/data-model improvements, and the remaining live-workout adaptation gaps.
 
-Open `index.html` in a modern browser, or serve this directory locally:
+After accepted cutover, Supabase/PostgreSQL is intended to become the sole active workout store; indefinite dual writes and an automatic local-only workout fallback are not part of the approved target.
+
+External AI/provider runtime integration, conversational automatic logging, adaptive AI coaching, and voice are deferred beyond V3.x unless a later explicit product decision changes that boundary.
+
+Read [current architecture](docs/CURRENT_ARCHITECTURE.md) and the [V3 implementation plan](docs/V3_IMPLEMENTATION_PLAN.md) for the authoritative transition view. The limited [Supabase connection diagnostic](docs/SUPABASE_CONNECTION_TEST.md) proves connectivity only; it is not completed workout persistence or migration.
+
+## Development workflow
+
+GymBro now uses an issue-driven implementation workflow:
+
+**Chat/product discussion → GitHub issue/specification → ordered backlog → Codex branch/PR → acceptance evidence → close issue**
+
+For new implementation work, the target GitHub issue is the executable specification. Issues contain purpose, requirements, acceptance criteria, dependencies, non-goals, data/migration impact, and validation requirements. A separate giant Codex prompt should normally be unnecessary.
+
+See [docs/DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md) and the repository [AGENTS.md](AGENTS.md). The reusable issue template lives at `.github/ISSUE_TEMPLATE/implementation.md`.
+
+GitHub `main` is the only authoritative code baseline. Start work from current `main`, use a focused feature branch, create a PR, run applicable validation, use Vercel Preview for runtime/UI acceptance, and do not merge or mutate Production data without explicit approval.
+
+## Run the current app
+
+Open `index.html` in a modern browser, or serve the repository locally:
 
 ```sh
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Normal workout operation needs no backend, account, API key, or application build. Keep `index.html`, all root-level JavaScript assets, `styles.css`, and `gymbro-logo.png` together. The optional enabled diagnostic additionally uses its public configuration route, vendored SDK and separate anonymous test identity. JavaScript, local storage, Canvas, and modern browser APIs are required. Node is needed for development tests or the optional local diagnostic server.
+There is no application compilation/build step. Node dependencies are development/testing tools.
 
-## Data and backups
-
-The app saves the whole database in browser local storage under the existing `daveGymTrackerV1` key. The application uses independent data version **7**, supporting explicit sessions and guided progress while preserving legacy history and manual logging. Version-5 databases upgrade with empty sessions and a null active pointer; version-6 databases advance to 7 without adding guidance to existing sessions. All migration happens in memory; legacy sets retain their fields and remain sessionless. Opening the app does not rewrite existing data; the next successful edit saves its migrated state. Program edits and history are preserved. Older applications that support only schema 5 or 6 cannot read version-7 backups/databases; retain the pre-upgrade JSON backup rather than forcing a downgrade.
-
-Data is specific to the browser profile and origin (protocol, hostname, and port). Direct-file storage behavior varies by browser. Use the same address consistently and export a JSON backup before moving devices or clearing browser data. There is no automatic cloud sync, server backup, or installed offline service worker.
-
-Before testing any milestone that touches persistence, export a complete JSON backup from production and verify the saved file. A Vercel preview has separate browser storage; empty or seeded preview data does not indicate missing production history. Keep production and preview addresses/data distinct. Automated tests use disposable storage only.
-
-- **Backup / Export JSON** includes history, bodyweights, program, exercise library, preferences, import metadata, sessions, plan snapshots, and the active-session pointer.
-- **Restore complete backup** validates the entire file, then replaces all of those fields after confirmation.
-- **Merge history only** adds sets, bodyweights, import metadata, and nonconflicting sessions while preserving current settings. Existing set IDs win; duplicate IDs inside a backup are rejected. Conflicting session identities/links or two different active sessions reject the entire merge rather than guessing a relationship.
-- **Export sets CSV** exports sets only. Formula-like text is prefixed with an apostrophe for spreadsheet safety; JSON preserves original text exactly.
-
-Unreadable or unsupported newer data is left untouched. A recovery notice offers an original-data download, full backup restore, or an explicit empty start. Failed saves do not commit in-memory edits or clear the form. If another tab changes storage, the old tab pauses saving until reloaded. Use one editing tab at a time; local storage is not a transactional multi-user database.
-
-## Workout and import workflow
-
-Choose a 30- or 60-minute plan, then log sets. Workout dates use the device's local date. History supports editing and deleting sets from all sources. The **Approximate / incomplete** checkbox preserves uncertainty even when numeric values are available.
-
-Paste structured workout JSON into **ChatGPT Inbox**, review it, then commit. A nested `exercises` array or a flat `sets` array is supported. See [the import format](docs/CHATGPT_IMPORT_SCHEMA.md); an example is available through the Inbox's **Example file** button.
-
-Invalid dates, numbers, effort ranges, and unsupported units block commits. Missing load/reps and unknown exercise names produce review notes; incomplete records remain supported. Session notes and explicit `complete: false` survive commit and backup. Import IDs remain recorded when sets are corrected or deleted, preventing accidental reimport.
-
-Performance charts and gains exclude incomplete records and compare positive external loads using the latest eligible unit for each exercise. Assisted and bodyweight sets remain visible in history but are excluded from load-times-reps rankings. These summaries are training context, not automatic individualized coaching. **Training days** counts unique dates, not separate sessions on the same date.
-
-Exercise detail's **Latest** shows the most recent set with recorded load and reps, including assisted, bodyweight, zero-load, and approximate records. It is independent of ranking eligibility.
-
-Session lifecycle actions were introduced programmatically in Milestone 2; Milestone 4 now exposes guided start/resume/finish controls, while retaining those APIs. With no active session, manual logging works as before. With one active, new manual sets link to it and must use its local date; explicit `sessionId: null` in the action API logs sessionless. ChatGPT imports remain sessionless. See [the session schema and acceptance guide](docs/WORKOUT_SESSIONS.md).
-
-## Development
+Development checks:
 
 ```sh
 npm ci
@@ -65,73 +56,79 @@ npm run check:diff
 npm test
 ```
 
-Tests use Node's test runner, `playwright-core`, and an installed Chromium executable. Default: `/usr/bin/chromium`; set `CHROMIUM_PATH` to use another installation. The test harness starts its own temporary local server and isolated browser contexts; it does not touch real workout storage.
+Tests use disposable browser storage and must never touch a user's real workout database.
 
-Managed Chromium may block direct `file:` navigation by administrator policy. The direct-file test reports a skip in that case; use the local static server in that environment.
+## Data safety and backups
 
-A physical-phone smoke test is a separate release gate. See [the device checklist](docs/REAL_PHONE_SMOKE_TEST.md). Responsive Chromium checks do not establish Safari or real-device readiness.
+Until V3 controlled cutover is accepted, the deployed V2 localStorage database remains authoritative for real workouts.
 
-Files:
+Before testing any issue that touches persistence or migration, export and verify a complete Production JSON backup. Preview and Production have different browser origins; an empty Preview does not mean Production history is missing.
 
-- `index.html`: form markup and the seven views.
-- `styles.css`: responsive layout and visual styling.
-- `app.js`: UI adapters, import review, analytics, and rendering; configures the workout actions.
-- `workout-actions.js`: DOM-free actions with explicit inputs, structured results and state snapshots.
-- `workout-data.js`: DOM-free validation, migration, import normalization and data helpers.
-- `workout-sessions.js`: DOM-free session/relationship validation, plan snapshot construction, and conservative backup merge.
-- `seed.js`: the original historical dataset and baseline program.
-- `storage.js`: browser persistence, stale-tab detection, recovery, and legacy backup/reset adapters.
-- `tests/app.test.cjs`: browser regression coverage for normal workflows and data-loss edge cases.
-- `tests/workout-actions.test.cjs`: action/state regression tests without a DOM or browser globals.
-- `tests/workout-sessions.test.cjs`: session lifecycle, migration, snapshot, relationship, rollback and merge regression tests.
+Current complete JSON backup/restore preserves the supported database, including history, bodyweights, program/templates, exercise library, preferences, import metadata, sessions, plan snapshots, guidance state, and the active-session pointer. CSV is sets-only and is not a complete backup.
 
-See [the workout action interface](docs/WORKOUT_ACTIONS.md) for the Milestone 1 boundary and [workout sessions](docs/WORKOUT_SESSIONS.md) for the additive Milestone 2 APIs, version-5 migration, and physical-iPhone acceptance steps.
+Startup must not destroy unsupported or malformed saved data. Failed saves must not be reported as successful. Existing IDs, dates, units, notes, pain/discomfort, incompleteness, provenance, session relationships, and unknown preserved fields must survive migration unless a specific approved issue deliberately changes their representation.
 
-The existing vanilla JavaScript workflow and accepted session identities remain supported. This documentation cleanup adds no runtime feature, identity migration, framework or backend; further product changes require their own approved scope.
+## Workout/data model today
 
-## Application and data versions
+The deployed product already separates:
 
-`app-version.js` is the canonical release source. The format is **MAJOR.MINOR.PATCH-BUILD**: product generation, milestone, non-feature/bugfix release, and a fixed UTC build timestamp (`YYYYMMDDTHHmmssZ`). Milestone 2 starts at 2.2.0. Update the committed timestamp for each deployable build; do not derive it from the browser clock. The normal footer and page title show the complete version, also available as `APP_VERSION` for diagnostics.
+- workout templates/program;
+- workout sessions and immutable plan snapshots;
+- sets and bodyweight records;
+- guided workout state/actions;
+- History and corrections;
+- deterministic performance/trainer evidence;
+- reviewed imports and backups.
 
-Application releases and `DATA_VERSION` are independent. Complete JSON backups include `appVersion` and the existing `version: 7` schema field (no redundant `dataVersion` field). Export metadata does not mutate workout state. Restore uses only schema compatibility: missing or different application versions are accepted. Re-export identifies the exporting build. CSV and ChatGPT interchange remain unchanged. The private npm package contains tooling only and has no separate application version.
+V2 exercise identity is still name-key based. V3 issue #16 replaces that fragile identity model with stable canonical exercise IDs and aliases before full database migration is accepted. Exercise labels from imports/providers are input/provenance, not future identity keys.
 
-The header Help button opens the application user guide, including logging, history icon actions, program modes, imports and local backup/restore. Update the relevant help text when user-facing workflows change. History uses labelled pencil/trash controls with compact 28px buttons; wide tables scroll within their cards.
+## V3 backlog structure
 
-Hover over RPE and RIR in Workout and ChatGPT import entry labels for explanations. Display-only content, including History, has no acronym tooltips. Native hover tooltips do not require mobile interaction. When correcting an incomplete set, use Mark complete or uncheck Approximate / incomplete, then Save changes; correcting numbers alone intentionally preserves an explicit uncertainty flag. Mark complete requires recorded weight and reps and does not save until Save changes succeeds.
+The V3 implementation plan groups issues by dependency rather than treating every issue as a release number.
 
-## Session history and recovery (Milestone 3)
+Foundation/database:
+- #27 Recoverable User Access and Private Data Ownership
+- #16 Exercise Identity Architecture
+- #28 Full Workout Persistence and Preview Migration
+- #29 Controlled Production Cutover and Local Workout-Storage Retirement
 
-History presents explicit sessions separately with saved plan name, mode, status, exercises and ordered sets. Multiple workouts on one date remain separate. Legacy/sessionless records remain fully visible in clearly labelled date groups used only for display. Source filters retain their existing meanings. Each set has compact edit/delete actions and expandable Record details for every saved field; History has no acronym tooltips.
+Core product/data maturity includes:
+- #17 Exercise Catalog Management
+- #18 Smart Import Resolution
+- #20 Collapsible Workout Sessions
+- #21 Group Sets by Exercise with Progressive Disclosure
+- #22 History Search and Filters
+- #23 Exercise Detail and Performance History
+- #24 Friendlier Legacy and Source Presentation
+- #25 Distinguish Session, Exercise, and Set Notes
+- #26 Deterministic Session Highlights and Last-Time Comparison
+- #30 Live-Workout Reordering and Duration Adaptation
 
-Data explains complete JSON backup versus sets-only CSV, complete restore versus history merge, and shows a file/content/effect summary before the final native confirmation. Recovery explains the difference between original saved bytes and the open tab’s in-memory export. No schema, storage or workout-action changes are introduced. See [History and backup behavior](docs/HISTORY_AND_BACKUPS.md) for exact semantics and iPhone acceptance steps.
+V3 release acceptance is tracked by #31.
 
-See [release history](docs/RELEASE_HISTORY.md) for accepted milestones, exact application builds, schema compatibility and preview lineage.
+Issue numbers and application versions are independent. A release may contain one or several accepted issues.
 
-## Guided workouts (Milestone 4)
+## Documentation map
 
-Workout now offers Start workout with a saved template, local date and approximate 30/60-minute mode. Session snapshots retain existing slot selections. Log sets, explicitly choose Done/Skip, navigate, substitute locally, reload/resume and finish even with pending exercises after confirmation. Manual logging remains available. No training targets, rest timers, progression, AI or voice are introduced.
+Start with [docs/README.md](docs/README.md) to distinguish current authorities from historical milestone records.
 
-Guided state and submission identities are persisted through the DOM-free action layer in schema 7. Failed writes commit neither progress nor request IDs. Exercise identity remains the existing exercise-library name key; no new ID system or equivalence policy is added. Read [guided-workout contracts and acceptance steps](docs/GUIDED_WORKOUTS.md) before modifying this flow.
+Key current documents:
 
-The current product scope is recorded in [docs/GymBro_PRD.md](docs/GymBro_PRD.md). The [guided action/state alignment audit](docs/GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) preserves the historical design motivation for the DOM-independent controls; it does not schedule or activate an external integration. The accepted actions remain useful to the standalone application.
+- [Product requirements / North Star](docs/GymBro_PRD.md)
+- [Approved V3 scope decisions](docs/V3_M0_SCOPE_AND_ACCEPTANCE.md)
+- [Current architecture and transition](docs/CURRENT_ARCHITECTURE.md)
+- [V3 implementation plan](docs/V3_IMPLEMENTATION_PLAN.md)
+- [Issue-driven development workflow](docs/DEVELOPMENT_WORKFLOW.md)
+- [Physical-device acceptance](docs/REAL_PHONE_SMOKE_TEST.md)
 
-## Trainer evidence (Milestone 5)
+Detailed V2 documents such as `V2_ARCHITECTURE.md`, `HISTORY_AND_BACKUPS.md`, `GUIDED_WORKOUTS.md`, and `TRAINER_EVIDENCE.md` remain important historical/subsystem contracts. Statements inside them about what was or was not implemented describe those releases; current roadmap authority comes from the hierarchy above.
 
-`workoutActions.getExercisePerformanceContext(...)`, `compareExercisePerformance(...)` and `getTrainerWorkoutContext(...)` expose read-only, detached JSON workout evidence within the standalone application. Their names do not imply an external trainer connection or provider runtime. Supply an explicit `asOfDate`. The workout context composes the existing guided selector; no new workout model or interaction screen is introduced.
+## Product/version policy
 
-Results contain exact exercise/unit context, ordered records, provenance, pain, unparsed preference/notes, transparent arithmetic and supporting IDs. Only `review`/`insufficient_evidence` evidence summaries are returned, never increase/maintain commands. Working-set/failure classification and structured constraints remain unknown where not modeled. No schema increment, persisted scores or state mutations are needed. See [docs/TRAINER_EVIDENCE.md](docs/TRAINER_EVIDENCE.md) for the approved policy, API contracts and acceptance checks.
+Application version format remains `MAJOR.MINOR.PATCH-BUILD`, with a committed UTC timestamp build. Application version and workout data schema are independent. Do not infer migration compatibility from the application version alone.
 
-## iPhone reliability
+The older M0 roadmap used milestone numbers directly as V3 minor versions. The new issue-driven workflow intentionally separates issue order from release numbering. Concrete V3 release-number mapping must be decided before the first affected V3 deployable release; do not use the same `3.x` label for two different meanings.
 
-Each successful workout action is persisted before it reports success; background/unload events do not save workouts. On page restoration or return to the foreground, GymBro checks for missed storage changes. A stale tab warns and pauses editing until deliberate reload; it never adopts or merges another tab’s data automatically. Unsaved form values remain transient and are not restored after reload. Use one editing tab at a time. See [the Milestone 6 audit](docs/IPHONE_HARDENING.md) and [physical Safari checklist](docs/REAL_PHONE_SMOKE_TEST.md#milestone-6--physical-iphone-acceptance-pending).
+## Primary UX target
 
-## V2 production-delivery preparation (Milestone 7)
-
-The 2.7.0 candidate prepares completion of V2 trainer infrastructure; **M7 and V2 are not yet complete**. No AI/voice or backend is introduced. Use Node from `.nvmrc`; CI installs Chromium through the pinned playwright-core version and runs the complete suite plus syntax, release metadata and committed-range whitespace checks. The existing GitHub→Vercel static deployment path is preserved; CI does not deploy.
-
-- [V2 architecture and supported trainer APIs](docs/V2_ARCHITECTURE.md)
-- [PRD compliance: implemented, V3, accepted limitations and actual discrepancies](docs/PRD_COMPLIANCE.md)
-- [Production, backup, smoke-test and rollback procedure](docs/PRODUCTION_DELIVERY.md)
-- [V2 release candidate and open acceptance gates](docs/V2_RELEASE.md)
-
-M6 is merged at `7548553`; recorded physical Safari results remain outstanding. Preparation is authorized, but physical results, explicit PRD-gap disposition, a verified production JSON backup and user merge approval are required before M7 production delivery. Preview and production have separate storage origins. Do not infer personal-data safety from seeded preview data or Chromium tests.
+iPhone Safari remains the primary UX target. Responsive Chromium checks are useful regression evidence but do not substitute for physical iPhone acceptance. User-visible changes should remain touch-friendly, preserve manual fallback, and clearly distinguish saved facts from unsaved/transient input.

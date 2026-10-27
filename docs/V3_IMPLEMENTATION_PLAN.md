@@ -1,173 +1,265 @@
-# GymBro V3 implementation planning baseline
+# GymBro V3.x implementation plan
 
-Status: proposed for user review, October 27, 2026. Planning only; no feature implementation, architecture, database design or deployment change is authorized by this document.
+Status: current V3 planning authority, October 27, 2026. V3.x is the **persistent-data and core-product-maturity generation**. Individual implementation work is authorized and executed through GitHub issues, not by this document alone.
 
-## Baseline and PRD review
+## Product direction
 
-Continue the existing Windows checkout, GitHub repository and Vercel project from main commit `ffd556e154ec19752c9f44031a95890d5954f200`, after PR #13. Application version is `2.7.2-20261027T152907Z`; workout data schema is 7. Refresh these facts before generating an implementation prompt. Do not revive the abandoned PR #9 implementation or create another development environment.
+The October 27 M0 decision approved staged cloud persistence. Subsequent product review refined the generation boundary:
 
-Sources: [PRD](GymBro_PRD.md), [compliance audit](PRD_COMPLIANCE.md), [release record](V2_RELEASE.md), [physical-phone acceptance](REAL_PHONE_SMOKE_TEST.md), [Supabase checkpoint](SUPABASE_CONNECTION_TEST.md), and the root [README](../README.md) and [project rules](../AGENTS.md).
+> **Make the data trustworthy → make the core product complete → expose it to AI later.**
 
-The PRD's current-scope section preserves the standalone V2 product and labels external AI/voice integration optional and unscheduled. Its historical sections 27–43 describe a broader end state: a conversational trainer operating GymBro during a real workout. This plan proposes a staged route toward that end state; approving a storage milestone does not approve the later trainer milestones.
+V3.x is not the external-AI-integration generation. The mature conversational trainer remains the North Star, but provider/runtime AI, conversational automatic logging, adaptive AI coaching and voice are deferred until GymBro has a stable database-backed system of record and mature core domain behavior.
 
-Implemented foundations include sessions, guided workouts, action/state contracts, factual performance context, History, corrections, backups and manual ChatGPT interchange. Local browser storage still holds workout data. The Supabase diagnostic proves one isolated value can be saved/read; it does not prove account recovery, workout migration, cross-device operation or production persistence.
+Current deployed V2 remains localStorage-based until controlled cutover is accepted. See [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md) and [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md).
 
-The compliance audit records two functional gaps: persisted temporary exercise reordering and adaptation of an already-active workout's duration/remaining plan. Physical iPhone evidence, verified personal backup evidence and final V2 acceptance remain incomplete in the records. Some release-record rows are stale: PR #12 and PR #13 have now merged. Distinguish missing documentation from missing functionality; do not repeat completed deployment work or declare unrecorded device tests passed.
+## Planning model
 
-## Proposed scope and sequencing
+GymBro uses an issue-driven workflow:
 
-Make cloud persistence the first major delivery phase, with separate reviewable milestones for identity, migration and local-storage retirement. Keep workout behavior stable during that phase. Supabase becomes the sole authoritative workout store after accepted cutover; do not keep indefinite dual writes or an automatic local-only fallback.
+**Chat/product discussion → GitHub issue/specification → ordered backlog → Codex branch/PR → acceptance evidence → close issue**
 
-The migration must preserve the complete dataset: sets, bodyweight, program, exercise library, preferences, imports and duplicate protection, sessions, original plan snapshots, active guidance, request history, IDs, dates, units, notes, pain and completeness. Legacy records stay legacy records.
+The GitHub issue is the executable implementation specification. Issue numbers do not equal application versions. A release may contain one or several accepted issues. Dependencies are explicit in issue bodies. See [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
 
-Recommended initial connectivity policy: require connectivity to confirm a saved change. Preserve visible unsaved input on failure and provide a deliberate retry; never report a set as saved until durable storage acknowledges it. This is a proposal to approve before migration work. If offline workout logging is essential, resolve that requirement first; it materially changes scope. Manual use independent of AI remains required, but does not imply offline persistence.
+## V3.x completion definition
 
-Retiring localStorage means retiring it as a workout database. Decide separately whether browser storage used for sign-in or harmless preferences is allowed; do not confuse authentication persistence with a second workout store. Do not automatically delete the old local dataset during initial migration. Retain it only as inactive recovery material until verified cloud migration and an explicit cleanup decision.
+V3.x should establish a trustworthy manual/guided product and durable system of record with:
 
-Use milestone IDs below independently of product version numbers. The PRD uses 3.x for the trainer generation and minor versions for milestones. Agree the numbering before changing release tooling. A cloud-storage checkpoint is not completion of the PRD's full V3 trainer definition.
+- recoverable personal access and database-enforced private data ownership;
+- reproducible Preview/Production infrastructure and source-controlled database migrations;
+- a reviewed authoritative relational schema and persistence boundary;
+- deterministic concurrency/revision/retry behavior for multi-device use;
+- verified Supabase/PostgreSQL workout migration and behavioral parity;
+- controlled retirement of localStorage as the active workout database;
+- complete cloud backup/restore/reset/recovery semantics;
+- supportable recoverable error states and safe diagnostics;
+- stable canonical exercise identity;
+- maintainable exercise catalog, aliases, archive/merge behavior;
+- robust import resolution for variant/unknown exercise labels;
+- correct note/data semantics;
+- usable long-term History, Program, Dashboard and Exercises UX on desktop and iPhone;
+- complete live-workout reordering/duration adaptation;
+- documented physical iPhone and Production acceptance;
+- an explicit V3 application-version/release mapping.
 
-## Milestones
+External AI/provider runtime integration is not required for V3.x completion.
 
-### M0 — Confirm V3 scope and baseline acceptance
+## Ordered backlog
 
-Outcome: an approved scope and acceptance checklist suitable for generating the first feature prompt.
+The order below is recommended by dependency first, then product value. Independent UI issues may be pulled earlier when they do not destabilize foundation work.
 
-- Reconcile stale release evidence against accepted main without rewriting historical records.
-- Record actual iPhone results and a verified complete production JSON backup, or obtain explicit disposition of remaining V2 acceptance items.
-- Confirm recoverable sign-in, single-user scope initially, Preview/Production data separation, connectivity behavior, local-storage retirement meaning and release numbering.
-- Approve cloud persistence as the first phase; leave conversation/voice conditional until their scope is approved.
+### Phase A — Infrastructure, ownership, identity and schema
 
-Acceptance: each decision and remaining gate has a recorded disposition; current instructions no longer conflict with the approved next milestone. No implementation or architecture in this milestone.
+**#38 — V3 Infrastructure: Preview/Production Environment and Database Migration Pipeline**  
+Establish reproducible Preview/Production Supabase/Vercel boundaries, source-controlled database migrations, safe configuration/secrets handling and a disposable test strategy.
 
-Suggested development model: **GPT-6 Astra, high reasoning**, for reconciling product requirements and conflicting historical records.
+**#27 — V3 Foundation: Recoverable User Access and Private Data Ownership**  
+Provide sign-in/sign-out/recovery plus database-enforced user isolation/RLS. This issue does not migrate personal workout history.
 
-### M1 — Recoverable user access and private data ownership
+**#16 — V3.0: Exercise Identity Architecture**  
+Introduce immutable canonical exercise IDs, aliases/provenance and the separation between intrinsic exercise metadata and contextual template/session role.
 
-Depends on M0. Outcome: the same person can access their own GymBro account from another browser/device.
+**#25 — Data Model: Distinguish Session, Exercise, and Set Notes**  
+Define note scope before the relational schema is finalized. Preserve historical text conservatively; do not guess old note scope.
 
-- Provide a simple sign-in/sign-out and recovery experience suitable for iPhone.
-- Demonstrate separation between users and between disposable Preview testing and actual Production workout data.
-- Verify access after closing the browser, signing out and returning on a second device. Do not treat the diagnostic's anonymous test identity as an accepted long-term account.
-- Preserve existing workout behavior while account access is tested; do not move or remove personal workout data yet.
+**#39 — V3 Data: Authoritative Relational Schema and Persistence Boundary**  
+Define/implement the V3 relational model for users, exercises/aliases, templates, sessions/snapshots, sets, bodyweights, guided/request state, imports, preferences and notes. Establish one persistence boundary under the existing domain actions.
 
-Acceptance: repeatable manual account recovery and second-device access; one test user cannot read or change another's data. Provide Preview instructions requiring no secret sharing.
+**#40 — V3 Data: Concurrency, Revision, and Retry Contract**  
+Define stale-write, optimistic revision, retry/idempotency, delayed-response and two-device behavior before migration acceptance.
 
-Suggested development model: **GPT-6 Astra, high reasoning**, because access recovery and data isolation require careful review.
+### Phase B — Backup/recovery semantics and Preview migration
 
-### M2 — Full workout persistence and migration on Preview
+**#41 — V3 Data: Cloud Backup, Restore, Reset, and Account Data Lifecycle**  
+Define cloud-authority export, complete restore, history merge, local recovery-copy cleanup, cloud reset and account/data deletion semantics.
 
-Depends on M1. Outcome: a deliberate test copy of the complete existing dataset operates through Supabase with existing GymBro functionality intact.
+**#28 — V3 Foundation: Full Workout Migration and Preview Parity Verification**  
+Migrate a deliberate verified test copy onto the established V3 platform and prove complete data/relationship/behavior parity. This issue no longer owns infrastructure, target schema design or concurrency-policy design.
 
-- Migrate explicitly selected local data or a verified complete backup; do not upload personal history merely by opening a Preview.
-- Exercise every persisted workflow: manual/guided logging, edits/deletes, program/library/preferences, bodyweight, session recovery, imports, full restore, history merge and exports.
-- Compare complete content and relationships before/after migration, not just record counts. Repeated or interrupted migration must not duplicate records or destroy a pre-existing destination dataset.
-- Test rejected writes, connection loss, retries, expired access, stale views and simultaneous-device changes. A delayed response must not cause duplicate logging or overwrite newer work silently.
-- Preserve existing JSON interchange and backup compatibility unless an explicit documented change is approved.
+**#42 — V3 Operations: Diagnostics and Recoverable Error States**  
+Provide supportable failure states for auth, network, database, stale writes, migration/schema mismatches and failed initial loads without adding broad analytics/telemetry.
 
-Acceptance: complete data comparison passes; an active workout survives reload and second-device access; failed saves preserve input and existing committed data; no live Production migration yet.
+### Phase C — Controlled Production cutover
 
-Suggested development model: **GPT-6 Astra, extra-high reasoning**, for the highest data-integrity and regression burden.
+**#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**  
+After accepted Preview migration and explicit Production approval, make Supabase/PostgreSQL the sole active workout store. Do not keep indefinite dual writes or automatic local-only fallback. Retain legacy local data only as deliberately managed recovery material until cleanup is separately approved.
 
-### M3 — Controlled cutover and local workout-storage retirement
+### Phase D — Exercise/catalog/import maturity
 
-Depends on accepted M2 and explicit production rollout approval. Outcome: Supabase is the sole active workout store.
+**#17 — V3.1: Exercise Catalog Management**  
+Canonical metadata editing, aliases, archive/restore, duplicate suggestions and explicit safe Merge Exercises workflow.
 
-- Rehearse cutover and recovery using disposable data before the approved personal-data transition.
-- Verify the actual retained backup and the accepted cloud dataset before ending local workout reads/writes.
-- Remove the supported local-only workout mode and automatic local fallback. Keep any remaining legacy importer narrowly defined; it must not become a competing active database.
-- Demonstrate continued operation in a fresh browser with no legacy workout key, and after sign-out/sign-in. A cloud load failure must not appear as an empty account or trigger reseeding.
-- Record the treatment of the inactive legacy copy. Do not delete it silently.
-- Define recovery for writes made after cutover; reverting app code alone must not strand newer cloud workouts.
+**#18 — V3.2: Smart Import Resolution**  
+Exact canonical/alias matches map automatically; unknown/ambiguous labels require review. Approved mappings become remembered aliases. Fuzzy similarity is suggestion-only.
 
-Acceptance: all normal workout workflows use cloud data; cross-device changes are visible after deliberate refresh/reopen; physical iPhone checks and approved production smoke results are recorded.
+**#35 — Exercises: Move Taxonomy and Categorization out of Program**  
+Make Exercises the owner of taxonomy/catalog metadata and keep Program focused on template structure.
 
-Suggested development model: **GPT-6 Astra, high reasoning**, for cutover, recovery and verification of local-storage retirement.
+**#23 — Exercise: Detail and Performance History View**  
+One canonical exercise gets one longitudinal history/detail experience.
 
-### M4 — Complete live-workout adaptation
+**#37 — Exercises: Mobile-Friendly Library Layout**  
+Use a phone-friendly card/list presentation rather than squeezing the desktop table into narrow widths.
 
-Depends on M3. Outcome: workouts can adapt to time and equipment without rewriting history. Covers PRD sections 18–19 and the two documented functional gaps.
+### Phase E — History and dashboard/program usability
 
-- Persist temporary exercise reordering and changes to the remaining plan/duration during an active workout.
-- Preserve original intent, completed sets, actual substitutions and permanent templates unless a separate permanent edit is requested.
-- Retain explicit skip, finish, manual fallback and clear remaining-workout state.
+**#20 — History: Collapsible Workout Sessions**  
+Collapsed-by-default session/date cards with concise summaries.
 
-Acceptance: start a 60-minute workout, log sets, shorten the remaining session, reorder an occupied exercise, substitute another, reload and verify both original context and actual performance.
+**#21 — History: Group Sets by Exercise with Progressive Disclosure**  
+Exercise-level summaries inside expanded sessions, with individual set rows revealed only when needed.
 
-Suggested development model: **GPT-6.1 Sol, high reasoning**, for focused extension of the existing workout behavior.
+**#36 — History: Mobile-Friendly Set Layout**  
+Phone-friendly stacked set presentation while preserving efficient desktop tables.
 
-### M5 — Trainer context and factual questions
+**#22 — History: Search and Filters**  
+Exercise/workout/date filtering, with optional reliable pain/discomfort filtering.
 
-Depends on M4 and separate approval of trainer integration. Outcome: the trainer can understand the user and answer from actual GymBro records before receiving permission to change workouts.
+**#24 — History: Friendlier Legacy and Source Presentation**  
+Keep provenance true but reduce internal `legacy/sessionless` language in the normal user experience.
 
-- Let the user record and correct goals, available equipment, schedule, preferences and relevant limitations. Retain existing free text and unknowns; do not infer medical facts or classifications from old notes.
-- Answer historical questions from PRD section 35 with identifiable supporting records, units, dates and explicit uncertainty.
-- Expose current workout position and remaining work accurately. Questions must not mutate workouts or invent historical sessions.
-- Before implementation, confirm the intended user experience: regular ChatGPT conversation/voice or a GymBro-hosted trainer. Verify that the selected experience supports the required behavior; do not assume ordinary ChatGPT voice can operate GymBro.
+**#26 — History: Deterministic Session Highlights and Last-Time Comparison**  
+Surface factual highlights and comparable prior performance without an AI provider.
 
-Acceptance: a fixed question set matches known test records; missing/ambiguous history is disclosed; the trainer cannot change data in this milestone.
+**#32 — Dashboard: Desktop Layout and Information Hierarchy**  
+Use desktop space better, simplify the header, remove low-value KPI cards, align charts and improve deterministic Problems/Flags copy while preserving the good phone layout.
 
-Suggested development model: **GPT-6.1 Sol, high reasoning**, for bounded product integration and evidence-based acceptance cases.
+**#33 — Backlog: Revisit Performance Calculation and Dashboard Metric**  
+Analysis-only decision issue: document the current calculation, define what question the metric should answer and create follow-on implementation issue(s) if the metric changes.
 
-### M6 — Conversational workout control and automatic logging
+**#34 — Program: Improve Split and Template Editing UX**  
+Clarify split/template selection and selected 30/60-minute context while preserving existing functionality discovered during implementation.
 
-Depends on M5. Outcome: a text conversation can operate a complete workout reliably before voice is added. Covers PRD sections 29, 31–32 and 36–37.
+### Phase F — Remaining live-workout behavior
 
-- Support start/resume, current/next, set logging, explicit corrections, skip, substitution and finish.
-- Interpret examples such as “12 clean, seven out of ten,” “same weight” and “got 10 with two left” against known workout context.
-- Clarify ambiguous load, unit, exercise or deletion targets; keep routine unambiguous logging low friction.
-- Confirm success only after the actual change is saved. Repeated messages, reconnects and interrupted replies must not duplicate sets or falsely report success.
-- Preserve manual correction and the existing reviewed JSON Inbox.
+**#30 — V3 Core: Complete Live-Workout Reordering and Duration Adaptation**  
+Persist temporary reordering and changes to the remaining workout/duration while preserving original plan intent, completed work and permanent templates.
 
-Acceptance: a scripted full text workout produces exactly the expected saved records, including clarification, correction, replay and failure cases.
+### Phase G — Release/version decision and V3 acceptance
 
-Suggested development model: **GPT-6 Astra, extra-high reasoning**, for contextual interpretation, state changes and reliable failure handling.
+**#43 — V3 Release: Version Numbering and Issue-to-Release Mapping Decision**  
+Resolve the collision between capability labels and application `3.x` minor versions. Issue order and release numbers remain independent; multiple accepted issues may ship in one minor release.
 
-### M7 — Adaptive coaching and deliberate program evolution
+**#31 — V3 Release: Core Product Completeness and Acceptance Review**  
+Review selected V3 scope, migration integrity, account recovery/isolation, cloud authority, catalog/import behavior, backup/recovery, core UX/workout behavior, diagnostics and physical iPhone evidence. Close V3 only when included issues have evidence or explicit disposition.
 
-Depends on M6. Outcome: the trainer recommends and applies appropriate user-approved workout changes using actual evidence. Covers PRD sections 2, 33–34.
+## Recommended execution sequence
 
-- Support initial split proposals and revisions for goals, schedule, equipment and user preferences.
-- Adapt remaining work for available time, equipment, reported discomfort and performance; explain the evidence behind suggested loads/repetitions and progression.
-- Distinguish advice from recorded performance, session-only changes from permanent changes, and uncertainty from established facts.
-- Require clear user intent before changing the permanent program; never rewrite prior session snapshots or infer missing performance.
+The grouped backlog above is organized by architectural area. It is **not** intended to mean "implement top to bottom exactly as displayed." For a primarily sequential Codex workflow, use the dependency-safe sequence below unless a later issue explicitly changes a dependency.
 
-Acceptance: scenario-based review covers onboarding, learning-phase changes, a shorter session, travel equipment, discomfort, sparse evidence and a permanent program revision. Suggestions remain distinguishable from completed work.
+1. **#43 — Version Numbering and Issue-to-Release Mapping Decision** — settle release semantics before the first deployable V3 build.
+2. **#38 — Preview/Production Environment and Database Migration Pipeline** — establish reproducible environments and schema-promotion mechanics.
+3. **#27 — Recoverable User Access and Private Data Ownership** — establish authentication, recovery and database-enforced isolation/RLS.
+4. **#16 — Exercise Identity Architecture** — settle canonical identity before final schema/migration work.
+5. **#25 — Distinguish Session, Exercise, and Set Notes** — settle note semantics before final schema/migration work.
+6. **#39 — Authoritative Relational Schema and Persistence Boundary** — implement the target V3 data model and persistence boundary.
+7. **#40 — Concurrency, Revision, and Retry Contract** — make cloud writes deterministic and retry-safe.
+8. **#41 — Cloud Backup, Restore, Reset, and Account Data Lifecycle** — make recovery/destructive semantics correct for cloud authority.
+9. **#28 — Full Workout Migration and Preview Parity Verification** — migrate a verified V2 copy onto the established V3 platform and prove parity.
+10. **#42 — Diagnostics and Recoverable Error States** — harden failure/recovery behavior before Production cutover.
+11. **#29 — Controlled Production Cutover and Local Workout-Storage Retirement** — move Production authority to Supabase/PostgreSQL only after Preview acceptance and explicit approval.
+12. **#17 — Exercise Catalog Management** — add canonical catalog maintenance/merge/archive behavior.
+13. **#18 — Smart Import Resolution** — resolve incoming labels against the canonical catalog safely.
+14. **#35 — Move Taxonomy and Categorization out of Program** — align information architecture with the final catalog ownership model.
+15. **#23 — Exercise Detail and Performance History View** — build one canonical longitudinal exercise view.
+16. **#37 — Exercises Mobile-Friendly Library Layout** — adapt the final Exercises experience to narrow screens.
+17. **#20 — History Collapsible Workout Sessions** — make History session-first and scan-friendly.
+18. **#21 — Group Sets by Exercise with Progressive Disclosure** — add exercise-level disclosure inside sessions.
+19. **#36 — History Mobile-Friendly Set Layout** — adapt the final History detail model to narrow screens.
+20. **#22 — History Search and Filters** — add long-term retrieval/navigation.
+21. **#24 — Friendlier Legacy and Source Presentation** — improve terminology while preserving provenance truth.
+22. **#26 — Deterministic Session Highlights and Last-Time Comparison** — add factual derived summaries on stable identities/history.
+23. **#34 — Program Split and Template Editing UX** — polish Program against the final template/exercise model.
+24. **#32 — Dashboard Desktop Layout and Information Hierarchy** — polish Dashboard after the underlying data/history model is stable.
+25. **#33 — Revisit Performance Calculation and Dashboard Metric** — analysis-only; create separate follow-on implementation issue(s) if the metric decision changes behavior.
+26. **#30 — Live-Workout Reordering and Duration Adaptation** — complete remaining active-workout behavior on authoritative persistence.
+27. **#31 — Core Product Completeness and Acceptance Review** — final V3 acceptance after selected issues are accepted/closed or explicitly dispositioned.
 
-Suggested development model: **GPT-6 Astra, high reasoning**, for broad context, nuanced decisions and adversarial scenario review.
+### Parallelization rule
 
-### M8 — Voice workout experience on iPhone
+UI-only issues such as #20, #32, #34, #35, #36 and #37 may be pulled forward when convenient because they do not need to block the database path. However:
 
-Depends on M7 and verification that the chosen conversational experience supports the intended voice workflow. Outcome: the accepted conversational workout can be performed by speaking with minimal phone interaction.
+- do not let early UI work invent a competing data model;
+- build exercise-centric UI on the final #16/#17/#23 identity/catalog path when those dependencies materially affect the screen;
+- build History mobile/progressive-disclosure work so #20/#21/#36 compose rather than compete;
+- keep the core platform sequence `#38 → #27 → #39 → #40 → #41 → #28 → #42 → #29` dependency-ordered;
+- implement one issue per focused PR unless an issue explicitly requires a coupled change;
+- accept/merge each dependency before starting the next dependent issue when using the safest sequential workflow.
 
-- Test earbuds, music, interruptions, misunderstood numbers, corrections, reconnection, backgrounding and phone locking on the actual target device.
-- Retain text/manual fallback and an unmistakable distinction between heard, interpreted and successfully saved results.
-- Validate the PRD's intended ChatGPT voice experience if that experience was selected. Record actual limitations; do not silently substitute another product experience or claim unsupported locked-phone operation.
+For Codex, the normal handoff should be simply: **Implement issue #N according to its execution contract; do not start another issue.**
 
-Acceptance: a real iPhone workout is recorded accurately; device/browser/version and limitations are documented. UI emulation alone cannot pass this milestone.
+## Dependency summary
 
-Suggested development model: **GPT-6 Astra, high reasoning**, for the integration and interruption/recovery cases. Physical acceptance requires the human tester.
+Primary platform path:
 
-### M9 — V3 release acceptance and handoff
+`#38 → #27 → #39 → #40 → #41 → #28 → #42 → #29`
 
-Depends on all milestones included in the agreed release scope. Outcome: a demonstrated, supportable release with an accurate PRD compliance record.
+with `#16` and `#25` required before #39/#28 acceptance.
 
-- Recheck complete historical data, account recovery, cross-device operation, backups, failed saves and absence of active local workout persistence.
-- Run the complete regression suite and hosted checks; record Preview and approved Production acceptance separately.
-- Demonstrate the full accepted trainer journey: start, recall previous performance, log, adapt, correct, finish and review the saved session.
-- Record remaining limitations, rollback/recovery instructions and physical iPhone results. Declare full PRD V3 complete only if the agreed conversational/voice success criteria are met.
+Exercise path:
 
-Acceptance: user accepts the recorded outcomes and explicitly approves production delivery. Missing physical or personal-data evidence stays pending.
+`#16 → #17 → #18`
 
-Suggested development model: **GPT-6.1 Sol, high reasoning**, for systematic verification and release documentation; use Astra for unresolved complex defects.
+Exercise-centric History:
 
-## Boundaries for every future milestone prompt
+`#16 → #23 → #26`
 
-Each prompt should identify the current accepted main revision, approved milestone and dependencies; concrete user-visible behavior; preserved behavior and data; explicit exclusions; acceptance scenarios; automated and manual verification; and required branch, PR and Vercel Preview evidence. Include any necessary data transition and recovery acceptance without prescribing architecture in this baseline.
+Responsive/catalog work should build on final dependencies rather than create parallel UI/data paths:
 
-Use the same repository, checkout and Vercel project. Keep each milestone independently reviewable; split an oversized milestone into named substeps rather than combining migration, coaching and voice in one PR. No unsolicited UI redesign, framework rewrite, social features, nutrition system or general health record. No merge or production data change without the applicable user approval. Do not treat approval of this planning document as approval of every future milestone.
+`#35/#37` reuse #16/#17/#23 as available; `#20/#21/#36` should compose rather than compete.
 
-## Model recommendation basis
+Workout adaptation:
 
-These are recommended models for the development agent implementing each milestone, not runtime trainer or speech-model selections. Recommendations reflect task complexity and are judgment calls, not performance guarantees. Recheck availability when generating each prompt.
+`#29 → #30` is the preferred order so the new active-workout state does not require a second persistence migration.
 
-Official OpenAI documentation positions GPT-6 Astra for demanding reasoning/coding and GPT-6.1 Sol for complex work with a balance of quality, time and cost: [model catalog](https://developers.openai.com/api/docs/models), [model selection](https://developers.openai.com/api/docs/guides/model-selection). Access and available reasoning settings depend on the product/account. No application AI-provider, runtime-model or voice technology choice is made here.
+Release management:
+
+`#43` before the first deployable V3 version; selected V3 issues → `#31` final acceptance.
+
+## Data and migration principles
+
+V3 migration must preserve historical truth and be conservative:
+
+- preserve stable IDs/relationships unless an explicit approved migration transforms them;
+- preserve dates, units, load/reps, effort, pain/discomfort, notes, incompleteness, source/provenance and unknown supported metadata;
+- preserve original imported/logged labels where practical even after canonical exercise mapping;
+- never fuzzy-merge historical exercises silently;
+- compare content and relationships, not only counts;
+- make migration retry-safe/idempotent;
+- never make a cloud-load failure look like an empty account;
+- require durable acknowledgement before reporting a cloud write saved;
+- maintain complete JSON backup/export capability and explicit recovery procedures;
+- keep Preview and Production data/configuration boundaries explicit;
+- keep database schema changes reproducible from reviewed migration state;
+- do not expose privileged credentials to browser code.
+
+## Exercise identity rule
+
+GymBro owns exercise identity.
+
+External tools, imports, users and future providers may supply labels such as `Rope Triceps Pressdown`, `Rope Triceps Pushdown`, or `Cable Rope Pushdown`; labels are not durable identity keys. A future trainer should consume one canonical GymBro exercise identity and authoritative history, not create a parallel taxonomy.
+
+Template/session role (`core`, `accessory`, `substitute`), order, short-workout inclusion and session substitutions are contextual relationships, not solely intrinsic canonical-exercise properties.
+
+## Deferred beyond V3.x
+
+Unless a later explicit product decision changes the boundary, defer:
+
+- external AI/provider runtime integration;
+- ChatGPT/Claude/provider connection UX;
+- natural-language automatic workout control/logging;
+- AI-driven progression/program adaptation;
+- provider-specific authorization beyond what V3 account/data ownership requires;
+- voice/earbud workout control;
+- GymBro-hosted open-weight AI.
+
+The next trainer generation should be planned against the stable V3 database/domain actions rather than carrying forward the abandoned PR #9 architecture.
+
+## Version numbering
+
+The earlier M0 plan mapped milestone numbers directly to application versions (`3.1`, `3.2`, etc.). The issue-driven workflow deliberately separates implementation-unit order from release numbering.
+
+Until #43 is accepted, do not assign a concrete V3 application minor version merely because an issue title contains `V3.0`, `V3.1`, or `V3.2`. Those exercise issue titles are capability labels inherited from product discussion, not automatic release numbers.
+
+## Execution rule
+
+To implement work, select/approve a GitHub issue and hand that issue to Codex. Codex should read `AGENTS.md`, `README.md`, [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md), [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md), the target issue, and named dependencies; start from current accepted `main`; implement only the issue; create a focused PR; provide actual validation evidence; and not merge or change Production data without explicit approval.
