@@ -2,6 +2,14 @@
 
 A local-first, mobile-friendly personal workout log with an editable five-workout split, set logging, bodyweight and performance trends, and reviewed ChatGPT imports.
 
+## Source of truth and supported workflow
+
+GitHub `main` is the authoritative GymBro source. Start new work from freshly fetched `main`, make changes on a feature branch, and review them through a GitHub pull request. GitHub Actions runs CI; Vercel supplies feature previews and the existing production deployment from approved merges to `main`. Do not merge without explicit approval. A developer checkout is a working copy of the repository, not a separate source of truth or application-hosting environment.
+
+The current product is the standalone GymBro application. Normal workout operation requires no Supabase, PostgreSQL, OAuth, MCP server, external trainer API, provider login, OpenAI key, or ChatGPT-hosted/provider-hosted GymBro runtime. ChatGPT Inbox remains manual JSON interchange and requires no provider account. The only authorized external test is the optional Preview connection checkpoint below.
+
+External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The unmerged integration experiment in [PR #9](https://github.com/dnk1000/GymBro/pull/9) is abandoned; its branch is retained temporarily as historical reference and must not be merged or used for deployments. See [deployment and quarantine instructions](PRODUCTION_DELIVERY.md#abandoned-integration-quarantine).
+
 ## Optional Supabase connection test
 
 The current Preview checkpoint adds only a one-value connection diagnostic in Data. It never uploads or migrates workouts; localStorage remains authoritative. Production always disables the test. Follow [Supabase/Vercel setup and manual verification](SUPABASE_CONNECTION_TEST.md) for the isolated test table, Preview variables and Save -> reload -> Read check. Ordinary static use remains supported. The pinned diagnostic client is loaded only after an enabled test action; no app build or CDN is required.
@@ -77,7 +85,7 @@ Files:
 
 See [the workout action interface](WORKOUT_ACTIONS.md) for the Milestone 1 boundary and [workout sessions](WORKOUT_SESSIONS.md) for the additive Milestone 2 APIs, version-5 migration, and physical-iPhone acceptance steps.
 
-The existing vanilla JavaScript workflow is retained. V2 can introduce explicit session/exercise IDs and further module boundaries behind tested migrations. Exercise classification editing and cross-device synchronization remain future work.
+The existing vanilla JavaScript workflow and accepted session identities remain supported. This documentation cleanup adds no runtime feature, identity migration, framework or backend; further product changes require their own approved scope.
 
 ## Application and data versions
 
@@ -103,11 +111,11 @@ Workout now offers Start workout with a saved template, local date and approxima
 
 Guided state and submission identities are persisted through the DOM-free action layer in schema 7. Failed writes commit neither progress nor request IDs. Exercise identity remains the existing exercise-library name key; no new ID system or equivalence policy is added. Read [guided-workout contracts and acceptance steps](GUIDED_WORKOUTS.md) before modifying this flow.
 
-The product north star is [GymBro_PRD.md](GymBro_PRD.md): ChatGPT supplies future virtual-trainer reasoning, while GymBro supplies structured memory/actions, persistence and the dashboard/manual fallback. The [guided action/state alignment audit](GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) maps the current DOM-independent control surface to that boundary; actual voice/AI integration remains future work.
+The current product scope is recorded in [GymBro_PRD.md](GymBro_PRD.md). The [guided action/state alignment audit](GUIDED_WORKOUTS.md#chatgpt-virtual-trainer-boundary-and-alignment-audit) preserves the historical design motivation for the DOM-independent controls; it does not schedule or activate an external integration. The accepted actions remain useful to the standalone application.
 
 ## Trainer evidence (Milestone 5)
 
-`workoutActions.getExercisePerformanceContext(...)`, `compareExercisePerformance(...)` and `getTrainerWorkoutContext(...)` expose read-only, detached JSON evidence for the future ChatGPT trainer. Supply an explicit `asOfDate`. The workout context composes the existing guided selector; no new workout model or interaction screen is introduced.
+`workoutActions.getExercisePerformanceContext(...)`, `compareExercisePerformance(...)` and `getTrainerWorkoutContext(...)` expose read-only, detached JSON workout evidence within the standalone application. Their names do not imply an external trainer connection or provider runtime. Supply an explicit `asOfDate`. The workout context composes the existing guided selector; no new workout model or interaction screen is introduced.
 
 Results contain exact exercise/unit context, ordered records, provenance, pain, unparsed preference/notes, transparent arithmetic and supporting IDs. Only `review`/`insufficient_evidence` evidence summaries are returned, never increase/maintain commands. Working-set/failure classification and structured constraints remain unknown where not modeled. No schema increment, persisted scores or state mutations are needed. See [TRAINER_EVIDENCE.md](TRAINER_EVIDENCE.md) for the approved policy, API contracts and acceptance checks.
 

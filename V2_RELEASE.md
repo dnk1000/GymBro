@@ -4,13 +4,15 @@ Application version: `2.7.2-20261027T152907Z`
 Data schema: `7`
 Release status: **preparation**
 
-The accepted V2 baseline remains the workout engine. **V2 acceptance is not yet declared complete.** The current narrowly scoped checkpoint adds an optional Preview/local Supabase connection diagnostic before any workout-storage migration.
+Current authoritative source is GitHub `main`, baseline `e5f87a538dc2be8212d723024718e283816c748b` (the standalone documentation update following delivered V2.7.1). Development uses feature branches, GitHub PRs/CI and Vercel preview/production deployments. Normal workouts remain standalone/localStorage-based. The narrowly scoped user-authorized exception is the optional Preview/local Supabase connection diagnostic; there is no workout-storage migration or external trainer runtime.
+
+V2.7 was the intended completion release of the V2 trainer-infrastructure phase. **That phase is not yet declared complete.** Preserve the evidence and open gates below. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** The later unmerged PR #9 experiment is abandoned, retained only as historical reference; it does not change this baseline or certify V2 acceptance.
 
 The 2.7.2 candidate saves/reads only one short test value in a separate RLS-protected table. Normal workout behavior, storage and schema remain unchanged. Production always disables the diagnostic. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md). Live Supabase acceptance requires actual setup and a verified round trip; simulated tests alone are insufficient.
 
 | Release evidence | Status |
 | --- | --- |
-| Starting accepted main | `38624d46268b638b78a37212453b075576f93cc2` — V2.7.1, [PR #11](https://github.com/dnk1000/GymBro/pull/11) |
+| Starting accepted main | `e5f87a538dc2be8212d723024718e283816c748b` — standalone docs update over V2.7.1, [PR #11](https://github.com/dnk1000/GymBro/pull/11) |
 | Candidate branch | `v3/supabase-connection-check` |
 | Candidate revision / CI / preview | See the patch PR’s exact head SHA and checks; not a production revision |
 | Production commit / deployment for this version | Pending candidate approval; V2.7.1 remains the delivered production baseline. No Production configuration changes are included. |
@@ -26,11 +28,11 @@ Explicit sessions and immutable plan intent; active recovery; ordered actual set
 
 ## Trainer-facing baseline
 
-See [V2_ARCHITECTURE.md](V2_ARCHITECTURE.md) for selectors, mutation contracts, result envelopes and replay/revision rules. getTrainerWorkoutContext composes existing guided state. ChatGPT supplies future intelligence; GymBro supplies factual memory, controls, persistence and dashboard. No AI/voice/coaching transport or cloud workout persistence exists in this release.
+See [V2_ARCHITECTURE.md](V2_ARCHITECTURE.md) for selectors, mutation contracts, result envelopes and replay/revision rules. getTrainerWorkoutContext composes existing guided state. GymBro supplies factual memory, controls, local persistence and the standalone dashboard. Trainer-named structured APIs and manual ChatGPT interchange remain accepted features. External AI/provider intelligence is an optional, unscheduled concept; no AI/voice/coaching transport or cloud workout persistence exists in this release.
 
 ## Accepted limitations and deferred work
 
-localStorage quota/eviction/concurrency limits; no cloud sync/accounts/offline shell; exercise identity by exact name key; no equipment or substitution equivalence; no inferred working/failure classification or structured trainer profile; transient unsaved inputs; no autonomous progression prescriptions. Future conversational reasoning, voice, workout generation and coaching are V3. Explicit V2 PRD gaps are separately classified in [PRD_COMPLIANCE.md](PRD_COMPLIANCE.md), not silently deferred.
+localStorage quota/eviction/concurrency limits; no cloud sync/accounts/offline shell; exercise identity by exact name key; no equipment or substitution equivalence; no inferred working/failure classification or structured trainer profile; transient unsaved inputs; no autonomous progression prescriptions. External conversational reasoning, voice, workout generation and coaching are future/optional integration concepts and are not currently scheduled. Explicit V2 PRD gaps are separately classified in [PRD_COMPLIANCE.md](PRD_COMPLIANCE.md), not silently deferred.
 
 ## Data safety and finalization
 

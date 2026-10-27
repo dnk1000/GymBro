@@ -6,6 +6,7 @@ This file records accepted milestone releases and the preview builds that led to
 
 - Application version: `2.7.2-20261027T152907Z`; data schema: `7`.
 - Branch: [v3/supabase-connection-check](https://github.com/dnk1000/GymBro/tree/v3/supabase-connection-check), from main `38624d46268b638b78a37212453b075576f93cc2`.
+- The subsequent standalone documentation baseline `e5f87a538dc2be8212d723024718e283816c748b` is incorporated; accepted workflow/quarantine guidance remains intact with only the narrow diagnostic exception documented.
 - Optional Preview/local diagnostic only: one separate test value, anonymous Auth and owner-only RLS; normal workout persistence remains local. No archived V3 code is merged.
 - Live Supabase setup/round-trip acceptance and merge approval remain pending. See [setup and manual verification](SUPABASE_CONNECTION_TEST.md).
 

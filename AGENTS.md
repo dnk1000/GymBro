@@ -2,6 +2,16 @@
 
 These rules apply throughout this repository. Preserve the product contracts below unless the user explicitly requests a change to them. Routine fixes within these contracts do not require renewed approval. If a requested change affects a contract, explain the behavior and compatibility impact before implementing it; do not treat adjacent cleanup as authorization to redesign the app.
 
+## Authoritative source and active workflow
+
+GitHub `main` is the only authoritative code baseline. Fetch and inspect it before new work, use a feature branch, and submit a GitHub PR. GitHub Actions provides CI; Vercel is the supported preview/production platform. Approved merges to `main` use the existing production integration. Do not maintain another source tree or ChatGPT/Codex-hosted runtime as a second authority, and do not merge without explicit user approval.
+
+The current focus is standalone GymBro and its accepted V2 functionality. No Supabase/PostgreSQL persistence, OAuth, MCP, provider connection, account UI or external trainer runtime is active or required. Do not reintroduce the abandoned implementation from PR #9 or its `v3/integration-architecture` branch. Keep that branch unmodified as historical reference until separately authorized for deletion; do not push new work to it. See PRODUCTION_DELIVERY.md for manual staging quarantine.
+
+User-authorized exception: the optional Preview/local Supabase connection checkpoint in SUPABASE_CONNECTION_TEST.md may store/read one short diagnostic value with a separate anonymous test identity and owner-only RLS. It must remain disabled in Production and must never migrate or replace workout localStorage, add mandatory accounts or reintroduce the abandoned integration. Live setup/acceptance and any production merge remain explicit separate steps.
+
+External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** This scope supersedes older roadmap wording below and in historical milestone records. Preserve accepted workout actions, sessions, guidance, trainer evidence/context, manual ChatGPT Inbox/interchange, history, backups, tests, release tooling and CI. Never remove functionality merely because a name mentions trainer, context or ChatGPT.
+
 ## Product and scope
 
 - GymBro is a mobile-first, local-first personal workout tracking/coaching web app. Application version follows the policy below; Milestones 2 and 3 used schema **6**; Milestone 4 uses independent data schema **7**.
@@ -20,7 +30,7 @@ These rules apply throughout this repository. Preserve the product contracts bel
 
 - Separate workout rules, calculations, validation, and state transitions from presentation/DOM logic wherever practical. Extract focused functions or modules incrementally when the task benefits from it; do not turn this principle into an unsolicited architectural rewrite.
 - Keep workout actions and validation reusable by future input adapters rather than embedding new business rules solely in click handlers. Future AI/voice input should be able to use the same validated actions and persistence path as the UI without requiring an application rewrite.
-- **Voice and AI interaction are planned for GymBro v3, not v2.** Do not add voice capture, transcription, conversational agents, AI services, or their infrastructure during v2 work unless the user explicitly changes the roadmap. The existing manual ChatGPT JSON Inbox remains supported.
+- External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** Do not add voice, transcription, conversational agents, provider services or their infrastructure without a new explicit request. The existing manual ChatGPT JSON Inbox remains supported without a provider login.
 - Supporting that future direction means preserving clear boundaries now, not adding speculative abstractions, dependencies, or unused integrations.
 
 ## Repository guide
@@ -166,7 +176,7 @@ The app has no runtime package installation or build step. Serve the repository 
 
 ## Product north star
 
-- Read `GymBro_PRD.md` when assessing product or architecture changes. ChatGPT is the future coaching/reasoning layer; GymBro provides structured memory, actions, persistence and the dashboard/manual fallback. All workout control must remain available through DOM-independent structured actions/state.
+- Read the current-scope section of `GymBro_PRD.md` when assessing product or architecture changes. The standalone application owns structured workout memory, actions, local persistence and the dashboard. Preserve DOM-independent structured actions/state; historical trainer concepts are not active implementation requirements.
 - The PRD is a roadmap, not blanket authorization to expand a milestone. Follow the specifically approved scope; do not add autonomous training prescriptions, AI/voice or later features merely because the PRD describes future capabilities.
 
 ## Trainer evidence — Milestone 5
@@ -175,7 +185,7 @@ The app has no runtime package installation or build step. Serve the repository 
 - Follow `TRAINER_EVIDENCE.md` (`trainer-evidence-v1`): exact actual exercise and unit, referenced arithmetic, separate modes as context, no substitution equivalence/conversion/1RM/composite scores or automatic increase/maintain recommendations.
 - Require explicit asOfDate; never use a runtime clock or arbitrary stale cutoff to change deterministic evidence. Preserve same-day chronology uncertainty and legacy display-only grouping.
 - Keep existing preference text unparsed; structured goals/constraints and working-set/failure classification are not modeled. Do not infer them from notes or add a trainer-profile schema without approval.
-- Evidence selectors must not write storage or change templates, current inputs, guided state, historical records or future prescriptions. ChatGPT remains the reasoning/coaching layer. Milestone 6 is separate work.
+- Evidence selectors must not write storage or change templates, current inputs, guided state, historical records or future prescriptions. The historical reasoning/coaching concept is not an active runtime integration. Milestone 6 remains a separate historical scope.
 
 ## iPhone hardening — Milestone 6
 
@@ -187,7 +197,7 @@ The app has no runtime package installation or build step. Serve the repository 
 ## Production delivery — Milestone 7
 
 - Follow PRODUCTION_DELIVERY.md, V2_ARCHITECTURE.md, PRD_COMPLIANCE.md and the current V2_RELEASE.md. CI runs the complete suite and npm run check:syntax/check:release/check:diff; committed-range whitespace matters even on clean CI checkouts. Use .nvmrc, npm ci and the lockfile-pinned browser.
-- Classify PRD requirements as implemented in V2, intentionally deferred to V3, accepted V2 limitation or actual V2 discrepancy. Future trainer reasoning/voice is V3; explicit underlying V2 action gaps must be reported, not silently deferred or implemented out of scope.
+- Classify PRD requirements as implemented in V2, intentionally deferred to V3, accepted V2 limitation or actual V2 discrepancy. External trainer reasoning/voice is optional and unscheduled; explicit underlying V2 action gaps must still be reported, not silently deferred or implemented out of scope.
 - Preparation may proceed before physical acceptance. Do not merge M7, perform final production acceptance or declare M7/V2 complete until physical iPhone results and defects, production backup verification, PRD gap dispositions and explicit merge approval are resolved.
 - Keep schema 7 and workout/domain modules unchanged unless a verified production-blocking defect is separately approved. No AI, voice, transport, backend or speculative V3 infrastructure.
 - Vercel remains branch→Preview, accepted main→Production. CI does not deploy, and a green preview is not production acceptance. Verify required GitHub checks/Vercel settings; do not claim branch protection from inaccessible settings.
