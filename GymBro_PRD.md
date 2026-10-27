@@ -10,7 +10,19 @@
 
 ---
 
-# 1. Product Vision
+# Current product scope and authority
+
+This section records the current approved product direction and supersedes the external integration schedule and hosting assumptions in the original vision below. The original document metadata, numbered roadmap and milestone descriptions are retained as historical design context; they are not evidence that a feature shipped or a new authorization to implement it.
+
+The present focus is the standalone GymBro application developed from the GitHub repository and delivered through Vercel. GitHub `main` is the single authoritative source. New work starts from freshly fetched `main` on a Git branch, is reviewed in a GitHub pull request, runs GitHub CI, and is exercised through Vercel previews. Only an explicitly approved merge to `main` advances the existing production deployment. Developer checkouts are working copies, not independent application authorities or hosted runtimes.
+
+Preserve accepted V2 behavior: localStorage persistence, workout actions and sessions, guided workouts, trainer evidence/context, History, backup/restore, import/export, manual ChatGPT Inbox/interchange, current UI, versioning and regression coverage. No provider account is needed to use those features.
+
+External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** No Supabase/PostgreSQL backend, OAuth, MCP, external trainer API, provider connection or ChatGPT-hosted/provider-hosted GymBro environment is part of the active architecture. The unmerged implementation in [PR #9](https://github.com/dnk1000/GymBro/pull/9) was an experiment and is abandoned; its branch is retained temporarily as historical reference, not a parallel baseline. Do not revive or merge it. Any future reconsideration needs a separately approved scope.
+
+The historical product vision, conceptual V3 generation and AI/voice examples below remain ideas only. They must not be read as committed near-term delivery work. Existing acceptance gaps for V2 are not resolved by this change of direction.
+
+# 1. Historical Product Vision
 
 GymBro exists to enable a **frictionless virtual personal trainer**.
 
@@ -856,7 +868,9 @@ Includes:
 
 ---
 
-# 27. VERSION 3 — Frictionless Virtual Trainer
+# 27. Historical VERSION 3 concept — Frictionless Virtual Trainer
+
+**Future/optional integration concept — not currently scheduled.** The following describes the original concept, not active implementation work or the abandoned PR #9 infrastructure as a release.
 
 ## 27.1 Objective
 

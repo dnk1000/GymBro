@@ -2,6 +2,12 @@
 
 This is the Milestone 7 preparation/runbook. It does not authorize a merge or declare V2 complete. See [V2_RELEASE.md](V2_RELEASE.md) for the candidate/version and open gates; [PRD_COMPLIANCE.md](PRD_COMPLIANCE.md) for the audit.
 
+## Current source and deployment policy
+
+GitHub `main` is authoritative. Start from freshly fetched `main`, develop on a feature branch and review changes through a GitHub PR. GitHub Actions is the CI path; Vercel is the supported application preview/production path. Local execution is a development check, not another hosted application or source authority. Preserve the existing production project and origin.
+
+The standalone application requires no Supabase/PostgreSQL/OAuth/MCP/provider services, external trainer credentials or provider-hosted storage/runtime. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** Domain selectors and manual ChatGPT JSON interchange remain supported. Documentation-only cleanup does not alter the application version, build timestamp or schema, and it does not close the existing V2 acceptance gates.
+
 ## Reproducible validation
 
 - Use Node from `.nvmrc`, `npm ci` and the pinned playwright-core lockfile. There are no runtime dependencies, application compilation step or backend.
@@ -72,3 +78,19 @@ Automated production read-only URL/asset/version checks are useful but are not c
 ## Final completion record
 
 Only after gated approval, merge and production verification: update V2_RELEASE.md with exact production SHA/deployment and results, accepted PRD dispositions, backup evidence and physical test reference. Update release history without changing application build for docs-only edits. Never invent acceptance results or start V3 as part of M7.
+
+
+## Abandoned integration quarantine
+
+The separate unmerged experiment is [PR #9](https://github.com/dnk1000/GymBro/pull/9), branch `v3/integration-architecture`, historical commit `e022944a83b3682f3636ec5f72c70f0336ab214f`. It added Supabase/PostgreSQL persistence, OAuth/trainer grants, account UI, server authority/migration, API routes, database migrations, transport receipts, integration-only tests/CI and a Vercel staging guard. None is on the standalone baseline `d2e6223f5d6020cb63c249ade4c02acaa7fe7cbd`. Do not merge or cherry-pick that implementation. PR #9 was closed as abandoned/not planned with a [closing explanation](https://github.com/dnk1000/GymBro/pull/9#issuecomment-6431714064); its branch is retained temporarily as unmodified historical reference. Do not push new development to it. Deletion requires separate explicit approval.
+
+The dedicated abandoned project was identified in GitHub deployment status as `dnk-9999/gymbro-v3-staging`, deployment `AfA7USCU9UFGBx5cm8LdxxXeYCie` (failed bootstrap from `main`). Its existence does not establish an active V3 application. The working V2 project is `gymbro-v1.5`; do not change its settings, Git connection, production branch, secrets, domain or deployment behavior during quarantine.
+
+Vercel management access is unavailable to the cleanup agent, so external staging configuration is **not modified** by this repository cleanup. Required manual quarantine by an authorized project administrator:
+
+1. In Vercel, select team `DNK9999` and the exact project `gymbro-v3-staging`. Confirm its project identity and repository against the deployment above; if anything is ambiguous, stop without changing settings.
+2. In that dedicated project's Settings → Git, disconnect its Git repository integration so new pushes cannot deploy there. If Vercel offers a project-level pause/disable automatic deployments control instead, disable automatic Git deployments for that project. Do not apply either action to `gymbro-v1.5`. Do not delete either project.
+3. Confirm the dedicated project's Git deployment automation is disabled and record the result. This step must not trigger a build or redeployment. Leave existing Supabase projects and data untouched.
+4. In the abandoned staging project's environment settings and any unused execution-environment draft, remove only confirmed integration-only binding requirements/references: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`, `GYMBRO_ORIGIN`, `GYMBRO_DEPLOY_TARGET`, `GYMBRO_SUPABASE_PROJECT_REF`. Do not inspect or copy secret values. These are not dependencies of current `main` and must not be added to it. If a binding has another owner/use or access is unavailable, report it rather than deleting it blindly.
+
+The repository cleanup preserves all existing feature-preview and main-production behavior. External quarantine is not complete until the administrator verifies the dedicated project's automation is disabled. Closing a PR alone is not a Vercel deployment switch. No new Codex/ChatGPT application environment or replacement backend should be configured.

@@ -1,10 +1,12 @@
 # GymBro V2 architecture and trainer API baseline
 
-This describes the accepted V2 runtime, not an implemented V3 integration. Milestone 7 release completion remains gated by [V2_RELEASE.md](V2_RELEASE.md).
+This describes the accepted standalone V2 runtime. GitHub `main` is authoritative; development uses repository branches and reviewed PRs, GitHub Actions provides CI, and Vercel supplies previews and production. Milestone 7 release completion remains gated by [V2_RELEASE.md](V2_RELEASE.md).
 
-**User voice/text → ChatGPT virtual trainer → GymBro structured actions/state → persistent workout data → GymBro dashboard**
+**GymBro UI / reviewed manual JSON import → structured workout actions → browser localStorage → dashboard / History / backups**
 
-ChatGPT is the future reasoning/coaching layer: interpret language, decide adaptations and progression, generate programs. GymBro stores facts, exposes structured state, validates/executes explicit actions, preserves history and renders the dashboard/manual fallback. GymBro does not become a competing autonomous trainer. No AI/voice, network transport, backend or account layer is implemented.
+GymBro stores facts, exposes detached state and evidence, validates explicit actions, and preserves workout history. There is no Supabase/PostgreSQL backend, OAuth, MCP, external trainer API, account/provider login or ChatGPT-hosted/provider-hosted runtime dependency. Node dependencies serve development tests only.
+
+The original voice/text → trainer → structured actions diagram explains historical design motivation; it is not the current deployment architecture. External AI/provider runtime integration is **Future/optional integration concept — not currently scheduled.** PR #9's unmerged implementation is abandoned. Existing trainer-named selectors and the manual ChatGPT interchange remain accepted standalone functionality.
 
 ## Current boundaries
 
@@ -64,6 +66,6 @@ Storage conflicts return PERSISTENCE_ERROR with errors and unchanged local commi
 
 ## Accepted limitations and unresolved PRD items
 
-localStorage quota/eviction and concurrent write races; no cloud backup/sync/account portability/offline shell; name-key exercise identity; unknown equipment equivalence, structured goals/constraints and failure/working classifications; transient unsaved inputs; whole-database synchronous writes. No autonomous progression prescriptions or AI/voice yet. Legacy date groups are display only, never inferred sessions.
+localStorage quota/eviction and concurrent write races; no cloud backup/sync/account portability/offline shell; name-key exercise identity; unknown equipment equivalence, structured goals/constraints and failure/working classifications; transient unsaved inputs; whole-database synchronous writes. No autonomous progression prescriptions or AI/voice runtime is implemented or scheduled. Legacy date groups are display only, never inferred sessions.
 
 Persisted session reordering and live session mode/plan adaptation are not implemented; navigation/skip is not equivalent. These explicit V2 PRD items are identified as discrepancies in [PRD_COMPLIANCE.md](PRD_COMPLIANCE.md), not added or reclassified as V3 by this release work. Physical acceptance and final production verification remain gates. See [PRODUCTION_DELIVERY.md](PRODUCTION_DELIVERY.md).
