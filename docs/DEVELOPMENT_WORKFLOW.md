@@ -41,7 +41,7 @@ The V3 implementation plan groups issues into broad phases, but the issues thems
 
 Unless an issue explicitly says otherwise, a Codex implementation request means:
 
-> Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, this workflow, the target issue, and any dependency issues/documents named by it. Implement only the target issue. Preserve existing behavior and historical data unless the issue explicitly changes them. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request. Link the PR to the issue. Run applicable validation and report evidence. Do not merge or change Production data without explicit user approval.
+> Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, this workflow, the target issue, and any dependency issues/documents named by it. Implement only the target issue. Preserve existing behavior and historical data unless the issue explicitly changes them. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request. Link the PR to the issue. Run applicable validation and report evidence. Do not merge or change Production data without explicit user approval.
 
 The issue body should contain the product-specific prompt. A separate giant Codex prompt should normally be unnecessary.
 
@@ -103,8 +103,10 @@ Use documents for durable cross-cutting contracts and history:
 
 - `README.md` — current product/run/storage summary and links.
 - `AGENTS.md` — repository rules Codex must follow.
-- `docs/GymBro_PRD.md` — product authority and North Star.
-- `docs/V3_IMPLEMENTATION_PLAN.md` — ordered V3 phase/backlog view and dependencies.
+- `docs/README.md` — map of current versus historical documentation.
+- `docs/GymBro_PRD.md` — product North Star and durable product requirements; newer approved transition decisions govern when older scheduling/hosting text conflicts.
+- `docs/CURRENT_ARCHITECTURE.md` — deployed V2 versus approved V3 target architecture.
+- `docs/V3_IMPLEMENTATION_PLAN.md` — ordered V3 issue/backlog view and dependencies.
 - `docs/RELEASE_HISTORY.md` — accepted shipped releases and evidence.
 - milestone/architecture documents — historical or subsystem-specific contracts; retain their historical context rather than rewriting the past.
 
