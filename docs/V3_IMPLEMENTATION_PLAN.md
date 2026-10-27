@@ -142,6 +142,51 @@ Resolve the collision between capability labels and application `3.x` minor vers
 **#31 — V3 Release: Core Product Completeness and Acceptance Review**  
 Review selected V3 scope, migration integrity, account recovery/isolation, cloud authority, catalog/import behavior, backup/recovery, core UX/workout behavior, diagnostics and physical iPhone evidence. Close V3 only when included issues have evidence or explicit disposition.
 
+## Recommended execution sequence
+
+The grouped backlog above is organized by architectural area. It is **not** intended to mean "implement top to bottom exactly as displayed." For a primarily sequential Codex workflow, use the dependency-safe sequence below unless a later issue explicitly changes a dependency.
+
+1. **#43 — Version Numbering and Issue-to-Release Mapping Decision** — settle release semantics before the first deployable V3 build.
+2. **#38 — Preview/Production Environment and Database Migration Pipeline** — establish reproducible environments and schema-promotion mechanics.
+3. **#27 — Recoverable User Access and Private Data Ownership** — establish authentication, recovery and database-enforced isolation/RLS.
+4. **#16 — Exercise Identity Architecture** — settle canonical identity before final schema/migration work.
+5. **#25 — Distinguish Session, Exercise, and Set Notes** — settle note semantics before final schema/migration work.
+6. **#39 — Authoritative Relational Schema and Persistence Boundary** — implement the target V3 data model and persistence boundary.
+7. **#40 — Concurrency, Revision, and Retry Contract** — make cloud writes deterministic and retry-safe.
+8. **#41 — Cloud Backup, Restore, Reset, and Account Data Lifecycle** — make recovery/destructive semantics correct for cloud authority.
+9. **#28 — Full Workout Migration and Preview Parity Verification** — migrate a verified V2 copy onto the established V3 platform and prove parity.
+10. **#42 — Diagnostics and Recoverable Error States** — harden failure/recovery behavior before Production cutover.
+11. **#29 — Controlled Production Cutover and Local Workout-Storage Retirement** — move Production authority to Supabase/PostgreSQL only after Preview acceptance and explicit approval.
+12. **#17 — Exercise Catalog Management** — add canonical catalog maintenance/merge/archive behavior.
+13. **#18 — Smart Import Resolution** — resolve incoming labels against the canonical catalog safely.
+14. **#35 — Move Taxonomy and Categorization out of Program** — align information architecture with the final catalog ownership model.
+15. **#23 — Exercise Detail and Performance History View** — build one canonical longitudinal exercise view.
+16. **#37 — Exercises Mobile-Friendly Library Layout** — adapt the final Exercises experience to narrow screens.
+17. **#20 — History Collapsible Workout Sessions** — make History session-first and scan-friendly.
+18. **#21 — Group Sets by Exercise with Progressive Disclosure** — add exercise-level disclosure inside sessions.
+19. **#36 — History Mobile-Friendly Set Layout** — adapt the final History detail model to narrow screens.
+20. **#22 — History Search and Filters** — add long-term retrieval/navigation.
+21. **#24 — Friendlier Legacy and Source Presentation** — improve terminology while preserving provenance truth.
+22. **#26 — Deterministic Session Highlights and Last-Time Comparison** — add factual derived summaries on stable identities/history.
+23. **#34 — Program Split and Template Editing UX** — polish Program against the final template/exercise model.
+24. **#32 — Dashboard Desktop Layout and Information Hierarchy** — polish Dashboard after the underlying data/history model is stable.
+25. **#33 — Revisit Performance Calculation and Dashboard Metric** — analysis-only; create separate follow-on implementation issue(s) if the metric decision changes behavior.
+26. **#30 — Live-Workout Reordering and Duration Adaptation** — complete remaining active-workout behavior on authoritative persistence.
+27. **#31 — Core Product Completeness and Acceptance Review** — final V3 acceptance after selected issues are accepted/closed or explicitly dispositioned.
+
+### Parallelization rule
+
+UI-only issues such as #20, #32, #34, #35, #36 and #37 may be pulled forward when convenient because they do not need to block the database path. However:
+
+- do not let early UI work invent a competing data model;
+- build exercise-centric UI on the final #16/#17/#23 identity/catalog path when those dependencies materially affect the screen;
+- build History mobile/progressive-disclosure work so #20/#21/#36 compose rather than compete;
+- keep the core platform sequence `#38 → #27 → #39 → #40 → #41 → #28 → #42 → #29` dependency-ordered;
+- implement one issue per focused PR unless an issue explicitly requires a coupled change;
+- accept/merge each dependency before starting the next dependent issue when using the safest sequential workflow.
+
+For Codex, the normal handoff should be simply: **Implement issue #N according to its execution contract; do not start another issue.**
+
 ## Dependency summary
 
 Primary platform path:
