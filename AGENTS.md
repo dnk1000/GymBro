@@ -31,7 +31,8 @@ Before implementing an issue:
 - preserve unrelated behavior;
 - do not add adjacent features merely because they seem useful;
 - update durable documentation only when the issue changes a cross-cutting contract;
-- report actual tests/evidence and explicitly identify anything not tested.
+- select the lowest validation level that fully covers the issue risk and acceptance criteria;
+- report actual tests/evidence and explicitly identify anything required but not tested.
 
 A PR should reference the issue it implements. A green CI run or open PR does not by itself satisfy the issue. Acceptance criteria require evidence. Keep an issue open until the agreed behavior is accepted.
 
@@ -158,18 +159,50 @@ Application version and data schema are independent. Restore compatibility is ba
 
 ## Validation requirements
 
-For behavior changes:
+Validation is **risk-based and scope-appropriate**. Use the lowest level that fully proves the target issue's acceptance criteria. Do not manually run broad or expensive suites merely by habit.
 
-- add/update focused automated coverage where practical;
-- run applicable syntax/release/diff checks and regression tests;
-- verify browser console behavior;
-- for layout/UI changes, check narrow phone widths (including ~320 and 390 px) and desktop;
-- use Vercel Preview for user-visible runtime acceptance;
-- never claim responsive Chromium proves physical Safari behavior.
+### Level 1 — Documentation/process only
 
-Physical iPhone checks must record actual device/iOS/browser/build/commit/results when required. Missing physical evidence stays Not tested / pending.
+Use for Markdown, planning, process, issue-template, or other non-executable documentation changes.
 
-Documentation-only changes do not require pretending the application suite was rerun; verify document consistency, links and referenced paths instead.
+Required evidence normally includes:
+
+- changed-document consistency;
+- Markdown/rendering sanity where relevant;
+- links, paths, filenames, issue references and terminology;
+- confirmation that runtime code, executable configuration, schema and Production data were not changed.
+
+Do not manually rerun the full application regression suite, Vercel runtime acceptance, browser/device tests, or migration tests solely for documentation changes. If normal CI runs automatically, it may complete as supporting evidence; do not duplicate unrelated checks manually.
+
+### Level 2 — UI/behavioral
+
+Use for user-facing runtime behavior, responsive/layout work, ordinary features and low-risk application logic.
+
+Run only applicable evidence, such as:
+
+- focused automated coverage where practical;
+- relevant syntax/release/diff and regression checks;
+- browser-console verification where affected;
+- Vercel Preview for user-visible runtime changes;
+- affected desktop and narrow-phone widths (including ~320 and 390 px) for responsive UI;
+- physical iPhone testing only when the issue/acceptance criteria require it.
+
+Never claim responsive Chromium proves physical Safari behavior. When physical checks are required, record actual device/iOS/browser/build/commit/results; otherwise state Not tested/pending rather than pretending.
+
+### Level 3 — Data/infrastructure/high-risk
+
+Use for authentication/authorization, schema, persistence, migrations, backup/restore, destructive operations, concurrency/retry, security-sensitive infrastructure and Production cutover.
+
+Run the applicable high-risk evidence, including where relevant:
+
+- full relevant regression/integration tests;
+- schema/migration replay and recovery/rollback checks;
+- backup and source/destination data comparisons;
+- retry/idempotency/concurrency testing;
+- authorization/isolation/security testing;
+- Preview validation and required physical-device/Production gates.
+
+Automatic CI is supporting evidence, not a requirement to manually repeat every suite. A PR must state the validation level selected, what was actually run, and what required evidence remains pending.
 
 Do not weaken assertions, remove validation, or delete tests merely to obtain green results.
 
@@ -204,6 +237,7 @@ Report:
 - branch and PR;
 - user-visible behavior changes;
 - data/schema/migration impact;
+- validation level selected;
 - tests/checks actually performed;
 - Preview/physical-device evidence when applicable;
 - known limitations or deferred acceptance items.
