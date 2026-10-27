@@ -250,6 +250,7 @@ test("rapid test actions commit once and blank input creates no identity", async
   });
   await p.waitForFunction(() => document.getElementById("probeSave").disabled);
   assert.equal(await p.locator("#probeRead").isEnabled(), false);
+  assert.equal(await p.locator("#probeValue").isEnabled(), false);
   release();
   await p.waitForFunction(() => document.getElementById("probeStatus").textContent.startsWith("Saved in Supabase"));
   assert.equal(f.calls.writes, 1);

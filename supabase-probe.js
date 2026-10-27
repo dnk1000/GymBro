@@ -100,11 +100,13 @@
 
   async function run(action) {
     if (busy || !config?.configured) return;
-    if (action === "save" && (!input.value.trim() || input.value.length > 120)) {
+    const value = input.value;
+    if (action === "save" && (!value.trim() || value.length > 120)) {
       status.textContent = "Enter a nonblank test value of at most 120 characters.";
       return;
     }
     busy = true;
+    input.disabled = true;
     save.disabled = read.disabled = true;
     result.textContent = "";
     status.textContent = action === "save" ? "Saving test value…" : "Reading from Supabase…";
@@ -112,7 +114,7 @@
       const owner = await testUser();
       if (action === "save") {
         const { error } = await client.from("gymbro_connection_probe")
-          .upsert({ owner_id: owner, value: input.value }, { onConflict: "owner_id" });
+          .upsert({ owner_id: owner, value }, { onConflict: "owner_id" });
         if (error) throw error;
         status.textContent = "Saved in Supabase. Click Read test value to retrieve it.";
       } else {
@@ -130,6 +132,7 @@
       status.textContent = errorText(error);
     } finally {
       busy = false;
+      input.disabled = false;
       save.disabled = read.disabled = false;
     }
   }
