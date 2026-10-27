@@ -1,252 +1,191 @@
 # GymBro V3.x implementation plan
 
-Status: revised product direction, October 27, 2026. This document is the implementation-planning authority for the V3.x family, subject to review/merge. Individual milestones still require explicit implementation authorization.
+Status: current V3 planning authority, October 27, 2026. V3.x is the **persistent-data and core-product-maturity generation**. Individual implementation work is authorized and executed through GitHub issues, not by this document alone.
 
-## Baseline and authority
+## Product direction
 
-Continue the existing `dnk1000/GymBro` repository, checkout and Vercel project from accepted `main`. Do not revive abandoned PR #9 or create a parallel application/runtime authority.
+The October 27 M0 decision approved staged cloud persistence. Subsequent product review refined the generation boundary:
 
-Sources: [PRD](GymBro_PRD.md), [M0 scope and acceptance](V3_M0_SCOPE_AND_ACCEPTANCE.md), [compliance audit](PRD_COMPLIANCE.md), [release record](V2_RELEASE.md), [physical-phone acceptance](REAL_PHONE_SMOKE_TEST.md), [Supabase checkpoint](SUPABASE_CONNECTION_TEST.md), root [README](../README.md) and [project rules](../AGENTS.md).
+> **Make the data trustworthy → make the core product complete → expose it to AI later.**
 
-The October 27 M0 decision approved staged cloud persistence as the first V3 phase. This revision sharpens that direction: **V3.x is primarily the persistent-data and core-product-maturity generation, not the AI-integration generation.** The mature conversational trainer remains a product North Star, but provider/runtime AI and voice are deferred until GymBro's data model, database migration, exercise identity, catalog management, import resolution and remaining core workout behavior are stable.
+V3.x is therefore not the external-AI-integration generation. The mature conversational trainer remains the North Star, but provider/runtime AI, conversational automatic logging, adaptive AI coaching and voice are deferred until GymBro has a stable database-backed system of record and mature core domain behavior.
 
-This sequencing avoids exposing unstable identifiers and incomplete domain behavior to an AI/provider boundary and avoids performing a database migration twice.
+Current deployed V2 remains localStorage-based until controlled cutover is accepted. See [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md) and [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md).
 
-## V3.x product principle
+## Planning model
 
-V3.x should make GymBro a trustworthy system of record first.
+GymBro now uses an issue-driven workflow. The roadmap groups work by phase/dependency; **the GitHub issue is the executable implementation specification**.
 
-The V3.x family should establish:
+Issue numbers do not equal application versions. A release may contain one or several accepted issues. Dependencies should be expressed explicitly in issue bodies rather than inferred from version-looking names.
 
-- recoverable user access and private data ownership;
-- Supabase/PostgreSQL as the eventual sole active workout store after controlled cutover;
-- complete verified migration from the V2 local dataset;
-- stable canonical exercise identity independent of display labels;
-- maintainable exercise catalog metadata, aliases and duplicate merging;
-- robust import resolution for unknown/variant exercise names;
-- durable cross-device workout/session state;
-- completion of known live-workout adaptation gaps;
-- preservation of existing JSON backup/import/export and historical truth;
-- clear domain boundaries that a future trainer can safely consume.
+See [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md).
 
-External AI/provider integration, conversational workout control and voice are **not required for V3.x completion**. They should begin only after a separate post-V3 product decision confirms that the core platform is mature enough to expose.
+## V3.x completion definition
+
+V3.x should establish a trustworthy manual/guided product and durable system of record with:
+
+- recoverable personal access and private data ownership;
+- verified Supabase/PostgreSQL workout persistence;
+- controlled retirement of localStorage as the active workout database;
+- stable canonical exercise identity;
+- maintainable exercise catalog, aliases, archive/merge behavior;
+- robust import resolution for variant/unknown exercise labels;
+- correct note/data semantics;
+- usable long-term History and exercise-centric navigation;
+- preserved corrections, backup/restore, imports/exports and historical truth;
+- complete live-workout reordering/duration adaptation;
+- documented physical iPhone and Production acceptance.
+
+External AI/provider runtime integration is not required for V3.x completion.
+
+## Ordered backlog
+
+The order below is a recommended dependency/value order. Independent UI issues may be pulled earlier when they do not destabilize migration work.
+
+### Phase A — Foundation and identity
+
+**#27 — V3 Foundation: Recoverable User Access and Private Data Ownership**
+
+Establish sign-in/sign-out/recovery, user isolation and Preview/Production separation without migrating personal workout history yet.
+
+**#16 — V3.0: Exercise Identity Architecture**
+
+Establish immutable canonical exercise IDs, aliases/provenance and the separation between intrinsic exercise metadata and contextual template/session role. This must be reflected in the database migration before the V2 dataset is considered fully migrated.
+
+**#25 — Data Model: Distinguish Session, Exercise, and Set Notes**
+
+Resolve note scope before the database model is finalized. Existing historical text must be preserved conservatively; do not guess old note scope.
+
+Recommended dependency: #27 and #16 may proceed as separate foundation tracks, but #16 and #25 should be settled before #28 accepts the final migrated workout model.
+
+### Phase B — Preview database migration
+
+**#28 — V3 Foundation: Full Workout Persistence and Preview Migration**
+
+Depends on #27 and #16 and incorporates the approved V3 data model. Move a deliberate test copy of the complete dataset to Supabase/PostgreSQL on Preview, exercise all persisted workflows, compare data/relationships, and prove retry/failure safety. Required personal-backup/physical-evidence gates from M0 apply before personal migration testing.
+
+### Phase C — Production cutover
+
+**#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**
+
+Depends on accepted #28 and explicit Production rollout approval. After cutover, Supabase/PostgreSQL becomes the sole active workout store. No indefinite dual writes or automatic local-only workout fallback. Retain the legacy local copy only as deliberately managed recovery material until cleanup is separately approved.
+
+### Phase D — Exercise/catalog/import maturity
+
+**#17 — V3.1: Exercise Catalog Management**
+
+Depends on #16. Provide canonical metadata editing, aliases, archive/restore, conservative duplicate detection and explicit Merge Exercises behavior without rewriting historical workout facts.
+
+**#18 — V3.2: Smart Import Resolution**
+
+Depends on #16 and should reuse #17 catalog operations. Exact canonical/alias matches may map automatically; unknown/ambiguous labels require review. Intentional mappings become remembered aliases. Fuzzy similarity is suggestion-only unless an explicit deterministic rule is approved.
+
+### Phase E — History and exercise usability
+
+These are core-product-maturity issues. Some can be implemented independently before database cutover; where practical, prefer stable exercise IDs for exercise-centric features.
+
+**#20 — History: Collapsible Workout Sessions**
+
+Collapsed-by-default session/date cards with summaries and Expand/Collapse All. Presentation only; no historical mutation.
+
+**#21 — History: Group Sets by Exercise with Progressive Disclosure**
+
+Within an expanded session, show exercise-level summaries before individual set rows while preserving actual sequence and corrections.
+
+**#22 — History: Search and Filters**
+
+Exercise/workout/date filtering, with optional reliable pain/discomfort filtering. Canonical exercise identity improves correctness.
+
+**#23 — Exercise: Detail and Performance History View**
+
+Depends on #16. One canonical exercise should have one navigable longitudinal history, including relevant setup metadata, pain context and deterministic performance context.
+
+**#24 — History: Friendlier Legacy and Source Presentation**
+
+Keep legacy/sessionless and provenance truth available without making implementation terminology dominate the normal UI. Never fabricate sessions.
+
+**#26 — History: Deterministic Session Highlights and Last-Time Comparison**
+
+Surface reliable facts and comparable prior performance without requiring an AI provider. Reuse existing comparison rules rather than inventing conflicting metrics.
+
+### Phase F — Remaining workout behavior
+
+**#30 — V3 Core: Complete Live-Workout Reordering and Duration Adaptation**
+
+Close the known V2 gaps: persist temporary reordering and changes to the remaining workout/duration while preserving original plan intent, completed work and permanent templates. Prefer implementation after authoritative persistence so new state does not require another migration.
+
+### Phase G — V3 acceptance
+
+**#31 — V3 Release: Core Product Completeness and Acceptance Review**
+
+Review the selected V3 release scope, migration integrity, account recovery, cloud authority, exercise identity/catalog/import behavior, History/core behavior, backup/recovery and physical iPhone evidence. Close V3 only when included issues have evidence or explicit disposition.
+
+## Dependency summary
+
+Core path:
+
+`#27 → #28 → #29`
+
+with `#16` and the approved V3 data semantics required before #28 migration acceptance.
+
+Exercise path:
+
+`#16 → #17 → #18`
+
+Exercise-centric History:
+
+`#16 → #23 → #26` (with #26 also reusing existing comparison contracts)
+
+Workout adaptation:
+
+`#29 → #30` is the preferred order, though final dependency should remain in the issue if architecture changes.
+
+Release:
+
+selected V3 issues → `#31`.
+
+## Data and migration principles
+
+V3 migration must preserve historical truth and be conservative:
+
+- preserve stable IDs/relationships unless an explicit approved migration transforms them;
+- preserve dates, units, load/reps, effort, pain/discomfort, notes, incompleteness, source/provenance and unknown supported metadata;
+- preserve original imported/logged labels where practical even after canonical exercise mapping;
+- never fuzzy-merge historical exercises silently;
+- compare content and relationships, not only counts;
+- make migration retry-safe/idempotent;
+- never make a cloud-load failure look like an empty account;
+- require durable acknowledgement before reporting a cloud write saved;
+- maintain complete JSON backup/export capability and explicit recovery procedures.
 
 ## Exercise identity rule
 
 GymBro owns exercise identity.
 
-External providers, imports and users may supply exercise labels, but provider-supplied/free-text names must not become persistent identity keys. Canonical exercises use immutable internal identifiers. Aliases may resolve alternate labels to canonical identity. Historical/import provenance should retain the original supplied label where practical.
+External tools, imports, users and future providers may supply labels such as `Rope Triceps Pressdown`, `Rope Triceps Pushdown`, or `Cable Rope Pushdown`; labels are not durable identity keys. A future trainer should consume one canonical GymBro exercise identity and authoritative history, not create a parallel taxonomy.
 
-Template/session role (`core`, `accessory`, `substitute`, order, short-workout inclusion and similar contextual properties) belongs to the workout/template relationship rather than being treated solely as an intrinsic exercise property.
+Template/session role (`core`, `accessory`, `substitute`), order, short-workout inclusion and session substitutions are contextual relationships, not solely intrinsic canonical-exercise properties.
 
-Migration must be conservative: deterministic known mappings may resolve automatically, but fuzzy semantic similarity must not silently merge historical exercises.
+## Deferred beyond V3.x
 
-## Version-label note
-
-The previously approved M0 version mapping used M1 -> `3.1.0-BUILD`, M2 -> `3.2.0-BUILD`, etc. The newly approved capability names also use `V3.0`, `V3.1` and `V3.2`. Until release numbering is explicitly remapped, this plan uses the requested `V3.0/V3.1/V3.2` labels as **capability phases**, not automatic application-version assignments. Do not create two meanings for the same shipped version number. Resolve the concrete app-version mapping before the first affected release.
-
-## Sequencing overview
-
-### Foundation track — cloud persistence
-
-The existing M0 cloud-persistence decisions remain valid: recoverable access, complete Preview migration, controlled Production cutover, connectivity-required durable saves initially, Preview/Production separation, no indefinite dual writes and no automatic local-only fallback after cutover.
-
-### Exercise-data track
-
-Exercise identity architecture must be incorporated into the database schema/migration before the V2 dataset is treated as fully migrated. Catalog management and smart import resolution build on that identity model.
-
-### Core workout-completion track
-
-After stable persistence and exercise identity, complete the known workout-adaptation gaps and any other core product gaps discovered through real use before integrating an AI runtime.
-
-### Future trainer generation
-
-Trainer/provider integration, natural-language control, adaptive AI coaching and voice move to a later separately approved generation. V3 may prepare clean domain contracts for them, but does not need to implement them.
-
-## Milestones / capability phases
-
-### M0 — Scope and baseline acceptance
-
-Status: decision work complete; see [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md).
-
-Outcome: approved cloud-persistence-first direction, connectivity behavior, migration gates, storage-retirement boundaries and Preview/Production separation.
-
-The new V3.x direction in this document supersedes the old assumption that later M5-M9 AI/trainer milestones are part of V3 completion.
-
-### M1 — Recoverable user access and private data ownership
-
-Outcome: the same person can access their own GymBro account from another browser/device without moving personal workout history yet.
-
-- Simple sign-in/sign-out/recovery suitable for iPhone.
-- User isolation and Preview/Production separation.
-- Existing V2 workout behavior preserved while account access is tested.
-- No personal workout migration merely by opening Preview.
-
-Acceptance: repeatable account recovery and second-device access; one test user cannot read/change another's data; Preview does not touch Production workout data.
-
-### V3.0 — Exercise Identity Architecture — Issue #16
-
-Issue: https://github.com/dnk1000/GymBro/issues/16
-
-Outcome: stable exercise identity is part of the V3 database model before complete workout migration is accepted.
-
-Requirements:
-
-- immutable internal `exercise_id` or equivalent;
-- canonical display name and structured exercise metadata;
-- normalized aliases to canonical identity;
-- logged sets/workout records reference stable exercise identity rather than name text;
-- workout-template entries reference stable exercise identity;
-- preserve original imported/logged label where practical for provenance;
-- support primary muscle/category, secondary muscles where modeled, equipment/type, active/archive state and provenance;
-- keep contextual template/session role separate from intrinsic exercise identity;
-- domain/API boundaries use stable identity;
-- external/imported labels are suggestions, not identity keys.
-
-Migration rules:
-
-- incorporate this model into the main V3 database migration rather than correcting identity after cutover;
-- preserve all historical workout facts and relationships;
-- no fuzzy automatic historical merges;
-- explicit/deterministic known mappings may resolve safely;
-- ambiguous existing labels remain separate until user-reviewed merge.
-
-Acceptance: renames do not break history; alternate labels can resolve to one canonical exercise; migration preserves complete data and provenance; no silent fuzzy collapse of distinct exercises.
-
-### M2 — Full workout persistence and migration on Preview
-
-Depends on M1 and V3.0 exercise identity architecture. Outcome: a deliberate test copy of the complete existing dataset operates through Supabase with existing GymBro behavior intact.
-
-- Migrate explicitly selected local data or a verified complete backup.
-- Preserve sets, bodyweight, program, exercise catalog/identity, preferences, imports/duplicate protection, sessions, snapshots, active guidance, request history, IDs, dates, units, notes, pain and completeness.
-- Exercise every persisted workflow: manual/guided logging, edits/deletes, program/catalog/preferences, bodyweight, session recovery, imports, restore, history merge and exports.
-- Compare content and relationships, not just counts.
-- Repeated/interrupted migration must not duplicate records or destroy destination data.
-- Test rejected writes, connection loss, retries, expired access, stale views and simultaneous-device changes.
-- Preserve existing JSON interchange/backward compatibility unless an explicit schema decision changes it.
-
-Acceptance: complete comparison passes; active workout survives reload/second-device access; failed saves preserve visible input and committed data; exercise references resolve through stable identity; no live Production migration yet.
-
-### M3 — Controlled cutover and local workout-storage retirement
-
-Depends on accepted M2 and explicit rollout approval. Outcome: Supabase/PostgreSQL is the sole active workout store.
-
-- Rehearse cutover/recovery with disposable data.
-- Verify retained backup and cloud dataset before ending local workout reads/writes.
-- Remove supported local-only workout mode and automatic local fallback.
-- Fresh browser works without legacy workout keys after sign-in.
-- Cloud load failure must not appear as an empty account or trigger reseeding.
-- Retain inactive legacy copy only as explicitly approved recovery material until deliberate cleanup.
-- Define recovery for post-cutover cloud writes.
-
-Acceptance: normal workout workflows use cloud data; cross-device changes are durable/visible; approved Production smoke and physical-iPhone evidence are recorded.
-
-### V3.1 — Exercise Catalog Management — Issue #17
-
-Issue: https://github.com/dnk1000/GymBro/issues/17
-
-Depends on V3.0 stable exercise identity. Outcome: the canonical exercise catalog can be safely maintained without corrupting historical performance.
-
-Requirements:
-
-- edit canonical display name without changing identity;
-- edit structured metadata such as primary/secondary muscles and equipment/type;
-- manage aliases;
-- archive/restore exercises instead of destructive deletion where history exists;
-- user-driven Merge Exercises workflow;
-- merged-away names can remain aliases;
-- preserve merge/audit provenance;
-- conservative possible-duplicate suggestions requiring explicit user action;
-- preserve all historical sets/session/template relationships and recorded facts.
-
-Acceptance: rename preserves history; metadata edits do not rewrite workout facts; duplicate exercises can be intentionally merged without lost/duplicated sets; archived exercises remain valid in history.
-
-### V3.2 — Smart Import Resolution — Issue #18
-
-Issue: https://github.com/dnk1000/GymBro/issues/18
-
-Depends on V3.0 and should reuse V3.1 catalog operations. Outcome: imports no longer create accidental duplicate exercises merely because labels vary.
-
-Resolution paths:
-
-1. exact canonical match -> automatic import;
-2. explicit alias match -> automatic canonical mapping, reported in summary;
-3. unknown/ambiguous label -> user review before commit.
-
-For unresolved names, allow selecting an existing exercise or creating a new canonical exercise. When the user intentionally maps an incoming label to an existing exercise, remember that mapping as an alias.
-
-Provide an import preview showing known matches, alias mappings, unresolved names and new exercises to be created.
-
-Fuzzy/semantic similarity may suggest possible matches but must not silently merge related-but-distinct exercises.
-
-Acceptance: variant labels can resolve without duplicate history; saved aliases prevent repeated prompts; new exercises can be created intentionally; ambiguous matches require user choice; retries remain duplicate-safe; JSON compatibility is preserved or changed only through explicit schema/versioning approval.
-
-### M4 — Complete live-workout adaptation
-
-Outcome: close the two known V2 functional gaps after persistence is stable.
-
-- Persist temporary exercise reordering during an active workout.
-- Persist changes to remaining plan/duration during an active workout.
-- Preserve original intent, completed sets, actual substitutions and permanent templates unless separately edited.
-- Retain explicit skip, finish, manual fallback and clear remaining-workout state.
-
-Acceptance: start a 60-minute workout, log sets, shorten remaining session, reorder an occupied exercise, substitute another, reload and verify original context plus actual performance.
-
-### M5 — Core V3.x completeness review
-
-Outcome: decide whether GymBro's non-AI product foundation is mature enough to close V3.x and become the basis for the future trainer generation.
-
-Review at minimum:
-
-- account recovery and user isolation;
-- complete historical migration and database integrity;
-- local workout-store retirement;
-- cross-device session behavior;
-- canonical exercise identity;
-- catalog editing/aliases/merge;
-- smart import resolution;
-- workout adaptation/reordering;
-- History, corrections, backup/restore and exports;
-- physical iPhone acceptance;
-- remaining product gaps discovered through real use.
-
-Acceptance: V3.x is supportable as a complete manual/guided workout product and trustworthy system of record without requiring any AI/provider runtime.
-
-## Explicitly deferred beyond V3.x
-
-The following are valuable future directions but are not V3.x completion criteria:
+Unless a later explicit product decision changes the boundary, defer:
 
 - external AI/provider runtime integration;
 - ChatGPT/Claude/provider connection UX;
-- conversational natural-language workout control;
-- automatic logging from provider conversation;
-- AI-generated/adaptive program evolution;
-- provider-specific authorization boundary beyond what is required by the future integration design;
+- natural-language automatic workout control/logging;
+- AI-driven progression/program adaptation;
+- provider-specific authorization beyond what V3 account/data ownership requires;
 - voice/earbud workout control;
 - GymBro-hosted open-weight AI.
 
-Before starting that generation, define a new product/architecture plan against the stable V3 database and domain actions. The future trainer should consume GymBro's canonical identities and factual records rather than create its own parallel taxonomy or state.
+The next trainer generation should be planned against the stable V3 database/domain actions rather than carrying forward the abandoned PR #9 architecture.
 
-## Boundaries for future milestone prompts
+## Version numbering
 
-Each implementation prompt must identify:
+The earlier M0 plan mapped milestone numbers directly to application versions (`3.1`, `3.2`, etc.). The issue-driven workflow deliberately separates implementation-unit order from release numbering.
 
-- current accepted `main` revision;
-- approved milestone/capability and dependencies;
-- concrete user-visible behavior;
-- preserved behavior/data;
-- explicit exclusions;
-- migration/recovery behavior where relevant;
-- acceptance scenarios;
-- automated/manual verification;
-- required branch, PR and Vercel Preview evidence.
+Do not assign a concrete V3 application minor version merely because an issue title contains `V3.0`, `V3.1`, or `V3.2`. Those exercise issue titles are capability labels inherited from the product discussion. Decide the concrete release mapping before the first affected V3 deployable build and then use `MAJOR.MINOR.PATCH-BUILD` consistently.
 
-Use the existing repository/project. Keep each milestone independently reviewable. No unsolicited UI redesign, framework rewrite, social features, nutrition ecosystem or generalized health record. No merge or Production data change without applicable user approval.
+## Execution rule
 
-## Product rationale
-
-AI integration becomes substantially safer and more useful after GymBro has stable database-backed identity and reliable core behavior. A future trainer should be able to reason over one canonical `exercise_id`, one authoritative workout/session state and one durable historical record even when humans or providers use different labels such as `Rope Triceps Pressdown`, `Rope Triceps Pushdown` or `Cable Rope Pushdown`.
-
-The desired ordering is therefore:
-
-**make the data trustworthy -> make the product complete -> expose it to AI.**
+To implement work, select/approve a GitHub issue and hand that issue to Codex. Codex should read `AGENTS.md`, `README.md`, [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md), [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md), the target issue, and named dependencies; start from current accepted `main`; implement only the issue; create a focused PR; provide actual validation evidence; and not merge or change Production data without explicit approval.
