@@ -1,18 +1,19 @@
 # GymBro project rules
 
-These rules apply throughout the repository. Preserve accepted behavior and user data unless the target GitHub issue explicitly changes them.
+These rules apply throughout the repository. Preserve accepted behavior and user data unless the target GitHub issue explicitly changes them within approved product and architectural constraints.
 
 ## Authority and workflow
 
-For current work, read in this order when documents overlap:
+Apply this source-of-truth hierarchy:
 
-1. `docs/GymBro_PRD.md` for product vision/North Star;
-2. `docs/V3_M0_SCOPE_AND_ACCEPTANCE.md` for approved V3 transition decisions;
-3. `docs/CURRENT_ARCHITECTURE.md` for deployed V2 versus approved V3 target architecture;
-4. the target GitHub issue and its dependency issues — **the executable implementation specification**;
-5. `docs/V3_IMPLEMENTATION_PLAN.md` for ordered backlog/dependency context;
-6. `docs/DEVELOPMENT_WORKFLOW.md` for the development process;
-7. subsystem/historical documents for detailed accepted contracts and release evidence.
+1. **`docs/GymBro_PRD.md` — Product authority:** intended behavior, user experience, product principles, scope and requirements.
+2. **Approved architecture/design documents — Technical authority:** domain models, identity, persistence, schemas, APIs, migrations and boundaries. Architecture must implement and support approved product requirements; it cannot independently override them.
+3. **GitHub issues — Approved implementation work:** bounded work translating approved product and architecture decisions. Issues may clarify implementation details within those constraints, but may not silently redefine them.
+4. **Repository code and tests — Implemented state:** current implementation and regression contract. Existing code or passing tests do not independently establish product requirements when they conflict with higher authority.
+
+Preserve approved decisions and delegated authority: milestone/decision records remain approval evidence, subsystem designs govern their technical domains, and `docs/VERSION_POLICY.md` retains explicitly delegated versioning authority. Document recency alone does not determine precedence. See [development governance](docs/DEVELOPMENT_WORKFLOW.md#source-of-truth-hierarchy) for the fuller explanation and governing references.
+
+For a material conflict, ambiguity or missing decision, identify the problem and authorities involved, explain the implementation impact, recommend a resolution when useful, and pause the affected work until resolved. Independent work may continue only when clearly safe and unable to prejudice or complicate the decision. Routine implementation choices within approved constraints need no escalation. Record approval and the resolved governing decision before dependent implementation proceeds; follow [decision resolution](docs/DEVELOPMENT_WORKFLOW.md#material-conflicts-and-decision-resolution).
 
 Historical milestone documents remain evidence of what existed at that release. Old future-roadmap language inside them does not authorize new work.
 
@@ -26,7 +27,7 @@ New product work follows:
 
 Before implementing an issue:
 
-- read the issue and dependency issues;
+- read the issue, dependency issues and governing product/architecture references; apply the hierarchy and conflict rule above;
 - confirm the current `main` revision and current architecture;
 - preserve unrelated behavior;
 - do not add adjacent features merely because they seem useful;
@@ -81,7 +82,7 @@ Do not revive abandoned PR #9 or develop on `v3/integration-architecture`.
 ## Product and UX rules
 
 - iPhone Safari is the primary UX target; preserve useful desktop behavior.
-- Preserve working functionality unless the target issue explicitly changes it.
+- Preserve working functionality unless the target issue explicitly changes it within approved product and architectural constraints.
 - Do not redesign unrelated UI as cleanup.
 - Keep touch targets, forms, tables, scrolling and keyboard behavior usable at narrow widths.
 - Retain manual fallback even as guided/core behavior evolves.
@@ -140,7 +141,7 @@ Current reviewed JSON interchange remains supported until an approved issue/vers
 - Substitution is session-local unless a separate permanent program edit is explicitly requested.
 - Historical template intent is preserved by snapshots when the current template later changes.
 
-Performance comparisons must remain deterministic and explainable. Respect units and existing comparability rules. Do not convert assisted/bodyweight/incompatible units into fake rankings or inferred one-rep-max equivalents unless a later issue explicitly establishes such behavior.
+Performance comparisons must remain deterministic and explainable. Respect units and existing comparability rules. Do not convert assisted/bodyweight/incompatible units into fake rankings or inferred one-rep-max equivalents unless a later issue implements an explicitly approved decision establishing such behavior.
 
 History presentation may evolve through approved issues (#20–#26), but presentation changes must not rewrite historical facts or fabricate session identity.
 
@@ -223,7 +224,7 @@ Current authorities:
 - `README.md` — concise current product/run/data/workflow summary.
 - `AGENTS.md` — these repository/Codex rules.
 - `docs/README.md` — documentation map and current-vs-historical classification.
-- `docs/GymBro_PRD.md` — product vision and North Star; newer approved V3 transition decisions supersede older scheduling/hosting assumptions when they conflict.
+- `docs/GymBro_PRD.md` — product authority and North Star, including explicitly approved amendments evidenced in linked decision records.
 - `docs/V3_M0_SCOPE_AND_ACCEPTANCE.md` — approved V3 transition decisions/gates.
 - `docs/CURRENT_ARCHITECTURE.md` — deployed V2 versus approved V3 target.
 - `docs/V3_IMPLEMENTATION_PLAN.md` — V3 ordered issue backlog.
