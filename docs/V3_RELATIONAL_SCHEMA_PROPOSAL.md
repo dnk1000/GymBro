@@ -1,6 +1,8 @@
 # Issue #39 — relational schema and persistence boundary proposal
 
-Status: **proposed; approval pending; implementation has not started**. Prepared for [issue #39](https://github.com/dnk1000/GymBro/issues/39) from accepted `main` `018004a971a5c44dbfb8b0098679f3e26cd9d261`. This document does not establish an implemented schema, approve a migration or declare an issue complete.
+Status: **approved design**. The user explicitly approved this proposal and the 3.5.0 mapping on October 28, 2026; approval is recorded in [issue #39](https://github.com/dnk1000/GymBro/issues/39). [PR #58](https://github.com/dnk1000/GymBro/pull/58) is merged into accepted main `bec9d865cb41d9d56c204ba48468f2259f9664ab`. Current implementation/evidence is tracked in [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md).
+
+The remaining preparation/gate wording and preparation AC results below record the original proposal at review; the design approval gate is now satisfied. Prepared for [issue #39](https://github.com/dnk1000/GymBro/issues/39) from accepted `main` `018004a971a5c44dbfb8b0098679f3e26cd9d261`. This document does not establish an implemented schema, approve a migration or declare an issue complete.
 
 ## Decision and implementation gate
 

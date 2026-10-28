@@ -24,6 +24,14 @@ select jsonb_build_object(
     'policies', (select coalesce(jsonb_agg(p order by tablename, policyname), '[]'::jsonb)
       from (select tablename, policyname, permissive, roles, cmd, qual, with_check from pg_policies
         where schemaname = 'public' and tablename in ('gymbro_exercises', 'gymbro_exercise_aliases')) p)),
+  'relational_workouts', jsonb_build_object(
+    'tables', (select coalesce(jsonb_agg(t order by relname),'[]'::jsonb)
+      from (select relname,relrowsecurity from pg_class where relnamespace='public'::regnamespace
+        and relname in (select public.gymbro_workout_table(t) from unnest(public.gymbro_workout_tables()) t)) t),
+    'constraints', (select coalesce(jsonb_agg(c order by table_name,conname),'[]'::jsonb)
+      from (select conrelid::regclass::text as table_name,conname,contype,convalidated
+        from pg_constraint where connamespace='public'::regnamespace and conrelid in
+          (select to_regclass('public.'||public.gymbro_workout_table(t)) from unnest(public.gymbro_workout_tables()) t)) c)),
   'grants', (select coalesce(jsonb_agg(g order by grantee, privilege_type), '[]'::jsonb)
     from (select grantee, privilege_type from information_schema.role_table_grants
       where table_schema = 'public' and table_name = 'gymbro_connection_probe') g)

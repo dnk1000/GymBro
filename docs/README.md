@@ -18,7 +18,8 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
-- [V3_RELATIONAL_SCHEMA_PROPOSAL.md](V3_RELATIONAL_SCHEMA_PROPOSAL.md) — #39 proposed relational model, persistence boundary and verification plan; approval pending, not an implemented or approved schema.
+- [V3_RELATIONAL_SCHEMA_PROPOSAL.md](V3_RELATIONAL_SCHEMA_PROPOSAL.md) — approved #39 relational model, persistence boundary and verification plan.
+- [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md) — #39 implementation boundary, relational migration and actual verification evidence.
 
 - [NOTE_SCOPES.md](NOTE_SCOPES.md) — #25 schema-8 session/exercise-occurrence/setup/set notes, conservative compatibility, canonical projection and downstream relational contract.
 

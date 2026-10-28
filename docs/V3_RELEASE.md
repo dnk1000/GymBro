@@ -1,3 +1,13 @@
+# V3 relational foundation candidate — issue #39
+
+Application version: `3.5.0-20261028T195515Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved mapping: 3.5.0 for #39 alone. Based on main `bec9d865cb41d9d56c204ba48468f2259f9664ab`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and additive migration `20261028042000`. The workout UI remains local; there is no personal migration or cutover. See [implementation and AC evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+Local/CI/Preview results are pending validation; no accepted Production release or device verification is claimed. The sections below retain prior candidate evidence.
+
 # V3 scoped-notes release candidate
 
 Release status: **preparation**

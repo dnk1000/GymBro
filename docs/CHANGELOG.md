@@ -1,5 +1,9 @@
 # Changes
 
+## 3.5.0 — #39 relational foundation candidate
+
+Owner-scoped relational workout schema, lossless canonical row mapping, and an opt-in DOM-free asynchronous repository under existing domain actions. No UI/storage-authority change or personal migration. Build `3.5.0-20261028T195515Z`; workout schema 8 is unchanged. Validation/acceptance evidence: [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md).
+
 ## 3.4.0 — scoped notes candidate
 
 Issue #25: separate session, exercise/session, durable exercise setup and set notes in Workout, History and the existing Exercise Detail panel. Workout schema 8 preserves all older text without guessed scope; complete JSON and canonical identity projection preserve scoped targets and exact text. Failed/stale saves retain committed state and visible drafts. Workouts remain local; no personal/cloud migration or Production cutover.

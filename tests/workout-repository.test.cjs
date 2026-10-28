@@ -1,0 +1,72 @@
+const {test}=require("node:test");
+const assert=require("node:assert/strict");
+const {fixture}=require("./relational-fixture.cjs");
+const plain=x=>JSON.parse(JSON.stringify(x));
+test("relational projection preserves complete content, optional presence, original labels and independent ordering",async()=>{
+  const f=await fixture(), rows=f.repository.project(f.document,f.owner,f.bodyweightIds);
+  Object.values(rows).forEach(list=>list.reverse());
+  const back=f.repository.assemble(rows,f.owner);
+  assert.deepEqual(plain(f.identity.restoreV2Source(back.document)),plain(f.source));
+  assert.deepEqual(plain(back.bodyweightIds),f.bodyweightIds);
+  assert.equal(Object.hasOwn(back.document.data.sets[0],"rpe"),false);
+  assert.equal(rows.guided_requests.length,2);
+  assert.equal(rows.sets.some(s=>s.set_id===rows.guided_requests.find(r=>r.request_id==="request-b").set_id),false);
+  assert(rows.sets.some(s=>s.session_id===null));
+  assert.notEqual(rows.snapshot_slots[0].exercise_id,rows.guided_slots.at(-1).exercise_id);
+});
+test("assembly fails closed for partial, cross-owner, orphan, duplicate and contradictory rows",async()=>{
+  const f=await fixture();
+  for(const corrupt of [r=>delete r.imports,r=>r.sets[0].owner_id="88888888-8888-4888-8888-888888888888",r=>r.sets[0].session_position=999,
+    r=>r.sets.push(structuredClone(r.sets[0])),r=>r.session_notes[0].session_id="orphan",r=>r.sets[0].extra.notes="shadow",r=>r.guided_slots.pop()]) {
+    const rows=plain(f.repository.project(f.document,f.owner,f.bodyweightIds));corrupt(rows);
+    assert.throws(()=>f.repository.assemble(rows,f.owner));
+  }
+});
+test("unsupported database text rejects without modifying source; literal escapes and valid Unicode survive",async()=>{
+  const f=await fixture(), before=plain(f.document);
+  for(const text of ["\0","\ud800","\udfff"]) {
+    const doc=structuredClone(f.document);doc.data.extension.bad=text;
+    assert.throws(()=>f.repository.project(doc,f.owner,f.bodyweightIds),/PostgreSQL/);
+  }
+  assert.deepEqual(plain(f.document),before);
+});
+test("DOM-free actions await durable acknowledgement; failed/late saves do not publish candidate state",async()=>{
+  const f=await fixture();let resolve, calls=0;
+  const repository={commit:async(before,after)=>{calls++;await new Promise(r=>{resolve=r;});return after;}};
+  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository,createId:()=>"synthetic-next"});
+  const before=plain(actions.getWorkoutState()), id=f.identity.resolveLabel(f.document.catalog,"Bench Press");
+  const pending=actions.execute("logSet",{date:"2026-10-28",exercise:id,weight:15,reps:8,sessionId:null});
+  assert.equal(calls,1);assert.deepEqual(plain(actions.getWorkoutState()),before);
+  assert.equal((await actions.execute("clearPlan")).ok,false);
+  resolve();const saved=await pending;assert.equal(saved.ok,true);assert.equal(saved.code,"OK");
+  assert.equal(saved.state.data.sets.at(-1).exercise.exerciseId,id);
+  const failing=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async()=>{throw Error("rejected");}},createId:()=>"failed"});
+  const failure=await failing.execute("logSet",{date:"2026-10-28",exercise:id,weight:1,reps:1,sessionId:null});
+  assert.equal(failure.code,"PERSISTENCE_ERROR");assert.deepEqual(plain(failing.getWorkoutState()),before);
+});
+test("canonical facade reuses guidance replay/tombstones, corrections, note and template rules",async()=>{
+  const f=await fixture();let writes=0;
+  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,next)=>{writes++;return next;}},createId:()=>"facade-id"});
+  const id=f.identity.resolveLabel(f.document.catalog,"Bench Press");
+  const tombstone=await actions.execute("logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"request-b",weight:20,reps:8});
+  assert.equal(tombstone.code,"REPLAY");assert.equal(tombstone.deleted,true);assert.equal(writes,0);
+  const conflict=await actions.execute("logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"request-b",weight:21,reps:8});
+  assert.equal(conflict.code,"REQUEST_CONFLICT");assert.equal(writes,0);
+  const snapshot=plain(actions.getWorkoutState().data.sessions[0].planSnapshot);
+  assert.equal((await actions.execute("removeSlot",{templateId:"push",index:0})).ok,true);
+  assert.deepEqual(plain(actions.getWorkoutState().data.sessions[0].planSnapshot),snapshot);
+  assert.equal((await actions.execute("saveScopedNote",{scope:"exercise",exercise:id,text:"changed setup",expectedText:"  setup\n"})).ok,true);
+  assert.equal((await actions.execute("logSet",{date:"2026-10-28",exercise:"Bench Press",weight:1,reps:1})).code,"VALIDATION_ERROR");
+});
+test("repository transport uses single RPC loads and acknowledges complete matching committed facts",async()=>{
+  const f=await fixture(),rows=f.repository.project(f.document,f.owner,f.bodyweightIds);let fail=false;
+  const calls=[];
+  const repo=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=>{calls.push(name);return fail?{error:{message:"private details"}}:{data:plain(name.endsWith("commit")?args.next_rows:rows)};}}});
+  assert.equal((await repo.load()).initialized,true);
+  assert((await repo.commit(null,f)).document);
+  assert.deepEqual(calls,["gymbro_workout_read","gymbro_workout_commit"]);
+  fail=true;await assert.rejects(repo.load(),/not acknowledged/);
+  const empty=Object.fromEntries(Object.keys(rows).map(t=>[t,[]]));
+  const uninitialized=f.repository.create({ownerId:f.owner,client:{rpc:async()=>({data:empty})}});
+  assert.deepEqual(plain(await uninitialized.load()),{initialized:false});
+});

@@ -41,6 +41,8 @@ Keep the existing issue titles; identify them by issue number and capability:
 
 These are inherited capability labels, including references between those issues. Use issue numbers for dependencies and full application versions for builds. Do not infer release content from title prefixes.
 
+The user explicitly approved **3.5.0 for #39 alone** on October 28, 2026. The approved [relational proposal](V3_RELATIONAL_SCHEMA_PROPOSAL.md) and issue #39 record this mapping. It does not approve personal migration, Production delivery or merge.
+
 ## When to change the version
 
 On October 27, 2026 the user explicitly approved **`3.4.0` for #25 alone** in the #25 implementation conversation. Its independent workout schema is 8 for explicit note scopes; this mapping is not Production acceptance or merge approval.

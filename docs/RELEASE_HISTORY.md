@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 relational foundation candidate — not yet accepted
+
+`3.5.0-20261028T195515Z`, workout schema 8; #39 alone, approved October 28, 2026. Based on accepted main `bec9d86`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and migration `20261028042000`. Candidate lineage only; validation and acceptance remain pending in [the evidence record](V3_RELATIONAL_PERSISTENCE.md). No Production delivery, personal migration or cutover.
+
 ## V3 scoped-notes candidate — not yet accepted
 
 `3.4.0-20261027T235417Z`, workout schema 8; #25 alone, approved by the user in the implementation conversation on October 27. Based on accepted main `08c57e3`, branch `codex/issue-25-note-scopes`; [PR #49](https://github.com/dnk1000/GymBro/pull/49), runtime `18a7882`. Code CI passed both jobs; local 190/190 regression, scoped-note JSON roundtrip at three widths and signed-in read-only Preview smoke passed. Separate note scopes and conservative schema-7 compatibility; same local workout authority. See [note contract](NOTE_SCOPES.md) and [candidate evidence](V3_RELEASE.md). This is candidate lineage; no Production delivery, personal migration, physical-device test, issue closure or merge is claimed.
