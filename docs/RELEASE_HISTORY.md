@@ -2,6 +2,32 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 opaque request-signature fix candidate — not yet accepted
+
+`3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; [final code CI](https://github.com/dnk1000/GymBro/actions/runs/40767524072) at `826c77a` passed 200 application tests and fresh/reset SQL (190 each). Hosted staging passed 110 assertions, rollback/zero-owner/no-op checks; exact 3.5.5 Preview smoke passed. Schema migration/SQL fixture are unchanged. #27 and Level 3 acceptance remain pending; PR #59 stays unmerged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+## V3 reviewed-import fix candidate — not yet accepted
+
+`3.5.4-20261028T204314Z`, schema 8; #39 only. The canonical adapter requires resolved IDs only for included import rows, retaining existing review/exclusion semantics, provenance and duplicate protection. Nine focused tests pass; [final code CI](https://github.com/dnk1000/GymBro/actions/runs/40766039548) at `3646806` passed 199 application tests and fresh/reset SQL (190 each). The unchanged applied migration passed 110 hosted assertions, rollback/zero-owner checks and no-op reapply. Exact 3.5.4 Preview smoke passed. #27 and Level 3 acceptance remain pending; PR #59 is unmerged. [Current evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+## V3 request identity fix candidate — not yet accepted
+
+`3.5.3-20261028T202536Z`, schema 8; #39 only. Relational request metadata explicitly distinguishes legacy exercise labels from canonical UUIDs; original signature bytes remain unchanged. Eight focused repository tests pass, including UUID-shaped aliases and replay after reload. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+Final code evidence for the 3.5.3 candidate: [CI](https://github.com/dnk1000/GymBro/actions/runs/40763380218) passed 198 application tests and fresh/reset SQL (188 each). Reviewed staging migration, 108 hosted synthetic assertions, rollback/no-op/ledger/RLS and exact Preview smoke passed. Technical ACs pass; #27 dependency and Level 3 acceptance remain pending. [Full report](V3_RELATIONAL_PERSISTENCE.md).
+
+## V3 relational transaction fix candidate — not yet accepted
+
+`3.5.2-20261028T201618Z`, schema 8; #39 only. Each RPC defers relationship staging then forces constraints before acknowledgement, including repeated invocations in one transaction. No scope or constraint reduction. Verification/acceptance is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).
+
+## V3 relational foundation fix candidate — not yet accepted
+
+`3.5.1-20261028T200955Z`, schema 8; #39 only. Fixes initial SQL lifecycle validation and template-label preservation. Initial `3.5.0` CI regression passed; database integration failed and was diagnosed before any staging apply. Current validation is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md). No Production delivery or personal migration is claimed.
+
+## V3 relational foundation candidate — not yet accepted
+
+`3.5.0-20261028T195515Z`, workout schema 8; #39 alone, approved October 28, 2026. Based on accepted main `bec9d86`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and migration `20261028042000`. Candidate lineage only; validation and acceptance remain pending in [the evidence record](V3_RELATIONAL_PERSISTENCE.md). No Production delivery, personal migration or cutover.
+
 ## V3 scoped-notes candidate — not yet accepted
 
 `3.4.0-20261027T235417Z`, workout schema 8; #25 alone, approved by the user in the implementation conversation on October 27. Based on accepted main `08c57e3`, branch `codex/issue-25-note-scopes`; [PR #49](https://github.com/dnk1000/GymBro/pull/49), runtime `18a7882`. Code CI passed both jobs; local 190/190 regression, scoped-note JSON roundtrip at three widths and signed-in read-only Preview smoke passed. Separate note scopes and conservative schema-7 compatibility; same local workout authority. See [note contract](NOTE_SCOPES.md) and [candidate evidence](V3_RELEASE.md). This is candidate lineage; no Production delivery, personal migration, physical-device test, issue closure or merge is claimed.

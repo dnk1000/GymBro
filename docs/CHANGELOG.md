@@ -1,5 +1,29 @@
 # Changes
 
+## 3.5.5 — preserve opaque request-signature meaning
+
+`3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; schema migration/SQL fixture are unchanged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+## 3.5.4 — preserve excluded reviewed-import rows
+
+`3.5.4-20261028T204314Z`, schema 8; #39 only. The canonical adapter requires resolved IDs only for included import rows, retaining existing review/exclusion semantics, provenance and duplicate protection. Nine focused tests pass; the unchanged applied relational migration is retested with 110 SQL assertions. [Current evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+## 3.5.3 — explicit request signature identity
+
+`3.5.3-20261028T202536Z`, schema 8; #39 only. Relational request metadata explicitly distinguishes legacy exercise labels from canonical UUIDs; original signature bytes remain unchanged. Eight focused repository tests pass, including UUID-shaped aliases and replay after reload. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
+## 3.5.2 — atomic relationship staging fix
+
+`3.5.2-20261028T201618Z`, schema 8; #39 only. Each RPC defers relationship staging then forces constraints before acknowledgement, including repeated invocations in one transaction. No scope or constraint reduction. Verification/acceptance is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).
+
+## 3.5.1 — relational foundation validation fixes
+
+Correct database creation detection across subtransactions and preserve recorded template labels in new snapshots/guidance after canonical rename. Build `3.5.1-20261028T200955Z`; schema 8 unchanged. Initial SQL failure and retest evidence remain in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).
+
+## 3.5.0 — #39 relational foundation candidate
+
+Owner-scoped relational workout schema, lossless canonical row mapping, and an opt-in DOM-free asynchronous repository under existing domain actions. No UI/storage-authority change or personal migration. Build `3.5.0-20261028T195515Z`; workout schema 8 is unchanged. Validation/acceptance evidence: [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md).
+
 ## 3.4.0 — scoped notes candidate
 
 Issue #25: separate session, exercise/session, durable exercise setup and set notes in Workout, History and the existing Exercise Detail panel. Workout schema 8 preserves all older text without guessed scope; complete JSON and canonical identity projection preserve scoped targets and exact text. Failed/stale saves retain committed state and visible drafts. Workouts remain local; no personal/cloud migration or Production cutover.

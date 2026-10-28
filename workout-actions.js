@@ -6,6 +6,7 @@ function createWorkoutActions({
   persist,
   createId,
   now = () => new Date().toISOString(),
+  prepareOnly = false,
 }) {
   function getWorkoutState() {
     return JSON.parse(JSON.stringify(getState()));
@@ -40,6 +41,10 @@ function createWorkoutActions({
         ...details,
         state: getWorkoutState(),
       };
+    // Shared candidate preparation for the opt-in asynchronous repository.
+    // PREPARED is never a durable-save acknowledgement and publishes no state.
+    if (prepareOnly)
+      return { ok: true, code: "PREPARED", errors: [], ...details, state: next };
     try {
       const saved = persist(next);
       if (!saved || saved.ok !== true)
