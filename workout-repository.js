@@ -214,7 +214,8 @@ const WorkoutRepository = (() => {
           // Inputs use the existing `exercise` property with a canonical UUID.
           for (const input of args) if (isObject(input) && Object.hasOwn(input,"exercise"))
             check(document.catalog.exercises.some(e=>e.id===input.exercise), "Canonical exercise ID required.");
-          if(name === "commitImport") for(const row of args[0]?.sets ?? []) check(document.catalog.exercises.some(e=>e.id===row.exercise), "Resolve reviewed import labels to canonical IDs first.");
+          if(name === "commitImport" && Array.isArray(args[0]?.sets)) for(const row of args[0].sets.filter(r=>r.include))
+            check(document.catalog.exercises.some(e=>e.id===row.exercise), "Resolve included import labels to canonical IDs first.");
           const result = actions[name](...clone(args));
           if (!result.ok || result.code !== "PREPARED") return { ...result, state:state() };
           const next = result.state;

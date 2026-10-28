@@ -1,6 +1,6 @@
 # V3 relational foundation candidate — issue #39
 
-Application version: `3.5.3-20261028T202536Z`
+Application version: `3.5.4-20261028T204314Z`
 Data schema: `8`
 Release status: **preparation**
 
@@ -8,7 +8,7 @@ Approved mapping: 3.5.0 for #39 alone. Based on main `bec9d865cb41d9d56c204ba484
 
 The initial code CI passed 196/196 regressions but its database tests exposed an invalid xmin/subtransaction assumption in the lifecycle guard (initial bundle rejected, dependent cases then failed). The correction uses an immutable database-managed creation transaction, protects upserts/tombstones, and retains template provenance after canonical rename. Initial build was `3.5.0-20261028T195515Z`; the fix is `3.5.1-20261028T200955Z`. The final SQL/Preview evidence is recorded below; no accepted Production release or device verification is claimed. The sections below retain prior candidate evidence.
 
-Final code `f970d2e0d3da284dc4c5914b6e6bd4bc34888bdb`: [CI 40763380218](https://github.com/dnk1000/GymBro/actions/runs/40763380218) passed **198/198** application tests and **188 SQL assertions on both fresh/reset databases**. The reviewed migration applied to GymBro-Staging; ledger/schema/RLS, no-op reapply and **108/108 hosted synthetic assertions** passed, with verified zero fixture owners after rollback. The exact 3.5.3 Preview Dashboard/Data smoke and console checks passed after normal user sign-in. **AC-1 through AC-8 technical results: PASS individually in [the completion report](V3_RELATIONAL_PERSISTENCE.md#verification-and-acceptance-evidence).** Overall acceptance remains pending #27 evidence and explicit Level 3 review; PR #59 is unmerged. No Production data, personal migration, backup or physical Safari verification is claimed. The candidate history below retains prior failure/pending states at their original capture.
+Verified 3.5.3 baseline code `f970d2e0d3da284dc4c5914b6e6bd4bc34888bdb`: [CI 40763380218](https://github.com/dnk1000/GymBro/actions/runs/40763380218) passed **198/198** application tests and **188 SQL assertions on both fresh/reset databases**. The reviewed migration applied to GymBro-Staging; ledger/schema/RLS, no-op reapply and **108/108 hosted synthetic assertions** passed, with verified zero fixture owners after rollback. The exact 3.5.3 Preview Dashboard/Data smoke and console checks passed after normal user sign-in. **AC-1 through AC-8 technical results: PASS individually in [the completion report](V3_RELATIONAL_PERSISTENCE.md#verification-and-acceptance-evidence).** Overall acceptance remains pending #27 evidence and explicit Level 3 review; PR #59 is unmerged. No Production data, personal migration, backup or physical Safari verification is claimed. The candidate history below retains prior failure/pending states at their original capture.
 
 # V3 scoped-notes release candidate
 
@@ -100,3 +100,7 @@ Preview lineage: `3.1.0-20261027T212930Z` introduced #38; `3.1.1-20261027T214344
 #39 follow-up at `3.5.2-20261028T201618Z` explicitly stages deferred FK relationships on each atomic RPC invocation and forces validation before acknowledgement. The prior 3.5.1 run passed the main round trips/actions but found a second-owner initialization failure when a prior invocation had left constraints immediate; a note-target test was also corrected to exercise the intended FK rather than its already-tested immutable key. No constraint or assertion was weakened.
 
 The 3.5.2 code at `0ab0aa3` passed both jobs of [CI 40762442209](https://github.com/dnk1000/GymBro/actions/runs/40762442209), including fresh/reset relational integration. Final review adds an explicit relational request `signature_scheme` to distinguish legacy labels from new canonical UUID parameters without guessing or altering original signature bytes; the eight-test focused repository suite includes UUID-shaped alias/reload coverage. Candidate fix build: `3.5.3-20261028T202536Z`. Final SQL retest and staging remain pending.
+
+## Reviewed-import compatibility follow-up
+
+Candidate `3.5.4-20261028T204314Z` corrects the canonical adapter to resolve only included reviewed-import rows, preserving the accepted exclusion contract. A new regression failed before the one-line fix and now passes; final focused suite **9/9**. SQL fixture coverage now also persists an actual reviewed import with an unresolved excluded row (**110 assertions**). The schema migration is unchanged from the verified/applied 3.5.3 revision. Final CI/hosted retest is pending; prior 3.5.3 evidence above remains valid for its captured revision.

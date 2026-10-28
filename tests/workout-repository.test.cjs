@@ -108,3 +108,17 @@ test("request identity schemes distinguish UUID-shaped legacy labels from canoni
   assert.equal((await actions.execute("logGuidedSet",{...input,weight:11})).code,"REQUEST_CONFLICT");
   assert.equal(actions.getWorkoutState().data.sessions[0].guided.requests.find(r=>r.id==="legacy-uuid-label").signature,signature);
 });
+test("reviewed imports resolve only included rows and preserve duplicate protection and provenance",async()=>{
+  const f=await fixture(),id=f.identity.resolveLabel(f.document.catalog,"Bench Press");let writes=0;
+  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>{writes++;return after;}},createBodyweightId:()=>"import-bodyweight"});
+  const draft={importId:"selected-canonical-import",date:"2026-10-28",template:"synthetic",duration:30,sessionNotes:"  exact summary\n",bodyweight:201,sets:[
+    {include:true,exercise:id,originalLabel:"Bench Press",weight:10,reps:8,unit:"lb",rpe:null,rir:0,pain:0,painArea:"",notes:"  exact imported\n",complete:true},
+    {include:false,exercise:"unresolved excluded label",weight:-10,reps:0,unit:"invalid"},
+  ]};
+  const result=await actions.execute("commitImport",draft);
+  assert.equal(result.ok,true);assert.equal(result.count,1);assert.equal(writes,1);
+  assert.equal(result.state.data.sets.at(-1).exercise.originalLabel,"Bench Press");
+  assert.equal(result.state.data.imports.at(-1).notes,draft.sessionNotes);
+  assert.equal(result.state.catalog.aliases.some(a=>a.label==="unresolved excluded label"),false);
+  assert.equal((await actions.execute("commitImport",draft)).code,"DUPLICATE_IMPORT");assert.equal(writes,1);
+});

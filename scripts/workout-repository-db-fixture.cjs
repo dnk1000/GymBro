@@ -22,6 +22,10 @@ async function buildSql() {
     ["editSet","synthetic-relational-new-1",{notes:"corrected after commit"}],
     ["deleteSet","synthetic-relational-new-1"],
     ["removeSlot",{templateId:"push",index:0}],
+    ["commitImport",{importId:"synthetic-reviewed-rpc",date:"2026-10-28",template:"synthetic",duration:30,sessionNotes:"  reviewed summary\n",bodyweight:null,sets:[
+      {include:true,exercise:id,originalLabel:"Bench Press",weight:10,reps:8,unit:"lb",rpe:null,rir:0,pain:0,painArea:"",notes:"  included import\n",complete:true},
+      {include:false,exercise:"excluded unresolved label",weight:-1,reps:0,unit:"invalid"},
+    ]}],
     ["logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"canonical-new",exercise:id,weight:10,reps:8}],
     ["finishGuidedSession",{sessionId:f.sessionId,expectedRevision:4,allowPending:true}],
     ["editSet","synthetic-relational-new-2",{notes:"corrected completed-session fact"}],
@@ -50,7 +54,7 @@ select is((select count(*)::int from public.gymbro_bodyweights),3,'equal date/va
 select is((select count(*)::int from public.gymbro_guided_requests),3,'request identities survive corrections/deletion/completion');
 select is((select signature_scheme from public.gymbro_guided_requests where request_id='canonical-new'),'canonical-ids','new guided requests explicitly store canonical signature identity');
 select is((select count(*)::int from public.gymbro_exercise_session_notes),2,'planned and manual occurrences remain separate');
-select is((select count(*)::int from public.gymbro_imports),1,'duplicate protection summary retained');
+select is((select count(*)::int from public.gymbro_imports),2,'existing and reviewed import duplicate-protection summaries retained');
 select ok((select extra->>'notes'='unclassified legacy session text' from public.gymbro_sessions),'legacy note not reclassified');
 select throws_ok($test$update public.gymbro_sessions set snapshot_name='rewritten' where session_id='${session}'$test$,'23514',null,'historical intent cannot be rewritten');
 select throws_ok($test$update public.gymbro_sets set session_id=null,plan_slot_id=null,session_position=null where session_id is not null$test$,'23514',null,'correction cannot silently detach membership');
