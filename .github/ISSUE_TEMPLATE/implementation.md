@@ -10,6 +10,14 @@ assignees: ""
 
 Describe the user or architectural problem this issue solves.
 
+## Governing references / unresolved decisions
+
+Cite relevant sections; keep references brief and state `none` where applicable.
+
+- Product requirements: `docs/GymBro_PRD.md` section(s) and applicable approved decision records.
+- Approved architecture/design: document(s) and section(s).
+- Known unresolved decisions: none / decision needed and affected work.
+
 ## Required behavior
 
 - 
@@ -54,4 +62,6 @@ State the user-visible change, or `none` for internal/documentation-only work.
 
 ## Codex execution contract
 
-Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, `docs/DEVELOPMENT_WORKFLOW.md`, this issue, and any dependency issues/documents named above. Implement only this issue. Preserve existing behavior and historical data unless this issue explicitly changes them. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request that references this issue. Select the lowest risk-based validation level that fully covers the issue and its acceptance criteria, run only the applicable validation, and report actual evidence. Do not merge or change Production data without explicit user approval.
+Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, `docs/DEVELOPMENT_WORKFLOW.md`, this issue, and its governing references and dependency issues/documents. Inherit the repository hierarchy and conflict procedure defined in `AGENTS.md` and `docs/DEVELOPMENT_WORKFLOW.md`: PRD → approved architecture/design → approved implementation issue → code/tests as implemented state. This issue may clarify implementation details within approved constraints, but cannot silently redefine product requirements or approved architecture. Material conflicts, ambiguities or missing decisions require the prescribed explanation, pause of affected work and recorded resolution before dependent implementation proceeds; routine choices within approved constraints need no escalation.
+
+Implement only this issue; preserve existing behavior and historical data unless it explicitly changes them within approved constraints. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request that references this issue. Select the lowest risk-based validation level that fully covers the issue and its acceptance criteria, run only the applicable validation, and report actual evidence. Do not merge or change Production data without explicit user approval.

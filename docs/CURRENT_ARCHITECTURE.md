@@ -105,14 +105,8 @@ Issue ordering is dependency/product priority, not application-version numbering
 
 ## Source-of-truth hierarchy
 
-When documents overlap, distinguish **product vision** from **current implementation authority**:
+Follow the [development governance hierarchy](DEVELOPMENT_WORKFLOW.md#source-of-truth-hierarchy): **PRD product authority → approved architecture/design technical authority → GitHub issues for approved implementation work → code and tests as implemented state**. This document and approved subsystem designs implement and support approved product requirements; they cannot independently override them. Issues specify bounded implementation within those constraints, and existing code or passing tests do not independently establish conflicting product requirements.
 
-1. [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md) for approved V3 transition decisions/gates;
-2. this current architecture summary for deployed-versus-target architecture;
-3. the target GitHub issue and dependency issues for executable implementation scope;
-4. [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md) for ordered backlog context;
-5. [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md) for implementation process;
-6. [GymBro_PRD.md](GymBro_PRD.md) for product North Star and durable product requirements; older scheduling/hosting statements in the PRD are superseded by the newer approved transition decisions above when they conflict;
-7. subsystem and historical milestone documents for detailed accepted contracts/evidence.
+Approved milestone/decision records remain approval evidence, subsystem designs retain their technical authority, and explicitly delegated policies retain their scope. Document recency alone does not determine precedence. Historical future-roadmap text and unaccepted candidates do not authorize new implementation.
 
-Historical documents do not authorize new implementation merely because they describe a future idea. GitHub issues are the implementation specification for newly approved work.
+Apply the [material conflict and decision-resolution procedure](DEVELOPMENT_WORKFLOW.md#material-conflicts-and-decision-resolution) when authorities conflict or a material decision is ambiguous or missing. Pause affected work until resolved; independent work may continue only when clearly safe and unable to prejudice or complicate the decision. Routine choices within approved constraints need no escalation.
