@@ -6,7 +6,7 @@ Data schema: `8`
 
 Implements #25 alone; branch `codex/issue-25-note-scopes`, based on accepted main `08c57e38c7d8b0a68a78602a350f83b870a093c4`. The user approved 3.4.0 for #25 in this implementation conversation. See [note contract and compatibility](NOTE_SCOPES.md). The local key remains `daveGymTrackerV1`; PostgreSQL workout schema/integration and personal migration remain #39/#28. No SQL migration is added.
 
-PR: [#49](https://github.com/dnk1000/GymBro/pull/49), open/unmerged. Runtime revision `18a788293bdf9c78bde9d746ff1667b2fd99ae92`; documentation-only evidence follow-up retains the same build.
+PR: [#49](https://github.com/dnk1000/GymBro/pull/49), recorded as open/unmerged at evidence capture; verified merged at [`c4306b3`](https://github.com/dnk1000/GymBro/commit/c4306b35318b4020bee113d71390684bb8f64481). Runtime revision `18a788293bdf9c78bde9d746ff1667b2fd99ae92`; documentation-only evidence follow-up retains the same build.
 
 Validation level: **3**.
 

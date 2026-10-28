@@ -43,7 +43,7 @@ Auth deletion currently cascades only disposable markers. This does not approve 
 
 ## Level 3 acceptance evidence
 
-PR: [#47](https://github.com/dnk1000/GymBro/pull/47), draft and unmerged. Final code `9785f6965201b87a36316425e5028f966542fa01`, `3.2.2-20261027T225348Z`: [CI](https://github.com/dnk1000/GymBro/actions/runs/40599003092) and [Vercel deployment](https://vercel.com/dnk-9999/gymbro/7iiYxZSUneFAm5aA9HC9SHjXMkni) passed. Earlier live account testing used `3.2.1-20261027T224326Z` at `d8bea0fea3e8a1c7311b61a0a4c17b67cbda2290`; development-only exact SQL-error assertion correction `f00b363` retained that build. `3.2.2` changes only the runtime rate-limit wording and adds the development-only guarded ownership helper. Final live Preview title/card/config verified; no further email request was made after the provider rate limit.
+PR: [#47](https://github.com/dnk1000/GymBro/pull/47), recorded as draft and unmerged at evidence capture; verified merged at [`b40156b`](https://github.com/dnk1000/GymBro/commit/b40156bd943d230bdfa2e636390b85f5be1fd639). Final code `9785f6965201b87a36316425e5028f966542fa01`, `3.2.2-20261027T225348Z`: [CI](https://github.com/dnk1000/GymBro/actions/runs/40599003092) and [Vercel deployment](https://vercel.com/dnk-9999/gymbro/7iiYxZSUneFAm5aA9HC9SHjXMkni) passed. Earlier live account testing used `3.2.1-20261027T224326Z` at `d8bea0fea3e8a1c7311b61a0a4c17b67cbda2290`; development-only exact SQL-error assertion correction `f00b363` retained that build. `3.2.2` changes only the runtime rate-limit wording and adds the development-only guarded ownership helper. Final live Preview title/card/config verified; no further email request was made after the provider rate limit.
 
 | Check | Status |
 | --- | --- |
