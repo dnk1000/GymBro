@@ -43,6 +43,8 @@ These are inherited capability labels, including references between those issues
 
 ## When to change the version
 
+On October 27, 2026 the user explicitly approved **`3.4.0` for #25 alone** in the #25 implementation conversation. Its independent workout schema is 8 for explicit note scopes; this mapping is not Production acceptance or merge approval.
+
 - Documentation-only changes, planning decisions and release-history corrections change neither version components nor BUILD, even if the hosting integration automatically republishes the unchanged application.
 - Development-only tests/tooling changes do not create an application release by themselves. Changes to shipped runtime assets, dependencies or executable deployment configuration require a deployable build. A non-feature change within an existing release increments PATCH and BUILD; a new feature follows an approved minor-release mapping.
 - Set BUILD once in the code commit for each new deployable build, including Preview fixes. Multiple files in that build share the same value. A new fix commit gets a new PATCH and UTC BUILD; documentation-only follow-up commits do not.

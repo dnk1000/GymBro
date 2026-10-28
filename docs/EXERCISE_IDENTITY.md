@@ -14,6 +14,8 @@ Both tables enforce [#27's ownership contract](V3_ACCOUNT_ACCESS.md): Auth UUID 
 
 ## DOM-independent conversion/API boundary
 
+Issue #25 extends the source contract to workout schema 8 and projects both exercise-bearing [scoped-note arrays](NOTE_SCOPES.md) through these same canonical IDs. New conversions use `sourceSchemaVersion: 8`; prior identity-version-1/schema-7 documents still recover their exact original source, including opaque metadata. The schema-7 descriptions below record the original #16 foundation; #25 does not reinterpret their notes or change the catalog SQL migration.
+
 [exercise-identity.js](../exercise-identity.js) defines immutable API object `ExerciseIdentity`. Load it after the existing data/session/guidance modules; `performanceContext` additionally uses the accepted performance module. It is not called at startup or loaded by the current V2 UI. There are no storage/network/DOM operations.
 
 | API | Contract |

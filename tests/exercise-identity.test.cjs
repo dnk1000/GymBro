@@ -51,7 +51,7 @@ test("schema-7 conversion preserves every fact/relationship, snapshot, request t
   assert.deepEqual(data, before, "source is immutable");
   assert.deepEqual(plain(identity.restoreV2Source(result)), plain(data));
   assert.equal(result.identityVersion, 1);
-  assert.equal(result.sourceSchemaVersion, 7);
+  assert.equal(result.sourceSchemaVersion, 8);
   assert.equal(Object.hasOwn(result.data, "exerciseLibrary"), false);
   assert.equal(Object.hasOwn(result.data, "version"), false);
   assert.deepEqual(plain(result.data.sessions[0].guided.requests), plain(data.sessions[0].guided.requests));

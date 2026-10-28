@@ -604,3 +604,12 @@ button:disabled {
 .account-card button { min-height: 44px; white-space: normal; }
 .account-card p, .account-card output { overflow-wrap: anywhere; }
 .account-card[hidden], .account-card [hidden] { display: none; }
+.scoped-notes { min-width: 0; overflow-wrap: anywhere; }
+.scoped-notes[hidden] { display: none; }
+.note-editor { margin: 12px 0; }
+.note-editor label, .scoped-notes > label { display: block; }
+.note-editor textarea, .scoped-notes select { width: 100%; box-sizing: border-box; font-size: 16px; }
+.note-editor button, .scoped-notes select { min-height: 44px; }
+.note-editor output { margin-left: 8px; }
+.note-text { margin: 10px 0; }
+.note-text > div { white-space: pre-wrap; }

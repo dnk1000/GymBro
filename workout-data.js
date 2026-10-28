@@ -1,5 +1,5 @@
-// V1.6 keeps the existing storage key and migrates V1–V1.5 records in memory.
-const DATA_VERSION = 7;
+// Local data validation and conservative in-memory upgrades; storage key unchanged.
+const DATA_VERSION = 8;
 const UNITS = ["lb", "lb/side", "assist lb", "bodyweight"];
 const hasOwn = (object, key) => Object.hasOwn(object, key);
 const isObject = (value) =>
@@ -96,7 +96,13 @@ function migrateData(input) {
     if (!hasOwn(set, "complete"))
       set.complete = set.weight != null && set.reps != null;
   });
-  // 6 → 7 adds guided invariants, not inferred progress. Existing records stay unchanged.
+  // 7 → 8 adds explicit note scopes. Never interpret pre-existing extension text.
+  // Preserve even a colliding unknown root field, without guessing its meaning.
+  if (version < 8) data.noteScopes = structuredClone({
+    session: [], exerciseSession: [], exercise: [],
+    ...(hasOwn(data, "noteScopes") ? { legacyValue: data.noteScopes } : {}),
+  });
+  // 6 → 7 added guided invariants, not inferred progress.
   data.version = DATA_VERSION;
   validateData(data);
   return data;
@@ -226,6 +232,7 @@ function validateData(data) {
   );
   validateSessions(data);
   validateGuidance(data);
+  validateNoteScopes(data);
 }
 
 function emptyData() {
@@ -236,6 +243,7 @@ function emptyData() {
     imports: [],
     sessions: [],
     activeSessionId: null,
+    noteScopes: { session: [], exerciseSession: [], exercise: [] },
     version: DATA_VERSION,
   };
 }

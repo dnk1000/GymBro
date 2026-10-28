@@ -1,5 +1,5 @@
 // V3 identity boundary. No DOM, storage, network, or automatic migration.
-// Call with a validated schema-7 source; #39/#28 own persistence and rollout.
+// Call with a validated current source; #39/#28 own persistence and rollout.
 const ExerciseIdentity = (() => {
   const VERSION = 1;
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -85,7 +85,7 @@ const ExerciseIdentity = (() => {
   // All current name-bearing relationships, including immutable snapshot intent
   // and session-local substitutions. Other text/preferences/request signatures
   // remain unparsed provenance and are never interpreted as identity references.
-  function references(data) {
+  function references(data, schemaVersion = DATA_VERSION) {
     const rows = [];
     data.sets.forEach((row) => rows.push([row, "exercise"]));
     data.program.templates.forEach((template) => template.slots.forEach((row) => rows.push([row, "exercise"])));
@@ -93,6 +93,12 @@ const ExerciseIdentity = (() => {
       session.planSnapshot?.slots.forEach((row) => rows.push([row, "exercise"]));
       session.guided?.slots.forEach((row) => rows.push([row, "actualExercise"]));
     });
+    // Only schema-8 documents define this field; schema-7 may contain opaque
+    // metadata under the same name and must remain uninterpreted.
+    if (schemaVersion >= 8) {
+      data.noteScopes.exercise.forEach((row) => rows.push([row, "exercise"]));
+      data.noteScopes.exerciseSession.forEach((row) => rows.push([row, "exercise"]));
+    }
     return rows;
   }
 
@@ -110,7 +116,8 @@ const ExerciseIdentity = (() => {
   async function migrateV2(source, { catalog = { exercises: [], aliases: [] }, mappings = [] } = {}) {
     // Normalization of supported older backups remains migrateData's contract.
     // This function never reads a browser store or writes either source/destination.
-    validateData(source);
+    if (source?.version === 7) migrateData(source);
+    else validateData(source);
     let nextCatalog = clone(validateCatalog(catalog));
     check(Array.isArray(mappings), "Explicit mappings must be an array.");
     const mappedLabels = new Set();
@@ -120,7 +127,7 @@ const ExerciseIdentity = (() => {
       nextCatalog = addAlias(nextCatalog, { ...mapping, provenance: "user-created" });
     }
     const data = clone(source), legacyExerciseLibrary = clone(source.exerciseLibrary);
-    const labels = new Set([...Object.keys(legacyExerciseLibrary), ...references(data).map(([row, field]) => row[field])]);
+    const labels = new Set([...Object.keys(legacyExerciseLibrary), ...references(data, source.version).map(([row, field]) => row[field])]);
     for (const name of [...labels].sort()) {
       if (resolveLabel(nextCatalog, name)) continue;
       const meta = Object.hasOwn(legacyExerciseLibrary, name) ? legacyExerciseLibrary[name] : {};
@@ -133,7 +140,7 @@ const ExerciseIdentity = (() => {
         metadata: meta,
       });
     }
-    for (const [row, field] of references(data))
+    for (const [row, field] of references(data, source.version))
       row[field] = { exerciseId: resolveLabel(nextCatalog, row[field]), originalLabel: row[field] };
     delete data.exerciseLibrary;
     delete data.version;
@@ -143,7 +150,7 @@ const ExerciseIdentity = (() => {
   }
 
   function restoreV2Source(document) {
-    check(object(document) && document.identityVersion === VERSION && document.sourceSchemaVersion === 7,
+    check(object(document) && document.identityVersion === VERSION && [7, 8].includes(document.sourceSchemaVersion),
       "Unsupported exercise identity document.");
     validateCatalog(document.catalog);
     check(object(document.legacyExerciseLibrary), "Missing legacy exercise definitions.");
@@ -151,7 +158,7 @@ const ExerciseIdentity = (() => {
       check(resolveLabel(document.catalog, name), "Legacy exercise definition lost its canonical identity.");
     const data = clone(document.data);
     check(object(data) && !Object.hasOwn(data, "version") && !Object.hasOwn(data, "exerciseLibrary"), "Invalid identity document data.");
-    for (const [row, field] of references(data)) {
+    for (const [row, field] of references(data, document.sourceSchemaVersion)) {
       const ref = row[field];
       check(object(ref) && Object.keys(ref).length === 2 && label(ref.originalLabel) && uuid.test(ref.exerciseId) &&
         resolveLabel(document.catalog, ref.originalLabel) === ref.exerciseId, "Broken canonical exercise reference.");
@@ -159,16 +166,20 @@ const ExerciseIdentity = (() => {
     }
     data.exerciseLibrary = clone(document.legacyExerciseLibrary);
     data.version = document.sourceSchemaVersion;
-    validateData(data);
+    // Prior identity documents retain their exact schema-7 source on recovery.
+    // Normalization validates their compatibility without modifying that source.
+    if (document.sourceSchemaVersion === 7) migrateData(data);
+    else validateData(data);
     return data;
   }
 
   function verifyV2Migration(source, document) {
-    validateData(source);
+    if (source?.version === 7) migrateData(source);
+    else validateData(source);
     const restored = restoreV2Source(document);
     check(sameSessionData(source, restored), "Migration content/relationship mismatch; destination must not be committed.");
     return { ok: true, identityVersion: VERSION, exercises: document.catalog.exercises.length,
-      references: references(document.data).length, sets: source.sets.length, sessions: source.sessions.length };
+      references: references(document.data, document.sourceSchemaVersion).length, sets: source.sets.length, sessions: source.sessions.length };
   }
 
   function performanceContext(document, input) {
@@ -179,7 +190,7 @@ const ExerciseIdentity = (() => {
     // Reuse accepted numerical/session/comparability rules. Only the identity
     // projection changes: equal IDs aggregate, regardless of original labels.
     const projected = clone(document.data);
-    for (const [row, field] of references(projected)) row[field] = row[field].exerciseId;
+    for (const [row, field] of references(projected, document.sourceSchemaVersion)) row[field] = row[field].exerciseId;
     projected.exerciseLibrary = Object.fromEntries(document.catalog.exercises.map((row) => [row.id, row]));
     projected.preferences = {}; // Never guess how different label notes combine.
     const result = exercisePerformanceContext(projected, { ...input, exercise: input.exerciseId });

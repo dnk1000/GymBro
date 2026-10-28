@@ -1,3 +1,15 @@
+# V3 scoped-notes release candidate
+
+Release status: **preparation**
+Application version: `3.4.0-20261027T235417Z`
+Data schema: `8`
+
+Implements #25 alone; branch `codex/issue-25-note-scopes`, based on accepted main `08c57e38c7d8b0a68a78602a350f83b870a093c4`. The user approved 3.4.0 for #25 in this implementation conversation. See [note contract and compatibility](NOTE_SCOPES.md). The local key remains `daveGymTrackerV1`; PostgreSQL workout schema/integration and personal migration remain #39/#28. No SQL migration is added.
+
+Validation level: **3**. Evidence will be recorded after final validation and Preview checks. Tests use disposable synthetic data/browser storage. Physical iPhone Safari and personal Production backup/migration are not performed; M0 gates remain before personal migration. No Production configuration/data mutation, merge, acceptance or issue closure is claimed.
+
+## Earlier #16 candidate evidence
+
 # V3 exercise-identity release candidate
 
 Release status: **preparation**

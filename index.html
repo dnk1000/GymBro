@@ -144,6 +144,7 @@
           class="card guided-workout"
           aria-label="Guided workout"
         ></div>
+        <div id="workoutNotes" class="card scoped-notes" hidden></div>
         <div class="grid cols2">
           <div class="card">
             <h2 id="setFormTitle">Log a set</h2>
@@ -213,7 +214,7 @@
                 ><input id="fPainArea" placeholder="shoulder / knee" />
               </div>
               <div class="span6">
-                <label class="label" for="fNotes">Notes</label
+                <label class="label" for="fNotes">Set notes</label
                 ><textarea
                   id="fNotes"
                   placeholder="clean reps, last rep grind, seat 6, no knee pain..."
@@ -639,6 +640,7 @@
         imports.
       </p>
       <h3>Exercises</h3>
+      <p>During an active workout, save a Session note for workout-wide context or an Exercise/session note for one exercise occurrence. Set notes apply only to the set being logged. Exercise Detail keeps Durable setup notes separate from dated workout observations. Use complete JSON backups to transfer all note scopes. Unsaved notes stay visible for retry after a failed save, but are not recovered after reload.</p>
       <p>
         Browse the exercise library and select an exercise to review its
         history, latest recorded set and performance trends. Latest and best

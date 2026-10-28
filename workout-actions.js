@@ -95,7 +95,7 @@ function createWorkoutActions({
           complete: true,
         };
     for (const key of fields) if (hasOwn(input, key)) set[key] = input[key];
-    for (const key of ["exercise", "painArea", "notes"])
+    for (const key of ["exercise", "painArea"])
       if (!previous || hasOwn(input, key)) set[key] = cleanText(set[key]);
     const errors = setErrors(set);
     if (!validDate(set.date)) errors.push("Choose a valid workout date.");
@@ -213,6 +213,28 @@ function createWorkoutActions({
       finishSession,
     }),
     getWorkoutState,
+    saveScopedNote(input) {
+      return transaction((next) => {
+        requireValue(isObject(input) && ["session", "exerciseSession", "exercise"].includes(input.scope), "Choose a note scope.");
+        requireValue(typeof input.text === "string", "Note must contain text.");
+        const target = noteTarget(input);
+        if (input.scope !== "session" && !hasOwn(next.exerciseLibrary, input.exercise)) {
+          // Supported legacy history may reference an exercise absent from the
+          // library. An explicit note can add its definition without rewriting
+          // any historical label or interpreting old metadata.
+          requireValue(next.sets.some((row) => row.exercise === input.exercise) || next.sessions.some((session) =>
+            session.planSnapshot?.slots.some((row) => row.exercise === input.exercise) ||
+            session.guided?.slots.some((row) => row.actualExercise === input.exercise)), "Note references an unknown exercise.");
+          ensureExercise(next, input.exercise);
+        }
+        const rows = next.noteScopes[input.scope];
+        const existing = rows.find((row) => sameNoteTarget(row, target));
+        requireValue(typeof input.expectedText === "string" && input.expectedText === (existing?.text ?? ""), "Note changed; reload it before saving.");
+        if (existing) existing.text = input.text;
+        else rows.push({ ...target, text: input.text });
+        return { changes: input.scope === "session" ? ["noteScopes"] : ["noteScopes", "exerciseLibrary"] };
+      });
+    },
     getSession(id) {
       return getWorkoutState().sessions.find((row) => row.id === id) ?? null;
     },

@@ -44,6 +44,8 @@ The approved scope and migration gates are recorded in [V3_M0_SCOPE_AND_ACCEPTAN
 
 ## Target V3.x data boundaries
 
+Issue #25's candidate introduces [note scopes](NOTE_SCOPES.md) in workout schema 8, retaining the existing local key and conservative in-memory compatibility for schemas 1–7. It adds no cloud workout tables, personal migration or cutover. Session/exercise-occurrence/setup/set scopes project through canonical exercise identity for #39/#28. The deployed schema-7 baseline above remains the pre-candidate authority until approved delivery.
+
 Issue #16 supplies the [canonical exercise identity contract](EXERCISE_IDENTITY.md), additive owner-scoped exercise/alias tables and a verified, lossless schema-7 identity projection. The current V2 UI/storage is not automatically converted; #39/#28 integrate this foundation with the authoritative workout schema and deliberate migration. Source labels are preserved provenance, while V3 domain references use immutable IDs.
 
 V3 should make these identities explicit and durable:

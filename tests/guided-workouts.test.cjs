@@ -112,12 +112,13 @@ test("6→7 migration preserves exact sections and metadata without inventing gu
   });
   const legacy = f.state();
   legacy.version = 6;
+  delete legacy.noteScopes; // A real pre-scoped-notes fixture.
   legacy.custom = { source: ["old"] };
   legacy.sets[0].importExtra = { exact: true };
   const before = plain(legacy),
     migrated = plain(f.migrate(legacy));
   assert.deepEqual(legacy, before);
-  assert.deepEqual(migrated, { ...before, version: 7 });
+  assert.deepEqual(migrated, { ...before, version: 8, noteScopes: { session: [], exerciseSession: [], exercise: [] } });
   assert.ok(
     migrated.sessions.every((session) => !Object.hasOwn(session, "guided")),
   );
@@ -477,7 +478,7 @@ test("corrupt guided position/requests/identity and future schema are rejected r
       d.sessions[0].guided.revision = -1;
     },
     (d) => {
-      d.version = 8;
+      d.version = 9;
     },
   ]) {
     const invalid = f.state();
