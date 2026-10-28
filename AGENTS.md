@@ -56,6 +56,21 @@ A PR should reference the issue it implements. A green CI run or open PR does no
 
 Use `.github/ISSUE_TEMPLATE/implementation.md` for new implementation issues. Issue numbers and application versions are independent; one release may contain several issues.
 
+## Definition of Done
+
+Use unqualified **issue complete** or **Done** only when all eight applicable conditions below are satisfied for the approved scope. `Not applicable` is valid only when a condition genuinely does not apply. Partial implementation, blocked handoffs and review requests are not DoD completion.
+
+1. **Approved scope delivered.** Required approved outcomes are implemented, with no silently included unrelated product, architecture, data, dependency, refactor, cleanup, formatting or other work. Scope deviations are approved and recorded; no unresolved material governance conflict affects the required outcome.
+2. **Acceptance and verification evidenced.** Every acceptance criterion has an explicit `AC-N → method/evidence → PASS / FAIL / UNVERIFIED` result, and required scope-appropriate verification is complete. Required `FAIL` or `UNVERIFIED` results prevent unqualified completion; implementation existing or unrelated checks passing do not prove acceptance. Approved removal/deferral updates the approved scope and preserves the original requirement's disposition, without rewriting prior failure/unverified evidence as `PASS`.
+3. **Applicable checks remain sound.** Existing valid checks affected by the change pass. Do not weaken, skip, bypass, delete or reinterpret them to declare completion. Explain expectations made obsolete by approved behavior changes, update them within scope and evidence their replacements.
+4. **Data and compatibility obligations satisfied.** Where applicable, evidence and approvals cover persisted data, migrations, supported compatibility, integrity, failure/retry, recovery/rollback, concurrency, security, destructive operations, backup/restore and import/export integrity. Otherwise use `Not applicable`.
+5. **Documentation and release handling accurate.** Update affected owning documentation and applicable release/version records to reflect actual changes and evidence. Distinguish planned, implemented, tested, accepted, merged and deployed; do not claim device verification, migration success, release acceptance or Production state without evidence. No documentation churn or version change is required when the relevant governed contract did not change.
+6. **Repository delivery intentional.** Include only intended changes, preserve unexplained user changes, isolate unrelated work, avoid unnecessary generated-file changes and follow branch/commit/PR conventions. The final tree is clean after the final commit unless retained pre-existing changes or another specific condition is explained; never discard unexplained user work to obtain a clean tree.
+7. **Completion report truthful and sufficient.** Provide the canonical [Completion report](docs/DEVELOPMENT_WORKFLOW.md#completion-report), including known negative evidence and pending actions. Do not omit known failures, skipped checks, limitations or unresolved risks.
+8. **Required acceptance and claimed state supported.** Record approvals and acceptance required for the claimed state. Pending human acceptance is a handoff, not evidence of acceptance, merge, deployment, Production state or full issue completion. Required verification remains required when Codex lacks the tool to perform it; tool limits do not reclassify technical verification as optional human acceptance.
+
+The DoD complements issue-specific requirements, acceptance criteria, Change Level, Validation approach, the source-of-truth hierarchy, permanent invariants and conflict procedure. It applies across all Change Levels with proportional evidence. An issue cannot independently waive higher-authority requirements; legitimate exceptions need justification, a record and approval at the appropriate authority level consistent with the hierarchy. Follow the workflow's [DoD application and completion states](docs/DEVELOPMENT_WORKFLOW.md#definition-of-done-and-completion-states) for exceptions and qualified handoffs.
+
 ## Current product/architecture boundary
 
 ### Deployed V2 today
@@ -230,15 +245,4 @@ Detailed V2/subsystem documents (`V2_ARCHITECTURE.md`, `GUIDED_WORKOUTS.md`, `TR
 
 ## Finish every task with evidence
 
-Report:
-
-- issue implemented;
-- branch and PR;
-- user-visible behavior changes;
-- data/schema/migration impact;
-- assigned Change Level and Validation approach;
-- tests/checks actually performed;
-- Preview/physical-device evidence when applicable;
-- known limitations or deferred acceptance items.
-
-Do not claim work is merged, deployed, physically tested, backed up, migrated, or accepted unless that evidence actually exists.
+Apply the [Definition of Done](#definition-of-done) and provide the canonical [Completion report](docs/DEVELOPMENT_WORKFLOW.md#completion-report), including for partial or blocked handoffs. Use the workflow's evidence-backed completion-state terminology; do not claim work is merged, deployed, physically tested, backed up, migrated or accepted unless that evidence actually exists.

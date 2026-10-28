@@ -59,7 +59,7 @@ Give observable acceptance criteria stable identifiers (`AC-1`, `AC-2`, etc.) so
 
 Record issue readiness explicitly:
 
-- **Ready** — required prerequisites and proposal/approval gates are satisfied and material governing decisions are resolved.
+- **Ready** — ready to begin implementation: required prerequisites and proposal/approval gates are satisfied and material governing decisions are resolved. This issue readiness status is distinct from [Ready for human acceptance](#canonical-completion-state-terminology).
 - **Waiting on dependencies** — required prerequisites remain outstanding; related work alone is not a prerequisite.
 - **Needs decision** — a material governing product, architecture, data, security or compatibility decision remains unresolved.
 
@@ -168,9 +168,56 @@ Each implementation PR should:
 - include Preview evidence when the issue, affected runtime scope or risk requires it;
 - remain unmerged until explicit user approval.
 
-The completion report must identify branch, commit, PR, exact files changed, a concise implementation summary, data/schema impact, documentation changes, assigned Change Level, Validation approach and actual checks/results, deviations, unresolved risks, unverified criteria and required human acceptance. Include actual Preview/browser/device evidence when applicable. Map every criterion by its stable identifier: `AC-1 → verification method/evidence → PASS / FAIL / UNVERIFIED`. Unverified criteria must be explicit; code existing or unrelated checks passing do not establish verification.
+Use the canonical [Completion report](#completion-report) for delivery evidence and pending actions. Apply the [Definition of Done](../AGENTS.md#definition-of-done) before claiming unqualified issue completion.
 
-An issue is complete only when its acceptance criteria have evidence. A green CI run or an open PR alone does not make the issue complete.
+## Definition of Done and completion states
+
+The eight conditions in [AGENTS.md](../AGENTS.md#definition-of-done) are the canonical operational Definition of Done (DoD). Use unqualified **issue complete** or **Done** only when all applicable conditions are satisfied for the approved scope. `Not applicable` is valid where a condition genuinely does not apply; explain the applicability decision when it would otherwise be unclear. A green CI run, an open PR, a review request or partial implementation alone is not completion.
+
+The DoD complements the issue's requirements and acceptance criteria, Change Level, Validation approach, source-of-truth hierarchy, permanent coding-agent invariants and conflict procedure. Apply it across all Change Levels:
+
+- **Change Level 1:** proportional evidence; no irrelevant architectural, migration, device or exhaustive regression work.
+- **Change Level 2:** explicit AC evidence and appropriate behavioral/regression verification, with required human acceptance identified.
+- **Change Level 3:** enhanced applicable evidence and required approvals for the actual risk; do not mechanically require every expensive verification mechanism.
+
+The issue's Validation approach defines required verification within repository obligations. Map every acceptance criterion to an explicit result using `AC-N → method/evidence → PASS / FAIL / UNVERIFIED`. Required `FAIL` or `UNVERIFIED` results prevent an unqualified completion claim. Code existing or unrelated checks passing do not establish verification or acceptance. Required checks remain required if the agent lacks a tool or environment to perform them; report the missing evidence and a blocked/partial handoff. Tool limitations do not make technical verification optional or automatically human-owned acceptance.
+
+### Exceptions and approved scope changes
+
+An individual issue cannot independently waive a higher-authority DoD requirement. A legitimate exception must be justified, recorded and approved at the appropriate authority level, consistent with the source-of-truth hierarchy. Use the [decision-resolution procedure](#material-conflicts-and-decision-resolution) before dependent implementation proceeds.
+
+If approved scope changes remove or defer an original requirement, update the approved scope and retain that requirement's disposition and approval reference. Preserve prior `FAIL` or `UNVERIFIED` evidence; do not relabel it `PASS` because the requirement was deferred. Assess completion against the revised approved scope while keeping the original outcome traceable.
+
+### Canonical completion-state terminology
+
+These are evidence-backed descriptions, not formal GitHub statuses or a mandatory sequence. State the scope each claim covers. Issue readiness **Ready** means ready to begin implementation; it does not mean **Ready for human acceptance**.
+
+| Term | Required evidence and limits |
+| --- | --- |
+| **Implementation complete** | Approved implementation and all required technical verification that must precede human acceptance are finished. Do not use while required implementation work or automated/technical verification is missing, or an implementation-verification AC is `FAIL` or `UNVERIFIED`. Outstanding technical checks cannot be reclassified as human-owned to claim this state. |
+| **Ready for human acceptance** | Implementation is complete and only explicitly identified human-owned acceptance checks or approval gates remain. Report pending ACs/gates, their current status and the next actor/action where known. This is a handoff; the overall issue is not yet `Done` solely because it reaches this state. |
+| **Accepted** | Required human/product/device/other acceptance for the specified scope has occurred and is recorded. This does not automatically establish merge, deployment, Production approval or release completion unless repository policy explicitly establishes those additional states. |
+| **Merged** | The Git merge is verified and repository approval policy was followed. Merge does not independently prove product/device acceptance, deployment or release completion. |
+| **Deployed** | The exact revision/build has been verified in a named environment, such as Preview or Production. Do not infer deployment from merge. Preview deployment may occur before merge where workflow permits it. Deployment does not imply acceptance; acceptance must be separately established. |
+
+### Partial and blocked handoffs
+
+When the DoD is not satisfied, use a qualified description such as **partial implementation ready for review**, **blocked pending decision**, **blocked pending verification**, **implementation ready for device testing**, or **Ready for human acceptance** when its definition is met. Do not call a handoff simply `Done` or hide failed/unverified criteria.
+
+Identify remaining work, known negative evidence, blockers and pending actions in the completion report. Keep required technical verification distinct from explicitly human-owned acceptance and approval gates. Neither a handoff nor an inability to perform a required check establishes issue completion or authorizes merge/Production action.
+
+### Completion report
+
+Provide this report for completed work and partial/blocked handoffs. Keep it proportionate; use `None` or `Not applicable` where appropriate and link evidence rather than repeating logs. Include:
+
+- **Scope and delivery:** issue or approved work package; branch; final commit; PR; exact files changed; concise implementation summary and user-visible behavior changes/preservation.
+- **Classification and verification:** assigned Change Level and rationale; issue-specific Validation approach; actual tests/checks and results; applicable exact Preview environment/revision/build and browser/device evidence (actual device/iOS/browser/build/commit/results for required physical iPhone checks).
+- **Acceptance evidence:** every stable AC identifier mapped as `AC-N → method/evidence → PASS / FAIL / UNVERIFIED`; make failed or unverified criteria explicit.
+- **Data and documentation:** data/schema/migration and supported-compatibility impact; owning documentation changes; applicable release/version handling based on actual evidence.
+- **Deviations and negative evidence:** approved scope deviations and requirement removals/deferrals with approval/disposition references; known failures, skipped checks, limitations and unresolved risks. Do not omit negative evidence.
+- **Claimed state and handoff:** evidence supporting the claimed completion state, recorded approvals/acceptance, and pending human actions/ACs/gates with their status and next actor/action where known. Identify any required technical verification still outstanding separately.
+
+Distinguish planned, implemented, tested, accepted, merged and deployed. Do not claim deployment, device verification, backup, migration success, release acceptance or Production state without actual evidence. Update affected owning documentation and applicable release/version records; do not create documentation churn or change versions where the relevant governed contract did not change. The final tree must be clean after the final commit unless retained pre-existing changes or another specific condition is explicitly explained; never discard unexplained user work to achieve cleanliness.
 
 ## Suggested labels
 
