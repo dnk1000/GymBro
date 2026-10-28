@@ -4,11 +4,37 @@ Status: current workflow authority for new GymBro product work.
 
 ## Operating model
 
-GymBro uses a simple issue-driven workflow:
+GymBro uses this end-to-end, issue-driven lifecycle:
 
-**Chat/product discussion → GitHub issue/specification → ordered backlog → Codex implementation branch/PR → acceptance evidence → close issue**
+**Idea/problem → classify and resolve governing decisions → implementation-ready issue → implementation → verification and completion evidence → human acceptance where required → approved merge → verified deployment/release where applicable**
 
-Chat is the product workshop. GitHub issues are the durable implementation specification and backlog. Pull requests are implementation/evidence records. Closing an issue means the accepted behavior is complete, not merely that code exists.
+These are applicable decision and evidence gates, not mandatory ceremony or a rigid chronology. The path depends on approved scope, Change Level, governing decisions, dependencies, Validation approach and Definition of Done. Not every issue needs a separate product decision, architecture proposal, human acceptance, deployment or release activity.
+
+| Activity | Gate and governing reference |
+| --- | --- |
+| **Idea / problem** | A bug, UX observation, feature/product need, technical concern, architecture debt, data-integrity problem or maintenance need may start discussion. An idea is not implementation approval. First check whether existing approved behavior, architecture or repository rules resolve it; routine known bugs need no heavyweight triage artifact. |
+| **Preparation** | Identify the [governing authorities](#source-of-truth-hierarchy), assign/verify the [Change Level](#change-levels-and-validation) and resolve material decisions through [decision resolution](#material-conflicts-and-decision-resolution). Record approval in the proper governing location and update owning documentation where required. Satisfy applicable Level 3 proposal/approval gates; reuse approved material covering the actual scope without duplicate approval. Routine choices within approved boundaries need no new decision artifact. |
+| **Implementation-ready issue** | Use the [standard work package](../.github/ISSUE_TEMPLATE/implementation.md) as the bounded contract. Before `Ready`, satisfy required dependencies and approval gates, resolve material decisions, assign/verify Change Level and define executable ACs. Follow existing [implementation-unit/readiness](#one-issue--one-implementation-unit) and [dependency/ordering](#ordering-and-dependencies) rules. |
+| **Implementation** | Once authorized, Codex follows approved issue scope, product requirements, architecture, [permanent invariants](../AGENTS.md#permanent-coding-agent-invariants) and the [execution contract](#codex-execution-contract). Routine choices remain agent discretion. If new facts materially affect scope, architecture, persisted data, compatibility, security, Change Level or required approval, pause affected work and apply [conflict resolution](#material-conflicts-and-decision-resolution) and [reclassification](#escalation-and-reclassification). Do not silently expand scope. |
+| **Verification and completion evidence** | Execute the issue's risk-based [Validation approach](#scope-appropriate-validation-approach), map every AC as `AC-N → method/evidence → PASS / FAIL / UNVERIFIED`, apply the [DoD](../AGENTS.md#definition-of-done) and provide the canonical [Completion report](#completion-report). Required checks that cannot be performed remain visible and required. |
+| **Human acceptance, where required** | Perform and record only applicable human-owned gates, such as product/device acceptance, Preview sign-off, migration/Production approval or explicit Level 3 acceptance. Use [Ready for human acceptance](#canonical-completion-state-terminology) only after implementation and required technical verification are complete; this handoff alone does not make the issue `Done`. Do not invent acceptance gates. |
+| **Approved merge** | Follow [PR/merge approval policy](#pull-requests-and-acceptance). Verify the Git merge and required approval before claiming `Merged`; merge alone establishes neither product acceptance, deployment, Production state nor release acceptance. |
+| **Verified deployment / release, where applicable** | Verify the exact revision/build in the named environment, such as Preview or Production, before claiming `Deployed`. Preview may precede acceptance or merge where permitted; deployment is not necessarily post-merge. Follow applicable [version/release](VERSION_POLICY.md), device and migration gates; merge alone proves neither deployment nor release acceptance. Documentation-only and other non-deployable work acquire no artificial deployment requirements. |
+
+Use the existing [completion-state definitions](#canonical-completion-state-terminology): issue readiness `Ready` is distinct from `Ready for human acceptance`. Close an issue only when the accepted behavior and all applicable [DoD conditions](../AGENTS.md#definition-of-done) for its approved scope are satisfied; implementation, merge or deployment alone is insufficient.
+
+Typical paths, subject to the gates above:
+
+- **Simple Level 1:** Known issue → implementation-ready issue → implementation → focused verification → PR/review → merge. No separate product/architecture decision when intended behavior is already governed.
+- **Level 2 feature:** Approved product requirement → implementation-ready issue → implementation → verification → human acceptance if required → merge → deployment where applicable. No new architecture proposal when established architecture covers the feature.
+- **Level 3 architecture/data change:** Problem → proposal/design/audit → approval → implementation-ready issue → implementation → enhanced applicable verification → explicit acceptance → merge → deployment/release where applicable. Existing approved material may satisfy the proposal/approval gate.
+
+Responsibility summary:
+
+- **Human / product owner / maintainer:** governing product decisions, required architecture and material scope-change approvals, applicable human acceptance, and required merge/Production approvals.
+- **Codex:** verify readiness/Change Level, read governing references, implement authorized scope, make routine implementation choices, escalate material conflicts, perform available required verification and report evidence truthfully. Unavailable required verification remains outstanding.
+- **GitHub issue:** records the bounded objective, governing references, requirements, scope, dependencies, ACs, Change Level, approval gate, readiness and Validation approach.
+- **Governing documentation:** retains durable product, architecture, process, compatibility, versioning and release authority. Chat is the product workshop; PRs record implementation and evidence, without replacing governing authority.
 
 ## Source-of-truth hierarchy
 
