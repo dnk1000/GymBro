@@ -43,6 +43,12 @@ Independent work may continue only when it is clearly safe and cannot prejudice 
 
 Obtain the necessary product or architecture approval and record the resolution, its scope and approval evidence in the issue or an approved decision record. Update the governing PRD/design documentation as applicable, or link the explicitly approved amendment, and align the issue's requirements and acceptance criteria before dependent implementation proceeds. Preserve prior decisions and historical evidence; do not resolve a conflict by silently treating code, tests, issue wording or a newer document as approval.
 
+## Permanent coding-agent invariants
+
+All implementation tasks inherit the [permanent coding-agent invariants in AGENTS.md](../AGENTS.md#permanent-coding-agent-invariants), the canonical operational definition. Apply them during issue preparation, implementation, validation, review and acceptance; the issue need not repeat the list.
+
+Higher-authority approved decisions may explicitly authorize scoped exceptions or transitions. Record the approval and its scope using the decision-resolution procedure above before dependent implementation proceeds. Issue wording alone does not authorize an exception. Existing detailed domain, persistence, validation and release protections remain in force.
+
 ## One issue = one implementation unit
 
 Each implementation issue should be small enough to review and accept independently. An issue may be a feature, data-model change, migration step, UX improvement, bug, or documentation task. A product release may contain several issues; issue numbers and application version numbers are independent.

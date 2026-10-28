@@ -19,6 +19,22 @@ Historical milestone documents remain evidence of what existed at that release. 
 
 GitHub `main` is the only authoritative code baseline. Start each implementation issue from current accepted `main`, use the existing repository/checkout/Vercel project, create a focused branch and PR, and do not merge or mutate Production data without explicit user approval. Do not create a parallel GymBro runtime/source authority.
 
+## Permanent coding-agent invariants
+
+These apply to every implementation task. Any exception must follow an explicitly approved higher-authority requirement and its recorded scope or transition; issue wording alone does not create an exception.
+
+1. **Keep scope focused.** Implement only the approved issue/work package using the smallest coherent change. Avoid unrelated cleanup, refactoring, upgrades, formatting, file moves, generated-file edits, or architectural changes. Report unrelated findings separately.
+2. **Preserve product intent.** Change user-visible behavior, workflows, safety behavior, or domain rules only when the approved work authorizes it consistently with governing product requirements. Existing behavior does not resolve a conflicting requirement.
+3. **Preserve approved architecture.** Change architectural boundaries, persistence, identity, schemas, APIs, provider boundaries, or security models only within approved technical decisions. Routine implementation choices within those boundaries require no escalation.
+4. **Protect persisted data.** Preserve facts, relationships, and metadata except through explicit user actions or approved transformations. Persistence/schema changes must define migration, compatibility, failure behavior, and verification. Pause affected work when safe handling cannot be established.
+5. **Preserve supported compatibility.** Keep supported formats, schemas, interfaces, workflows, and integrations compatible unless approved work explicitly defines the breaking change and transition. Escalate material uncertainty.
+6. **Preserve test integrity.** Do not weaken, delete, bypass, skip, or rewrite valid tests merely to pass. Explain obsolete expectations and update them with the approved behavior change. Add or modify coverage where needed to prove acceptance and prevent regression.
+7. **Diagnose failures before changing behavior.** Establish the cause of build, test, lint, migration, or runtime failures. Do not suppress errors, broaden exception handling, disable validation, or add fallbacks merely to obtain passing checks.
+8. **Minimize dependencies and complexity.** Prefer the existing stack. Justify necessary runtime or development dependencies against approved work. Avoid abstractions for hypothetical future needs.
+9. **Keep documentation and completion claims evidence-based.** Update the owning documentation when its described contract or assumptions change. Distinguish planned, implemented, tested, deployed, and accepted states. Verify acceptance criteria proportionately and report unverified criteria explicitly.
+10. **Respect repository state.** Check branch/worktree, intended base, and working-tree changes before implementation. Preserve unexplained user changes, isolate unrelated work, and follow repository branch, commit, PR, and approval conventions.
+11. **Resolve material ambiguity explicitly.** Apply Step 1's conflict procedure to material product, architecture, data, security, or compatibility uncertainty. Continue independent work only when clearly safe; routine choices within approved constraints remain implementation decisions.
+
 ## Issue-driven implementation contract
 
 New product work follows:
