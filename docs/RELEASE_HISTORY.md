@@ -6,6 +6,8 @@ This file records accepted milestone releases and the preview builds that led to
 
 `3.5.3-20261028T202536Z`, schema 8; #39 only. Relational request metadata explicitly distinguishes legacy exercise labels from canonical UUIDs; original signature bytes remain unchanged. Eight focused repository tests pass, including UUID-shaped aliases and replay after reload. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
 
+Final code evidence for the 3.5.3 candidate: [CI](https://github.com/dnk1000/GymBro/actions/runs/40763380218) passed 198 application tests and fresh/reset SQL (188 each). Reviewed staging migration, 108 hosted synthetic assertions, rollback/no-op/ledger/RLS and exact Preview smoke passed. Technical ACs pass; #27 dependency and Level 3 acceptance remain pending. [Full report](V3_RELATIONAL_PERSISTENCE.md).
+
 ## V3 relational transaction fix candidate — not yet accepted
 
 `3.5.2-20261028T201618Z`, schema 8; #39 only. Each RPC defers relationship staging then forces constraints before acknowledgement, including repeated invocations in one transaction. No scope or constraint reduction. Verification/acceptance is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).

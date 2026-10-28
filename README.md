@@ -26,7 +26,7 @@ Read [current architecture](docs/CURRENT_ARCHITECTURE.md) and the [V3 implementa
 
 ## Development workflow
 
-Issue #39's `3.5.0` candidate adds the approved relational workout foundation and an opt-in DOM-free repository. The workout UI still uses its existing local store. See [schema/boundary and actual verification](docs/V3_RELATIONAL_PERSISTENCE.md); personal migration, concurrency acceptance and cutover remain separate.
+Issue #39's `3.5.x` candidate adds the approved relational workout foundation and an opt-in DOM-free repository. The workout UI still uses its existing local store. See [schema/boundary and actual verification](docs/V3_RELATIONAL_PERSISTENCE.md); personal migration, concurrency acceptance and cutover remain separate.
 
 Issue #25's `3.4.0` candidate introduces schema-8 scoped notes on the same localStorage key: session context, exercise/session observations, durable setup and existing set notes. Old notes/text remain intact without guessed scope; startup writes nothing. See [note scopes, compatibility and recovery](docs/NOTE_SCOPES.md). This is not cloud workout migration or Production acceptance.
 
