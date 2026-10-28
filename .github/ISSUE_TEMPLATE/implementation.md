@@ -6,64 +6,72 @@ labels: ""
 assignees: ""
 ---
 
-## Purpose / problem
+Use a concise, outcome-oriented GitHub title. Preserve meaningful established capability/milestone labels; they do not assign application versions.
 
-Describe the user or architectural problem this issue solves.
+Keep entries brief. Use `None` or `Not applicable` where appropriate, and link specific governing sections instead of copying them.
 
-## Governing references / unresolved decisions
+## Context and objective
 
-Cite relevant sections; keep references brief and state `none` where applicable.
+- **Context:** Why this work exists and which approved problem or decision led to it.
+- **Objective:** The observable end condition this issue should achieve.
 
-- Product requirements: `docs/GymBro_PRD.md` section(s) and applicable approved decision records.
-- Approved architecture/design: document(s) and section(s).
-- Known unresolved decisions: none / decision needed and affected work.
+## Governing references
 
-## Required behavior
+- **Product:** Relevant `docs/GymBro_PRD.md` sections and approved product decision records. Explicitly state when no product behavior changes.
+- **Architecture / technical contracts:** Relevant documents and sections, or `Not applicable`.
 
-- 
+## Requirements and preservation
+
+- Required outcomes: Specific, bounded and testable where practical. Use `R-1`, `R-2`, etc. where useful; a single trivial requirement needs no identifier. Prescribe code structure only when approved architecture requires it.
+- Issue-specific preservation: Additional things that must remain unchanged, or `None`. Do not repeat the permanent repository invariants.
+
+## Dependencies and out of scope
+
+- **Depends on:** Required prerequisite issue(s), or `None`.
+- **Blocks / related issues (optional):** Include only when useful; distinguish related work from true prerequisites.
+- **Out of scope:** Adjacent work this issue must not absorb.
+
+## Data, migration and compatibility
+
+`None`, or describe affected persisted data, schemas or interfaces; migration and supported compatibility expectations; failure/retry behavior; backup/recovery implications; rollout/rollback behavior and required approval gates. Do not imply compatibility beyond what GymBro supports.
 
 ## Acceptance criteria
 
-- [ ] 
+- [ ] AC-1: Observable outcome proving the required result.
+- [ ] AC-2: Additional observable outcome, where needed.
 
-## Dependencies
+Keep identifiers stable so completion evidence can reference them. Implementation activity alone does not prove completion.
 
-- Depends on: none / #
-- Blocks: none / #
-- Independent of: #
+## Verification and completion report
 
-## Non-goals / exclusions
+**Validation level:** Select 1 / 2 / 3 under `docs/DEVELOPMENT_WORKFLOW.md` with a brief risk-based rationale. Do not require full regression, Preview or device testing by default.
 
-- 
+**Required checks:** Specify known test/fixture, Preview, browser/device, migration or other evidence requirements. Otherwise let the agent select a proportionate verification mechanism for each criterion.
 
-## Data / migration impact
+**Completion report:** Return branch, commit, PR, exact files changed and a concise implementation summary; selected validation level, actual checks/results and applicable Preview/browser/device evidence; data/schema impact, documentation changes, deviations, unresolved risks, unverified criteria and anything requiring human acceptance.
 
-State `none` or describe schema, identity, migration, import/export, backup, compatibility, rollback, and historical-data requirements.
+Map every acceptance criterion to actual evidence:
 
-## Validation level
+`AC-1 → verification method/evidence → PASS / FAIL / UNVERIFIED`
 
-Choose the lowest level that fully covers the risk of this issue. Do not run broader or more expensive validation merely by habit.
+Report unverified criteria explicitly. Do not infer verification merely because code exists or unrelated checks passed.
 
-- [ ] **Level 1 — Documentation/process only:** verify changed-document consistency, Markdown/rendering where relevant, links/paths/references, issue numbers/names, and confirm no runtime/schema behavior changed. Full application regression and device testing are not required unless the documentation change also changes executable configuration/code.
-- [ ] **Level 2 — UI/behavioral:** run focused automated coverage where practical, relevant regression/syntax checks, Vercel Preview for user-visible runtime changes, and affected desktop/narrow-phone checks. Physical iPhone evidence is required only when the issue/acceptance criteria call for it.
-- [ ] **Level 3 — Data/infrastructure/high-risk:** run the applicable full regression/integration/migration/recovery/security/concurrency checks, Preview evidence, backup/data comparisons, and physical-device/Production gates required by the issue.
+## Documentation and release notes
 
-## Testing / evidence
+- **Documentation:** Owning documents that must change, or `None`. Avoid churn when no documented contract, behavior, setup or operational assumption changes.
+- **Release notes / version impact:** `None`, or the user-visible change and applicable approved release mapping. Follow `docs/VERSION_POLICY.md`; issue numbers, labels and sequencing do not independently assign application versions.
 
-List the checks actually required by the selected validation level and the issue's acceptance criteria. Explicitly record anything required but not tested. Automatic CI may run additional checks; that does not mean Codex must manually repeat unrelated suites.
+## Decisions and readiness
 
-- [ ] Required focused checks completed
-- [ ] Required Preview/device checks completed or explicitly recorded as not required/not tested
-- [ ] Required data/migration/backup/recovery checks completed where applicable
+- **Approved decisions:** Implementation-relevant approval references, or `None`.
+- **Material unresolved decisions:** `None`, or the decision needed and affected work.
+- **Implementation discretion:** Bounded uncertainty the agent may resolve within approved constraints, or `None`.
+- **Readiness:** `Ready` / `Waiting on dependencies` / `Needs decision`.
 
-## Release notes
-
-State the user-visible change, or `none` for internal/documentation-only work.
+Do not mark `Ready` while a material governing product, architecture, data, security or compatibility decision remains unresolved. Routine choices within approved boundaries do not prevent readiness. If a decision affects only a bounded portion, follow the repository conflict procedure for affected and independent work.
 
 ## Codex execution contract
 
 This issue inherits all repository agent invariants in `AGENTS.md`.
 
-Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, `docs/DEVELOPMENT_WORKFLOW.md`, this issue, and its governing references and dependency issues/documents. Inherit the repository hierarchy and conflict procedure defined in `AGENTS.md` and `docs/DEVELOPMENT_WORKFLOW.md`: PRD → approved architecture/design → approved implementation issue → code/tests as implemented state. This issue may clarify implementation details within approved constraints, but cannot silently redefine product requirements or approved architecture. Material conflicts, ambiguities or missing decisions require the prescribed explanation, pause of affected work and recorded resolution before dependent implementation proceeds; routine choices within approved constraints need no escalation.
-
-Implement only this issue; preserve existing behavior and historical data unless it explicitly changes them within approved constraints. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request that references this issue. Select the lowest risk-based validation level that fully covers the issue and its acceptance criteria, run only the applicable validation, and report actual evidence. Do not merge or change Production data without explicit user approval.
+It also inherits the repository source-of-truth hierarchy and the conflict procedure in `docs/DEVELOPMENT_WORKFLOW.md`. Read governing references and dependencies before implementation; implement only approved issue scope. Escalate material unresolved decisions under that procedure and provide acceptance evidence before claiming completion.

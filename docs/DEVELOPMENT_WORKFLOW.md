@@ -53,17 +53,17 @@ Higher-authority approved decisions may explicitly authorize scoped exceptions o
 
 Each implementation issue should be small enough to review and accept independently. An issue may be a feature, data-model change, migration step, UX improvement, bug, or documentation task. A product release may contain several issues; issue numbers and application version numbers are independent.
 
-An implementation issue should contain:
+Use the [implementation issue template](../.github/ISSUE_TEMPLATE/implementation.md) as the bounded Codex work package. It connects context and an outcome-oriented objective to governing references, requirements/preservation, dependencies and exclusions, data/migration/compatibility impact, acceptance criteria, verification/reporting, documentation/release implications, decisions/readiness and inherited governance. Keep entries brief; use `None` or `Not applicable` where appropriate and link governing sections rather than duplicating them.
 
-- **Purpose / problem** — what user or architectural problem is being solved.
-- **Governing references / unresolved decisions** — relevant product requirements, approved architecture/design sections and known unresolved decisions, or `none` where applicable.
-- **Required behavior** — concrete product and data behavior.
-- **Acceptance criteria** — observable conditions that prove completion.
-- **Dependencies** — issues that must precede it, issues it blocks, or an explicit statement that it is independent.
-- **Non-goals / exclusions** — adjacent work that is intentionally not included.
-- **Data / migration impact** — required for persistence, schema, identity, import/export, or historical-data changes.
-- **Validation level / testing evidence** — checks proportional to the actual risk and acceptance criteria.
-- **Release notes** — user-visible change or `none` when purely internal/documentation.
+Give observable acceptance criteria stable identifiers (`AC-1`, `AC-2`, etc.) so review can map evidence to each result. Requirement identifiers (`R-1`, `R-2`, etc.) are useful for larger issues but are not mandatory for a single trivial requirement. State issue-specific preservation and out-of-scope boundaries without repeating the permanent repository invariants. Distinguish required prerequisite issues from related work; optional blocking/related references should add implementation or sequencing value.
+
+Record issue readiness explicitly:
+
+- **Ready** — required prerequisites are satisfied and material governing decisions are resolved.
+- **Waiting on dependencies** — required prerequisites remain outstanding; related work alone is not a prerequisite.
+- **Needs decision** — a material governing product, architecture, data, security or compatibility decision remains unresolved.
+
+Routine choices within approved constraints do not prevent readiness. Do not mark an issue `Ready` while a material governing decision remains unresolved. If uncertainty affects only bounded work, apply the existing conflict procedure before continuing any clearly safe independent work.
 
 If discussion reveals multiple independently useful implementation units, split them into separate issues rather than expanding one issue indefinitely.
 
@@ -141,6 +141,8 @@ Each implementation PR should:
 - identify anything required but not tested, especially physical iPhone behavior;
 - include Preview evidence when the selected validation level/user-visible runtime scope requires it;
 - remain unmerged until explicit user approval.
+
+The completion report must identify branch, commit, PR, exact files changed, a concise implementation summary, data/schema impact, documentation changes, selected validation level and actual checks/results, deviations, unresolved risks, unverified criteria and required human acceptance. Include actual Preview/browser/device evidence when applicable. Map every criterion by its stable identifier: `AC-1 → verification method/evidence → PASS / FAIL / UNVERIFIED`. Unverified criteria must be explicit; code existing or unrelated checks passing do not establish verification.
 
 An issue is complete only when its acceptance criteria have evidence. A green CI run or an open PR alone does not make the issue complete.
 
