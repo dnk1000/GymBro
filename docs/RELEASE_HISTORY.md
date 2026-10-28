@@ -4,7 +4,7 @@ This file records accepted milestone releases and the preview builds that led to
 
 ## V3 opaque request-signature fix candidate — not yet accepted
 
-`3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; schema migration/SQL fixture are unchanged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+`3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; [final code CI](https://github.com/dnk1000/GymBro/actions/runs/40767524072) at `826c77a` passed 200 application tests and fresh/reset SQL (190 each). Hosted staging passed 110 assertions, rollback/zero-owner/no-op checks; exact 3.5.5 Preview smoke passed. Schema migration/SQL fixture are unchanged. #27 and Level 3 acceptance remain pending; PR #59 stays unmerged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
 
 ## V3 reviewed-import fix candidate — not yet accepted
 
