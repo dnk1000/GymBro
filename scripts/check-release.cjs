@@ -11,8 +11,8 @@ function checkRelease(root) {
   const version = vm.runInContext("APP_VERSION", runtime);
   assert.deepEqual(
     [version.major, version.minor, version.patch],
-    [3, 3, 0],
-    "Expected issue #16 exercise-identity application version 3.3.0",
+    [3, 4, 0],
+    "Expected issue #25 note-scope application version 3.4.0",
   );
   assert.ok(Object.isFrozen(version), "Canonical version must be immutable");
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
@@ -27,11 +27,11 @@ function checkRelease(root) {
     iso.replace("Z", ".000Z"),
     "Build must be a valid UTC date/time",
   );
-  assert.equal(version.version, `3.3.0-${b}`);
+  assert.equal(version.version, `3.4.0-${b}`);
   const schemaRuntime = vm.createContext({});
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);
-  assert.equal(schema, 7, "Identity foundation #16 must not increment the active workout data schema");
+  assert.equal(schema, 8, "Note-scope schema #25 must match the approved migration");
   const release = read("docs/V3_RELEASE.md");
   assert.ok(
     release.includes(`Application version: \`${version.version}\``),
@@ -48,8 +48,8 @@ function checkRelease(root) {
   );
   assert.match(
     read("docs/CHANGELOG.md"),
-    /^## 3\.3\.0\b/m,
-    "Changelog is missing the exercise-identity release",
+    /^## 3\.4\.0\b/m,
+    "Changelog is missing the note-scope release",
   );
   const html = read("index.html");
   assert.equal(

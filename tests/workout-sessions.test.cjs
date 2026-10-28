@@ -89,7 +89,7 @@ test("v5 migration is deterministic, nonmutating and preserves every historical 
   const original = plain(legacy),
     migrated = f.migrate(legacy);
   assert.deepEqual(plain(legacy), original);
-  assert.equal(migrated.version, 7);
+  assert.equal(migrated.version, 8);
   assert.deepEqual(plain(migrated.sets), original.sets);
   assert.deepEqual(plain(migrated.bodyweights), original.bodyweights);
   assert.deepEqual(plain(migrated.program), original.program);
@@ -105,7 +105,7 @@ test("session lifecycle has stable identity and allows independent same-day work
     a = f.actions;
   const first = a.createSession({ date, templateId: "push", duration: 30 });
   assert.equal(first.ok, true);
-  assert.equal(first.state.version, 7);
+  assert.equal(first.state.version, 8);
   assert.equal(first.sessionId, "ws_test-1");
   const session = plain(a.getActiveSession());
   assert.equal(session.id, first.sessionId);
@@ -310,7 +310,7 @@ test("session validation rejects corrupt links, snapshots, pointers and future v
       delete d.activeSessionId;
     },
     (d) => {
-      d.version = 8;
+      d.version = 9;
     },
   ];
   for (const mutate of mutations) {

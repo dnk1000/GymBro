@@ -84,6 +84,10 @@ let db = load();
 let editingSetId = null;
 let selectedExercise = "Seated Row";
 let selectedTemplateId = null;
+// Unsaved notes are presentation state. A draft retains its original target and
+// committed text across unrelated renders; it never follows a substitution.
+const noteDrafts = new Map();
+let selectedNoteOccurrence = null;
 const workoutActions = createWorkoutActions({
   getState: () => db,
   setState: (next) => {
@@ -108,6 +112,65 @@ function applyActionResult(result) {
 
 function jsArg(value) {
   return esc(JSON.stringify(String(value)));
+}
+function noteEditor(id, input, label) {
+  const key = JSON.stringify(input);
+  const saved = scopedNote(db, input);
+  const draft = noteDrafts.get(key);
+  return `<div class="note-editor"><label for="${id}">${esc(label)}</label><textarea id="${id}" data-note-target="${esc(key)}" oninput="rememberNoteDraft(this)">${esc(draft?.text ?? saved)}</textarea><button class="btn secondary" onclick="saveNoteEditor('${id}')">Save ${esc(label.toLowerCase())}</button><output id="${id}Status" aria-live="polite">${draft ? "Unsaved" : ""}</output></div>`;
+}
+function rememberNoteDraft(el) {
+  const key = el.dataset.noteTarget;
+  const previous = noteDrafts.get(key);
+  noteDrafts.set(key, { text: el.value, expectedText: previous?.expectedText ?? scopedNote(db, JSON.parse(key)) });
+  document.getElementById(el.id + "Status").textContent = "Unsaved";
+}
+function saveNoteEditor(id) {
+  const el = document.getElementById(id), key = el.dataset.noteTarget;
+  if (!noteDrafts.has(key)) rememberNoteDraft(el);
+  const result = workoutActions.saveScopedNote({ ...JSON.parse(key), ...noteDrafts.get(key) });
+  if (!result.ok) { applyActionResult(result); return; }
+  noteDrafts.delete(key);
+  applyActionResult(result);
+  const status = document.getElementById(id + "Status");
+  if (status) status.textContent = "Saved";
+}
+function noteText(label, text) {
+  return text === "" ? "" : `<div class="note-text"><strong>${esc(label)}</strong><div>${esc(text)}</div></div>`;
+}
+function noteOccurrenceLabel(note) {
+  const session = db.sessions.find((row) => row.id === note.sessionId);
+  const index = session?.planSnapshot?.slots.findIndex((slot) => slot.id === note.planSlotId);
+  return `${note.exercise}${note.planSlotId ? ` · planned exercise ${(index ?? -1) + 1}` : " · manual / unplanned"}`;
+}
+function renderScopedWorkoutNotes() {
+  const root = document.getElementById("workoutNotes"), session = workoutActions.getActiveSession();
+  root.hidden = !session;
+  if (!session) { root.innerHTML = ""; return; }
+  const choices = [];
+  function add(exercise, planSlotId = null) {
+    const input = { scope: "exerciseSession", sessionId: session.id, exercise, planSlotId };
+    if (!choices.some((row) => sameNoteTarget(row, input))) choices.push(input);
+  }
+  session.planSnapshot?.slots.forEach((slot) => {
+    add(slot.exercise, slot.id);
+    const actual = session.guided?.slots.find((row) => row.planSlotId === slot.id)?.actualExercise;
+    if (actual) add(actual, slot.id);
+  });
+  db.sets.filter((set) => set.sessionId === session.id).forEach((set) => add(set.exercise, set.planSlotId ?? null));
+  db.noteScopes.exerciseSession.filter((row) => row.sessionId === session.id).forEach((row) => add(row.exercise, row.planSlotId));
+  allExercises().forEach((exercise) => add(exercise));
+  const keys = choices.map((choice) => JSON.stringify(choice));
+  if (!keys.includes(selectedNoteOccurrence)) selectedNoteOccurrence = keys[0] ?? null;
+  root.innerHTML = `<h2>Workout notes</h2><p class="sub">Save workout context separately from an exercise occurrence or an individual set.</p>${noteEditor("sessionNote", { scope: "session", sessionId: session.id }, "Session note")}${choices.length ? `<label for="noteOccurrence">Exercise occurrence</label><select id="noteOccurrence" onchange="selectedNoteOccurrence=this.value;renderScopedWorkoutNotes()">${choices.map((choice, i) => `<option value="${esc(keys[i])}" ${keys[i] === selectedNoteOccurrence ? "selected" : ""}>${esc(noteOccurrenceLabel(choice))}</option>`).join("")}</select>${noteEditor("occurrenceNote", JSON.parse(selectedNoteOccurrence), "Exercise/session note")}` : ""}`;
+}
+function historyScopedNotes(session) {
+  return `<div class="scoped-notes">${noteText("Session note", scopedNote(db, { scope: "session", sessionId: session.id }))}${db.noteScopes.exerciseSession.filter((row) => row.sessionId === session.id).map((row) => noteText(`Exercise/session note · ${noteOccurrenceLabel(row)}`, row.text)).join("")}${typeof session.notes === "string" ? noteText("Existing session text · scope not recorded", session.notes) : ""}</div>`;
+}
+function exerciseScopedNotes(exercise) {
+  const context = exerciseNoteContext(db, exercise);
+  const dated = (row) => { const session = db.sessions.find((item) => item.id === row.sessionId); return `${session?.date ?? ""} · ${session?.planSnapshot?.name || "Unplanned workout"}`; };
+  return `<section class="scoped-notes"><h3>Setup and recorded notes</h3><p class="sub">Setup guidance stays with the exercise. Workout observations stay with their recorded session or set.</p>${noteEditor("setupNote", { scope: "exercise", exercise }, "Durable setup note")}<details><summary>Session and set observations</summary>${context.exerciseSession.map((row) => noteText(`Exercise/session note · ${dated(row)} · ${noteOccurrenceLabel(row)}`, row.text)).join("")}${context.session.map((row) => noteText(`Session note · ${dated(row)}`, row.text)).join("")}${context.sets.map((set) => noteText(`Set note · ${set.date} · ${fmt(set.weight)} ${set.unit} × ${fmt(set.reps)}`, set.notes)).join("") || '<p class="sub">No set notes recorded.</p>'}</details></section>`;
 }
 function newId() {
   return (
@@ -177,7 +240,7 @@ function addSet() {
     rir: numeric(fRir.value),
     pain: numeric(fPain.value) ?? 0,
     painArea: fPainArea.value.trim(),
-    notes: fNotes.value.trim(),
+    notes: fNotes.value,
     complete: !document.getElementById("fApproximate").checked,
   };
   if (guidedFormContext && !editingSetId) {
@@ -287,6 +350,7 @@ function renderAll() {
   renderExercises();
   if (selectedTemplateId) editTemplate(selectedTemplateId);
   renderGuidedWorkout();
+  renderScopedWorkoutNotes();
   document
     .querySelectorAll('#workout label[for="fRpe"], #workout label[for="fRir"]')
     .forEach(explainAcronyms);
@@ -566,7 +630,7 @@ function renderToday() {
 
 function historySetTable(group) {
   const rows = group.sets;
-  return `<table><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td>${s.date}</td><td><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : index + 1}.</span> ${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td>${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td>${esc(s.notes || "—")}<details class="set-record"><summary>Record details</summary><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+  return `<table><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td>${s.date}</td><td><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : index + 1}.</span> ${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td>${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td>${esc(s.notes || "—")}<details class="set-record"><summary>Record details</summary><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
 }
 function renderHistory() {
   const filter = historyFilter?.value || "all";
@@ -589,6 +653,7 @@ function renderHistory() {
         return `<article class="history-group" ${session ? `data-session-id="${esc(session.id)}"` : `data-legacy-date="${esc(group.date)}"`}>
       ${heading}
       ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul><p class="sub">Set records below show the actual exercise performed, including earlier substitutions.</p></details>` : ""}
+      ${session ? historyScopedNotes(session) : ""}
       <p class="sub">${countText}</p>
       <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
       ${group.sets.length ? `<p class="sub">Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
@@ -639,7 +704,8 @@ function showExercise(ex) {
   const pain = r.filter((s) => s.pain > 0);
   const pref = hasOwn(db.preferences, ex) ? db.preferences[ex] : null;
   const meta = db.exerciseLibrary?.[ex] || {};
-  exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px">${esc(pref)}</div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${exerciseSessionCount(r)}</strong></div></div></div>`;
+  exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px"><strong>Existing exercise preference</strong><div class="note-text">${esc(pref)}</div></div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${exerciseSessionCount(r)}</strong></div></div></div>`;
+  exerciseDetail.insertAdjacentHTML("beforeend", exerciseScopedNotes(ex));
   lineChart(
     exerciseChart,
     bestByDate(ex).map((x) => ({ v: x.v, label: x.label })),
@@ -903,15 +969,15 @@ function exportCSV() {
 function renderBackupOperation() {
   const restore = document.getElementById("backupMode").value === "restore";
   document.getElementById("backupEffect").textContent = restore
-    ? "Complete restore replaces ALL current sets, sessions, active workout, bodyweights, program/templates, exercise library, preferences and import records with the validated backup. Export a complete JSON backup first. You will confirm before anything is saved."
-    : "History merge adds compatible sets, sessions, bodyweights and import records. Current program, exercise definitions, preferences and existing set IDs win; missing exercises are added. The active session is kept, or adopted from the backup if none is active. Conflicting sessions or two different active workouts reject the entire merge. You will confirm before anything is saved.";
+    ? "Complete restore replaces ALL current sets, sessions, active workout, bodyweights, program/templates, exercise library, preferences, scoped notes and import records with the validated backup. Export a complete JSON backup first. You will confirm before anything is saved."
+    : "History merge adds compatible sets, sessions, bodyweights and import records. Session/exercise-session notes are included; conflicts reject. Current program, exercise definitions, durable setup, preferences and existing set IDs win; missing exercises are added. The active session is kept, or adopted from the backup if none is active. Conflicting sessions or two different active workouts reject the entire merge. You will confirm before anything is saved.";
 }
 function backupConfirmation(mode, restored, next, filename) {
   const identity = `File: ${filename}\nData schema: ${restored.version} · Exporting application: ${typeof restored.appVersion === "string" ? restored.appVersion : "not recorded (older backup)"}`;
   const contents = `Backup contains ${restored.sets.length} sets, ${restored.sessions.length} sessions, ${restored.bodyweights.length} bodyweights and ${restored.imports.length} import records. Active session: ${restored.activeSessionId ? "present" : "none"}.`;
   const effect =
     mode === "restore"
-      ? "COMPLETE RESTORE replaces ALL current sets, sessions, active workout, bodyweights, program/templates, exercise library, preferences and import records."
+      ? "COMPLETE RESTORE replaces ALL current sets, sessions, active workout, bodyweights, program/templates, exercise library, preferences, scoped notes and import records."
       : `HISTORY MERGE adds ${next.sets.length - db.sets.length} sets, ${next.sessions.length - db.sessions.length} sessions and ${next.bodyweights.length - db.bodyweights.length} bodyweights. Current program/settings and existing set IDs are preserved. Missing exercises and import records may be added. Active session: ${next.activeSessionId ? (next.activeSessionId === db.activeSessionId ? "kept" : "adopted from backup") : "none"}.`;
   return `${identity}\n\n${contents}\n\n${effect}\n\nExport and verify a complete JSON backup first. Continue?`;
 }
@@ -935,6 +1001,8 @@ function importJSON() {
       if (!confirm(backupConfirmation(mode, restored, next, file.name))) return;
       if (save(next, mode === "restore")) {
         db = next;
+        noteDrafts.clear();
+        selectedNoteOccurrence = null;
         clearForm();
         clearInbox();
         selectedTemplateId = null;
@@ -958,6 +1026,8 @@ function resetSeed() {
     const next = migrateData(seed);
     if (save(next)) {
       db = next;
+      noteDrafts.clear();
+      selectedNoteOccurrence = null;
       clearForm();
       clearInbox();
       renderAll();
@@ -974,6 +1044,8 @@ function clearAll() {
     next.preferences = {};
     if (save(next)) {
       db = next;
+      noteDrafts.clear();
+      selectedNoteOccurrence = null;
       clearForm();
       clearInbox();
       renderAll();

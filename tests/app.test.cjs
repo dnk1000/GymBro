@@ -127,7 +127,7 @@ test("GymBro boots, navigates all tabs, saves a set, reloads and exports it", as
   const download = await downloading;
   const exported = JSON.parse(await fs.readFile(await download.path(), "utf8"));
   assert.equal(exported.sets.at(-1).notes, "persist me");
-  assert.equal(exported.version, 7);
+  assert.equal(exported.version, 8);
 });
 
 test("corrupt, malformed and future-version storage remains byte-for-byte intact", async (t) => {
@@ -205,7 +205,7 @@ test("V1.5 migration preserves customized program, history and preferences", asy
   await p.reload();
   assert.equal(await stored(p), raw, "startup does not rewrite data");
   const migrated = await backup(p);
-  assert.equal(migrated.version, 7);
+  assert.equal(migrated.version, 8);
   assert.deepEqual(migrated.program, legacy.program);
   assert.deepEqual(migrated.sets, legacy.sets);
   assert.equal(migrated.preferences.custom, "my preference");
@@ -763,7 +763,7 @@ test("v5 storage migrates without writing or changing old records; failed first 
   );
   await p.reload();
   const migrated = await backup(p);
-  assert.equal(migrated.version, 7);
+  assert.equal(migrated.version, 8);
   assert.deepEqual(migrated.sets, legacy.sets);
   assert.deepEqual(migrated.sessions, []);
   assert.equal(migrated.activeSessionId, null);
@@ -784,7 +784,7 @@ test("v5 storage migrates without writing or changing old records; failed first 
     workoutActions.createSession({ date: "2026-10-23", templateId: "push" }),
   );
   assert.equal(created.ok, true);
-  assert.equal(JSON.parse(await stored(p)).version, 7);
+  assert.equal(JSON.parse(await stored(p)).version, 8);
   assert.deepEqual((await backup(p)).sets, legacy.sets);
 });
 
@@ -887,7 +887,7 @@ test("JSON export/restore/export preserves sessions and active pointer exactly; 
   legacy.sets = legacy.sets.filter((set) => !set.sessionId);
   await importBackup(p, legacy);
   const restored = await backup(p);
-  assert.equal(restored.version, 7);
+  assert.equal(restored.version, 8);
   assert.deepEqual(restored.sessions, []);
   assert.equal(restored.activeSessionId, null);
   assert.deepEqual(restored.sets, legacy.sets);
@@ -950,13 +950,13 @@ test("session create, completion and attachment retain stale-tab and write-failu
   assert.equal(await p.evaluate(() => workoutActions.getActiveSession()), null);
 });
 
-test("malformed v6 sessions and future v8 storage remain untouched and block session writes", async (t) => {
+test("malformed v6 sessions and future v9 storage remain untouched and block session writes", async (t) => {
   const p = await app(t);
   const valid = await backup(p);
   const malformed = structuredClone(valid);
   malformed.activeSessionId = "missing";
   const future = structuredClone(valid);
-  future.version = 8;
+  future.version = 9;
   const missing = structuredClone(valid);
   delete missing.sessions;
   for (const data of [malformed, future, missing]) {
@@ -1040,7 +1040,7 @@ test("published synthetic iPhone fixture restores and logs through the existing 
     await fs.readFile(path.join(__dirname, "fixtures/session-v6.json"), "utf8"),
   );
   await importBackup(p, fixture);
-  assert.deepEqual(await backup(p), { ...fixture, version: 7 });
+  assert.deepEqual(await backup(p), { ...fixture, version: 8, noteScopes: { session: [], exerciseSession: [], exercise: [] } });
   await p.locator('[data-view="workout"]').click();
   await p.locator("#fDate").fill(fixture.sessions[0].date);
   await p.locator("#fExercise").fill("Bench Press");
@@ -1093,7 +1093,7 @@ test("canonical version is visible across phone/desktop views and complete expor
     await fs.readFile(await (await downloading).path(), "utf8"),
   );
   assert.equal(exported.appVersion, version);
-  assert.equal(exported.version, 7);
+  assert.equal(exported.version, 8);
   const { appVersion, ...content } = exported;
   assert.deepEqual(content, original);
   assert.deepEqual(await backup(p), original);
@@ -1113,7 +1113,7 @@ test("restore accepts missing and differing application metadata using schema on
   delete legacy.activeSessionId;
   delete legacy.appVersion;
   await importBackup(p, legacy);
-  assert.equal((await backup(p)).version, 7);
+  assert.equal((await backup(p)).version, 8);
   assert.deepEqual((await backup(p)).sets, legacy.sets);
   for (const appVersion of [
     undefined,
@@ -1693,7 +1693,7 @@ test("backup presentation and confirmation distinguish complete replacement from
     const dialog = await pending;
     assert.equal(dialog.type(), "confirm");
     assert.match(dialog.message(), /review-backup.json/);
-    assert.match(dialog.message(), /Data schema: 7/);
+    assert.match(dialog.message(), /Data schema: 8/);
     assert.match(dialog.message(), /99.0.0-20990101T000000Z/);
     assert.match(
       dialog.message(),
@@ -1741,7 +1741,7 @@ test("complete export restore export preserves every supported section and metad
   await importBackup(p, first);
   assert.deepEqual(await exportComplete(), first);
   assert.deepEqual(await backup(p), first);
-  assert.equal(first.version, 7);
+  assert.equal(first.version, 8);
   assert.equal(first.sessions.length, 2);
   assert.ok(first.activeSessionId);
   assert.ok(first.imports.length > 0);
@@ -1840,7 +1840,7 @@ test("published History fixture renders session order and legacy records on an i
     await fs.readFile(path.join(__dirname, "fixtures/history-v6.json"), "utf8"),
   );
   await importBackup(p, fixture);
-  assert.deepEqual(await backup(p), { ...fixture, version: 7 });
+  assert.deepEqual(await backup(p), { ...fixture, version: 8, noteScopes: { session: [], exerciseSession: [], exercise: [] } });
   const raw = await stored(p);
   await p.locator('[data-view="history"]').click();
   assert.equal(await p.locator("[data-session-id]").count(), 2);
@@ -1862,7 +1862,7 @@ test("published History fixture renders session order and legacy records on an i
   assert.equal(await p.locator("[data-session-id]").count(), 0);
   assert.equal(await p.locator("#historyTable tbody tr").count(), 1);
   assert.equal(await stored(p), raw);
-  assert.deepEqual(await backup(p), { ...fixture, version: 7 });
+  assert.deepEqual(await backup(p), { ...fixture, version: 8, noteScopes: { session: [], exerciseSession: [], exercise: [] } });
 });
 
 async function startGuide(p, duration = "30") {
@@ -2095,7 +2095,7 @@ test("guided schema-7 backups round trip; schema-6 active sessions require expli
   const exported = JSON.parse(
     await fs.readFile(await (await exporting).path(), "utf8"),
   );
-  assert.equal(exported.version, 7);
+  assert.equal(exported.version, 8);
   assert.ok(exported.sessions[0].guided.requests.length);
   await importBackup(p, exported);
   assert.deepEqual(await backup(p), exported);
@@ -2297,7 +2297,7 @@ test("derived evidence is not persisted and reproduces across complete backup re
   const exported = JSON.parse(
     await fs.readFile(await (await pending).path(), "utf8"),
   );
-  assert.equal(exported.version, 7);
+  assert.equal(exported.version, 8);
   assert.equal(
     exported.appVersion,
     await p.evaluate(() => APP_VERSION.version),
@@ -2662,4 +2662,106 @@ test("real quota exceptions retain guided form and request identity for intentio
   assert.equal(saved.sessions[0].guided.requests[0].id, requestId);
   await p.reload();
   assert.deepEqual(await backup(p), saved);
+});
+
+for (const width of [320, 390, 1280]) {
+  test(`scoped notes save, render, and roundtrip separately at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 } });
+    await startGuide(p);
+    const original = await backup(p);
+    const sessionId = original.activeSessionId;
+    const target = JSON.parse(await p.locator('#noteOccurrence').inputValue());
+    const sessionText = '  Hotel gym; only 35 minutes\n<svg onload="window.noteXss=1">  ';
+    await p.locator('#sessionNote').fill(sessionText);
+    await p.getByRole('button', { name: 'Save session note', exact: true }).click();
+    await p.locator('#occurrenceNote').fill('Seat position 6 today');
+    await p.getByRole('button', { name: 'Save exercise/session note', exact: true }).click();
+    await p.locator('[data-view="exercises"]').click();
+    await p.evaluate((ex) => showExercise(ex), target.exercise);
+    await p.locator('#setupNote').fill('Usual seat 4');
+    await p.getByRole('button', { name: 'Save durable setup note', exact: true }).click();
+    const detail = p.locator('#exerciseDetail');
+    await detail.getByText('Session and set observations', { exact: true }).click();
+    assert.match(await detail.innerText(), /Seat position 6 today/);
+    assert.match(await detail.innerText(), /Session note/);
+    assert.equal(await p.evaluate(() => window.noteXss), undefined);
+    const recorded = await backup(p);
+    assert.equal(recorded.noteScopes.session[0].text, sessionText);
+    assert.deepEqual(recorded.sessions, original.sessions, 'notes preserve all workout facts');
+    await p.locator('[data-view="history"]').click();
+    const group = p.locator(`[data-session-id="${sessionId}"]`);
+    assert.match(await group.innerText(), /Session note/);
+    assert.match(await group.innerText(), /Seat position 6 today/);
+    assert.doesNotMatch(await group.innerText(), /Usual seat 4/, 'current setup is not historical context');
+    await p.reload();
+    assert.deepEqual(await backup(p), recorded);
+    const downloading = p.waitForEvent("download");
+    await p.getByRole("button", { name: "Backup", exact: true }).click();
+    const exported = JSON.parse(await fs.readFile(await (await downloading).path(), "utf8"));
+    assert.deepEqual(exported.noteScopes, recorded.noteScopes);
+    await importBackup(p, exported);
+    assert.deepEqual(await backup(p), exported);
+    await p.locator('[data-view="workout"]').click();
+    assert.equal(await p.locator('#sessionNote').inputValue(), sessionText);
+    assert.equal(await p.locator('#occurrenceNote').inputValue(), 'Seat position 6 today');
+    assert(await p.locator('#sessionNote').isVisible());
+    const box = await p.getByRole('button', { name: 'Save session note', exact: true }).boundingBox();
+    assert(box.height >= 44);
+    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await p.locator('#workoutNotes').screenshot({ path: `test-results/issue25-notes-${width}.png` });
+  });
+}
+
+test('note drafts survive quota failure, unrelated renders and context changes until a successful retry', async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const before = await backup(p), raw = await stored(p);
+  await p.locator('#sessionNote').fill('  unsaved session\n');
+  await p.locator('#occurrenceNote').fill('unsaved occurrence');
+  const selected = await p.locator('#noteOccurrence').inputValue();
+  await p.evaluate(() => {
+    window.originalNoteSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => { throw new DOMException('Full', 'QuotaExceededError'); };
+  });
+  await p.getByRole('button', { name: 'Save session note', exact: true }).click();
+  assert.deepEqual(await backup(p), before);
+  assert.equal(await stored(p), raw);
+  assert.equal(await p.locator('#sessionNote').inputValue(), '  unsaved session\n');
+  assert.equal(await p.locator('#sessionNoteStatus').innerText(), 'Unsaved');
+  await p.evaluate(() => renderAll());
+  assert.equal(await p.locator('#sessionNote').inputValue(), '  unsaved session\n');
+  const other = await p.locator('#noteOccurrence option').nth(1).getAttribute('value');
+  await p.locator('#noteOccurrence').selectOption(other);
+  assert.equal(await p.locator('#occurrenceNote').inputValue(), '');
+  await p.locator('#noteOccurrence').selectOption(selected);
+  assert.equal(await p.locator('#occurrenceNote').inputValue(), 'unsaved occurrence');
+  await p.evaluate(() => { Storage.prototype.setItem = window.originalNoteSetItem; });
+  await p.getByRole('button', { name: 'Save session note', exact: true }).click();
+  assert.equal(await p.locator('#sessionNoteStatus').innerText(), 'Saved');
+  assert.equal((await backup(p)).noteScopes.session[0].text, '  unsaved session\n');
+  assert.equal(await p.locator('#occurrenceNote').inputValue(), 'unsaved occurrence');
+});
+
+test('schema-7 note upgrade never writes at startup and stale-tab note save preserves newer data and draft', async (t) => {
+  const p = await app(t);
+  await startGuide(p);
+  const old = await backup(p);
+  old.version = 7;
+  old.noteScopes = { raw: 'unknown old note field' };
+  const raw = JSON.stringify(old);
+  await p.evaluate(([key, value]) => localStorage.setItem(key, value), [KEY, raw]);
+  await p.reload();
+  assert.equal(await stored(p), raw);
+  assert.deepEqual((await backup(p)).noteScopes.legacyValue, old.noteScopes);
+  const sessionId = old.activeSessionId;
+  await p.locator('[data-view="workout"]').click();
+  await p.locator('#sessionNote').fill('my draft');
+  const newer = await backup(p);
+  newer.noteScopes.session.push({ sessionId, text: 'newer tab' });
+  const newerRaw = JSON.stringify(newer);
+  await p.evaluate(([key, value]) => localStorage.setItem(key, value), [KEY, newerRaw]);
+  await p.getByRole('button', { name: 'Save session note', exact: true }).click();
+  assert.equal(await stored(p), newerRaw);
+  assert.equal(await p.locator('#sessionNote').inputValue(), 'my draft');
+  assert.equal((await backup(p)).noteScopes.session.length, 0);
 });

@@ -1,3 +1,29 @@
+# V3 scoped-notes release candidate
+
+Release status: **preparation**
+Application version: `3.4.0-20261027T235417Z`
+Data schema: `8`
+
+Implements #25 alone; branch `codex/issue-25-note-scopes`, based on accepted main `08c57e38c7d8b0a68a78602a350f83b870a093c4`. The user approved 3.4.0 for #25 in this implementation conversation. See [note contract and compatibility](NOTE_SCOPES.md). The local key remains `daveGymTrackerV1`; PostgreSQL workout schema/integration and personal migration remain #39/#28. No SQL migration is added.
+
+PR: [#49](https://github.com/dnk1000/GymBro/pull/49), open/unmerged. Runtime revision `18a788293bdf9c78bde9d746ff1667b2fd99ae92`; documentation-only evidence follow-up retains the same build.
+
+Validation level: **3**.
+
+| Evidence | Actual result |
+| --- | --- |
+| Local complete regression | `node --test tests/*.test.cjs`: 190/190 passed with desktop Chrome in disposable localhost contexts. The first full run was 188/189; the new `saveScopedNote` action was then added to the exact API inventory without removing prior assertions. |
+| Final focused checks | 18/18 note-scope + identity tests after preserving direct schema-7 canonical conversion/verification; 17/17 note/release/version checks. Actual complete JSON download/restore repeated at 320/390/1280 px: 3/3 passed. |
+| Browser/failure/layout | Five new browser scenarios cover scoped display, escaped text, reload, complete backup/restore, touch targets/no page overflow, quota failure/retry, draft retention across rerenders/occurrences, startup non-writing migration and stale-tab rejection. Screenshots at all three widths inspected at 320/390. Browser page-error assertions passed. Initial sandbox localhost run was denied; authorized reruns passed. |
+| Syntax/release/diff/docs | 40 JS files passed syntax; canonical version/schema checks passed; staged/unstaged/base-range whitespace passed; 93 changed-document local links passed. |
+| [CI at 18a7882](https://github.com/dnk1000/GymBro/actions/runs/40606811599) | Both regression and disposable database replay passed; syntax/release/diff and full test steps passed. No new SQL migration was required. |
+| [Vercel deployment](https://vercel.com/dnk-9999/gymbro/AFt5UBdNV4BLRPjuNVJiWoahqhrZ) / [Preview](https://gymbro-git-codex-issue-25-note-scopes-dnk-9999.vercel.app/) | Deployment ready at `18a7882`. Fresh automated contexts reached Vercel login protection, so no automated live-save pass is claimed. Existing signed-in Chrome served exact 3.4.0 build; Dashboard, Exercises (durable setup/observation controls), and Workout manual/guided entry rendered; console warnings/errors empty. This live smoke was read-only. Save/backup/layout evidence above used disposable localhost contexts. |
+| Database / personal / physical | No new SQL or hosted apply, or personal data/backup/migration test. Existing SQL was replayed only in disposable CI. Physical iPhone Safari not tested. #39/#28 own relational persistence/full migration; M0 personal-backup/device gates remain before personal migration. |
+
+Tests use disposable synthetic data/browser storage. No Production configuration/data mutation, merge, acceptance or issue closure is claimed.
+
+## Earlier #16 candidate evidence
+
 # V3 exercise-identity release candidate
 
 Release status: **preparation**

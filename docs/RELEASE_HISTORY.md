@@ -2,7 +2,11 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 scoped-notes candidate — not yet accepted
+
+`3.4.0-20261027T235417Z`, workout schema 8; #25 alone, approved by the user in the implementation conversation on October 27. Based on accepted main `08c57e3`, branch `codex/issue-25-note-scopes`; [PR #49](https://github.com/dnk1000/GymBro/pull/49), runtime `18a7882`. Code CI passed both jobs; local 190/190 regression, scoped-note JSON roundtrip at three widths and signed-in read-only Preview smoke passed. Separate note scopes and conservative schema-7 compatibility; same local workout authority. See [note contract](NOTE_SCOPES.md) and [candidate evidence](V3_RELEASE.md). This is candidate lineage; no Production delivery, personal migration, physical-device test, issue closure or merge is claimed.
 ## V3 exercise-identity candidate — not yet accepted
+
 
 `3.3.0-20261027T233414Z`, active workout schema 7; #16 alone, with identity document version 1 and database migration `20261027233000`. Based on accepted main `b40156bd943d230bdfa2e636390b85f5be1fd639`; user approved this release mapping on October 27. [PR #48](https://github.com/dnk1000/GymBro/pull/48) remains unmerged; runtime revision `893fa70`, test-only correction `320f1a0`. Canonical IDs/aliases and lossless conversion foundation; current workout authority remains local. CI at `320f1a0` passed 177/177 regressions and both fresh/reset SQL runs (71 + 9 assertions each); staging additive apply/retry and live read-only Preview passed. See [identity contract](EXERCISE_IDENTITY.md) and [candidate evidence](V3_RELEASE.md). No personal migration, Production acceptance, cutover or physical-device result is claimed.
 
