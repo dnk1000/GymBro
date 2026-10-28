@@ -44,11 +44,11 @@ Keep identifiers stable so completion evidence can reference them. Implementatio
 
 ## Verification and completion report
 
-**Validation level:** Select 1 / 2 / 3 under `docs/DEVELOPMENT_WORKFLOW.md` with a brief risk-based rationale. Do not require full regression, Preview or device testing by default.
+**Validation approach:** Define risk-based checks and evidence under `docs/DEVELOPMENT_WORKFLOW.md` for the assigned Change Level. Include applicable tests, Preview/browser/device, integration/migration/recovery and issue-specific evidence. Do not require full regression, Preview or device testing by default.
 
 **Required checks:** Specify known test/fixture, Preview, browser/device, migration or other evidence requirements. Otherwise let the agent select a proportionate verification mechanism for each criterion.
 
-**Completion report:** Return branch, commit, PR, exact files changed and a concise implementation summary; selected validation level, actual checks/results and applicable Preview/browser/device evidence; data/schema impact, documentation changes, deviations, unresolved risks, unverified criteria and anything requiring human acceptance.
+**Completion report:** Return branch, commit, PR, exact files changed and a concise implementation summary; assigned Change Level, actual verification/results and applicable Preview/browser/device evidence; data/schema impact, documentation changes, deviations, unresolved risks, unverified criteria and anything requiring human acceptance.
 
 Map every acceptance criterion to actual evidence:
 
@@ -63,12 +63,14 @@ Report unverified criteria explicitly. Do not infer verification merely because 
 
 ## Decisions and readiness
 
+- **Change level:** `1 / 2 / 3 — brief rationale`.
+- **Proposal/approval gate:** `Not required / approved reference / pending decision`.
 - **Approved decisions:** Implementation-relevant approval references, or `None`.
 - **Material unresolved decisions:** `None`, or the decision needed and affected work.
 - **Implementation discretion:** Bounded uncertainty the agent may resolve within approved constraints, or `None`.
 - **Readiness:** `Ready` / `Waiting on dependencies` / `Needs decision`.
 
-Do not mark `Ready` while a material governing product, architecture, data, security or compatibility decision remains unresolved. Routine choices within approved boundaries do not prevent readiness. If a decision affects only a bounded portion, follow the repository conflict procedure for affected and independent work.
+Do not mark `Ready` while a material governing product, architecture, data, security or compatibility decision remains unresolved or a required proposal/approval gate is pending. Routine choices within approved boundaries do not prevent readiness. If a decision affects only a bounded portion, follow the repository conflict procedure for affected and independent work.
 
 ## Codex execution contract
 
