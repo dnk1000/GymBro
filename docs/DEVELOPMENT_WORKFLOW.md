@@ -59,11 +59,11 @@ Give observable acceptance criteria stable identifiers (`AC-1`, `AC-2`, etc.) so
 
 Record issue readiness explicitly:
 
-- **Ready** — required prerequisites are satisfied and material governing decisions are resolved.
+- **Ready** — required prerequisites and proposal/approval gates are satisfied and material governing decisions are resolved.
 - **Waiting on dependencies** — required prerequisites remain outstanding; related work alone is not a prerequisite.
 - **Needs decision** — a material governing product, architecture, data, security or compatibility decision remains unresolved.
 
-Routine choices within approved constraints do not prevent readiness. Do not mark an issue `Ready` while a material governing decision remains unresolved. If uncertainty affects only bounded work, apply the existing conflict procedure before continuing any clearly safe independent work.
+Routine choices within approved constraints do not prevent readiness. Do not mark an issue `Ready` while a material governing decision remains unresolved or a required proposal/approval gate is pending. If uncertainty affects only bounded work, apply the existing conflict procedure before continuing any clearly safe independent work.
 
 If discussion reveals multiple independently useful implementation units, split them into separate issues rather than expanding one issue indefinitely.
 
@@ -77,55 +77,81 @@ Order the backlog primarily by dependency, then by user/product value. Do not en
 
 The V3 implementation plan groups issues into broad phases, but the issues themselves are the executable work units.
 
-## Risk-based validation
+## Change levels and validation
 
-Validation must be proportional to the risk and scope of the change. Use the lowest level that fully proves the issue's acceptance criteria; do not run broader or more expensive checks merely by habit.
+**Change Level** is the sole numbered classification for new work. It determines minimum proposal, approval, implementation and review process. **Validation approach** identifies the actual checks and acceptance evidence appropriate to the scope; it is not a second numbered classification. All levels inherit repository invariants, the conflict procedure and existing explicit merge/Production approval gates.
 
-### Level 1 — Documentation/process only
+### Classification and assignment
 
-Use when only Markdown, process documentation, planning text, issue templates, or other non-executable documentation changes.
+Issue authors normally assign the Change Level with a short rationale; the coding agent verifies it before implementation. Evaluate product/architectural impact, governed contracts, persisted data, compatibility, security/privacy, reversibility, blast radius and uncertainty. **Highest applicable level wins.** Apply these rules in order:
 
-Required evidence normally includes:
+- Check Change Level 3 triggers first.
+- Without those triggers, material feature/workflow/domain behavior changes are Change Level 2.
+- Otherwise use Change Level 1 only for narrow, clear, reversible and contained work.
 
-- document consistency and correct current-vs-historical wording;
-- Markdown/rendering sanity where relevant;
-- links, paths, issue references and filenames;
-- confirmation that no runtime code, executable configuration, schema, or Production data changed.
+File count, line count, implementation time and apparent code simplicity do not determine classification. A one-line authorization or schema-contract change can be Change Level 3; a multi-file contained CSS fix need not be. Routine implementation choices inside approved boundaries remain agent discretion, even when several coding approaches are reasonable.
 
-Do **not** manually rerun the full application regression suite, Vercel acceptance, browser/device tests, or migration tests solely for documentation changes. If CI triggers automatically, let it run, but Codex does not need to duplicate unrelated suites manually.
+### Change Level 1 — Local / low-risk
 
-### Level 2 — UI/behavioral
+Use for narrow, reversible corrections or maintenance with clear intended behavior and no material change to product contracts, architecture, persisted-data meaning, supported compatibility, security/privacy boundaries or foundational cross-cutting behavior. Examples include contained CSS/layout or UI presentation fixes, copy/link corrections, documentation/process corrections, isolated bugs with established intended behavior and test/documentation maintenance preserving the governed contract. This level is not restricted to documentation.
 
-Use for user-facing runtime behavior, layout/responsive changes, normal feature changes, and low-risk application logic.
+**Normal process:** Approved issue/work package → implementation → proportional verification → PR/review. A separate implementation proposal is normally unnecessary. Applicable Preview, responsive, browser or device checks still apply when required by the issue or risk.
 
-Required evidence should be scoped to what changed, such as:
+### Change Level 2 — Feature / domain behavior
 
-- focused automated tests where practical;
-- relevant syntax/regression checks rather than every unrelated suite;
-- Vercel Preview for user-visible runtime changes;
-- affected desktop and narrow-phone checks for responsive UI;
-- physical iPhone evidence only when the issue or acceptance criteria require it.
+Use when work adds or materially changes user-visible, workflow or domain behavior within approved product decisions, established architecture, approved persistence/data boundaries and supported compatibility, without a Change Level 3 trigger. Examples include user-facing features, workout/session behavior, significant UI workflows, approved progression/performance logic and feature work using established persistence patterns. Multiple files alone do not make work this level.
 
-### Level 3 — Data/infrastructure/high-risk
+**Normal process:** Implementation-ready issue with explicit acceptance criteria → implementation → focused risk-based verification/regression → PR/review → applicable human acceptance. A separate proposal is not automatically required when product/architecture decisions are approved and the issue is `Ready`. Material unresolved decisions invoke the conflict procedure; routine implementation choices do not.
 
-Use for authentication/authorization, schema, migrations, persistence, backup/restore, destructive operations, concurrency, Production cutover, security-sensitive infrastructure, and other changes that can lose/corrupt/expose user data.
+### Change Level 3 — Architecture / data / security / high-risk
 
-Required evidence may include:
+Use for material foundational-contract changes or substantial risk involving persistence architecture, schemas, persisted identity, authentication/authorization, security/provider boundaries, public/API contracts, backup/import compatibility, migrations, recovery behavior, concurrency/data integrity, destructive operations, major architectural boundaries, difficult reversibility or substantial uncertain blast radius.
 
-- full applicable regression/integration coverage;
-- schema/migration replay and rollback/recovery checks;
-- backup and source/destination data comparisons;
-- retry/idempotency/concurrency testing;
-- authorization/isolation/security checks;
-- Preview evidence and explicit physical-device/Production gates required by the issue.
+Import/export work is this level when it materially affects persisted facts, restore/recovery integrity, duplicate protection or supported compatibility, even without a schema-version change. Small implementation size does not reduce those risks.
 
-Automatic CI is supporting evidence, not a command to manually repeat all tests. A PR must state which validation level was used, what was actually run, and what required evidence remains pending.
+**Normal process:** Proposal/audit → recorded approval → implementation-ready issue → implementation → enhanced applicable verification → PR/review → explicit human acceptance.
+
+The proposal addresses current state, intended end state, implementation boundaries, architecture/data/security/compatibility effects, migration implications, alternatives or meaningful tradeoffs, risks and verification strategy, as applicable. Dependent implementation waits for the relevant approval to be recorded.
+
+### Reuse approved material
+
+An approved design, decision issue, audit/proposal or another recorded approval recognized by repository governance can satisfy the Change Level 3 proposal/approval gate when it covers the actual implementation scope. Reference that material rather than recreating it. Do not request approval again unless scope changes, risk changes materially or existing approval does not cover the implementation. Classification alone does not require a new large proposal.
+
+Record the assigned level/rationale and proposal/approval gate in the issue's **Decisions and readiness** section. A required pending gate prevents `Ready`. Neither a level assignment nor design approval authorizes an otherwise unapproved merge, Production operation or destructive action.
+
+### Escalation and reclassification
+
+The assigned level is minimum process, not permission to ignore new risk. If the classification is materially too low, before or during implementation:
+
+- Pause affected work.
+- Identify the newly discovered risk or governed contract and involved authority.
+- Explain why the current level is insufficient.
+- Recommend the appropriate Change Level.
+- Obtain any newly required decision or approval before dependent work proceeds.
+
+Safe independent work may continue only under the existing conflict procedure. Do not silently downgrade: lowering a level or removing an assigned control requires recorded rationale and appropriate approval. Do not escalate routine choices within approved product/architecture boundaries merely because multiple implementations are possible.
+
+### Scope-appropriate Validation approach
+
+Select applicable checks against acceptance criteria and affected contracts; do not run broader or more expensive suites merely by habit. The Change Level establishes minimum process and applicable verification expectations, not a mandatory bundle of every possible test:
+
+- **Documentation-only scope:** consistency/current-versus-historical wording, Markdown/rendering, links/paths/references and confirmation that runtime/configuration/schema/Production data are unchanged. Do not run application suites, runtime Preview/device acceptance or migration tests solely for documentation changes.
+- **Runtime/UI scope:** focused automated coverage where practical; relevant syntax/release/diff/regression and affected browser-console checks; Vercel Preview for user-visible runtime changes; affected desktop and narrow-phone responsive checks. Physical iPhone evidence remains required when specified by the issue/acceptance criteria; a lower Change Level does not waive applicable issue/risk-specific device checks.
+- **High-risk implementation scope:** applicable full relevant regression/integration, schema/migration replay, recovery/rollback, backup and source/destination content/relationship comparisons, retry/idempotency/concurrency and authorization/isolation/security checks; Preview and required physical-device/Production gates. Preserve existing backup, disposable-data and isolation protections.
+
+More verification alone does not raise Change Level. A Change Level 1 mobile-layout fix may still require physical-device evidence. A Change Level 3 architecture-only proposal needs design/decision evidence rather than migration tests when no implementation exists. Discovering foundational risk can require escalation before additional checks are defined. Responsive Chromium does not prove physical Safari behavior; record actual device/build/commit/results when required, otherwise report unverified evidence explicitly.
+
+Automatic CI is supporting evidence, not a command to manually repeat unrelated suites. Report the assigned Change Level, Validation approach, actual checks/results and anything required but unverified, using the issue's AC-to-evidence mapping.
+
+### Historical terminology
+
+The former numbered validation levels are retired for new work. Existing labels in historical issues, PRs, releases, subsystem evidence and acceptance records remain valid descriptions of the verification performed at that time. Do not rewrite or retroactively reclassify those records merely to adopt this terminology. New Change Level 1 intentionally includes contained runtime/UI work; it does not mean every earlier UI change should be relabeled.
 
 ## Codex execution contract
 
 A Codex implementation request follows the hierarchy and conflict procedure above:
 
-> Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, this workflow, the target issue, and its governing references and dependency issues/documents. Implement only the target issue within approved product and architectural constraints. Preserve existing behavior and historical data unless the issue explicitly changes them within those constraints. Apply the conflict procedure before dependent implementation when a material conflict, ambiguity or missing decision is discovered. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request. Link the PR to the issue. Select the lowest risk-based validation level that fully covers the issue and its acceptance criteria, run the applicable validation, and report evidence. Do not merge or change Production data without explicit user approval.
+> Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, this workflow, the target issue, and its governing references and dependency issues/documents. Verify the assigned Change Level and rationale and satisfy required proposal/approval gates. Implement only the target issue within approved product and architectural constraints. Preserve existing behavior and historical data unless the issue explicitly changes them within those constraints. Apply the conflict procedure before dependent implementation when a material conflict, ambiguity or missing decision is discovered. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request. Link the PR to the issue. Define a scope-appropriate Validation approach, perform applicable checks and report evidence. Do not merge or change Production data without explicit user approval.
 
 The issue body should contain the product-specific prompt. A separate giant Codex prompt should normally be unnecessary.
 
@@ -137,12 +163,12 @@ Each implementation PR should:
 - avoid unrelated cleanup or scope expansion;
 - state user-visible behavior changes and preserved behavior;
 - state data/schema/migration implications;
-- identify the validation level used and list tests/manual checks actually performed;
+- identify the assigned Change Level and Validation approach and list tests/manual checks actually performed;
 - identify anything required but not tested, especially physical iPhone behavior;
-- include Preview evidence when the selected validation level/user-visible runtime scope requires it;
+- include Preview evidence when the issue, affected runtime scope or risk requires it;
 - remain unmerged until explicit user approval.
 
-The completion report must identify branch, commit, PR, exact files changed, a concise implementation summary, data/schema impact, documentation changes, selected validation level and actual checks/results, deviations, unresolved risks, unverified criteria and required human acceptance. Include actual Preview/browser/device evidence when applicable. Map every criterion by its stable identifier: `AC-1 → verification method/evidence → PASS / FAIL / UNVERIFIED`. Unverified criteria must be explicit; code existing or unrelated checks passing do not establish verification.
+The completion report must identify branch, commit, PR, exact files changed, a concise implementation summary, data/schema impact, documentation changes, assigned Change Level, Validation approach and actual checks/results, deviations, unresolved risks, unverified criteria and required human acceptance. Include actual Preview/browser/device evidence when applicable. Map every criterion by its stable identifier: `AC-1 → verification method/evidence → PASS / FAIL / UNVERIFIED`. Unverified criteria must be explicit; code existing or unrelated checks passing do not establish verification.
 
 An issue is complete only when its acceptance criteria have evidence. A green CI run or an open PR alone does not make the issue complete.
 

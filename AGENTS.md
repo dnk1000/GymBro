@@ -48,7 +48,8 @@ Before implementing an issue:
 - preserve unrelated behavior;
 - do not add adjacent features merely because they seem useful;
 - update durable documentation only when the issue changes a cross-cutting contract;
-- select the lowest validation level that fully covers the issue risk and acceptance criteria;
+- verify the assigned Change Level and rationale, use the highest applicable level and satisfy any required proposal/approval gate;
+- define a scope-appropriate Validation approach that proves the issue's acceptance criteria;
 - report actual tests/evidence and explicitly identify anything required but not tested.
 
 A PR should reference the issue it implements. A green CI run or open PR does not by itself satisfy the issue. Acceptance criteria require evidence. Keep an issue open until the agreed behavior is accepted.
@@ -174,52 +175,31 @@ Keep these operations distinct:
 
 Application version and data schema are independent. Restore compatibility is based on supported data schema, not matching application build numbers.
 
-## Validation requirements
+## Change control and validation
 
-Validation is **risk-based and scope-appropriate**. Use the lowest level that fully proves the target issue's acceptance criteria. Do not manually run broad or expensive suites merely by habit.
+**Change Level** is the sole numbered risk/change classification. **Validation approach** describes actual checks and evidence, not another numbered system. Follow the [full change-control model](docs/DEVELOPMENT_WORKFLOW.md#change-levels-and-validation):
 
-### Level 1 — Documentation/process only
+- **Change Level 1 — Local / low-risk:** narrow, clear, reversible corrections or maintenance without material governed-contract change. Includes contained runtime/UI fixes and documentation corrections; normally no separate proposal.
+- **Change Level 2 — Feature / domain behavior:** material behavior changes within approved product, architecture, persistence and compatibility boundaries. A `Ready` issue with explicit acceptance criteria normally needs no separate proposal.
+- **Change Level 3 — Architecture / data / security / high-risk:** material foundational-contract change or substantial data, compatibility, security, destructive-operation, reversibility or uncertain-blast-radius risk. Requires a proposal/audit, recorded approval and explicit human acceptance. Import/export integrity, restore/recovery, duplicate protection and concurrency can require this level without a schema bump.
 
-Use for Markdown, planning, process, issue-template, or other non-executable documentation changes.
+Check Change Level 3 triggers first, then behavior changes for Change Level 2; otherwise use Change Level 1 only for contained low-risk work. **Highest applicable level wins.** Authors assign and agents verify before implementation. Classify by risk and governed contracts, not file/line count, implementation time or apparent simplicity; routine choices inside approved boundaries need no escalation.
 
-Required evidence normally includes:
+If work is materially under-classified, pause affected work, identify the risk/authority, explain the mismatch, recommend the appropriate level and obtain newly required decisions/approvals. Safe independent work follows the existing conflict procedure. Do not silently downgrade: lowering a level or removing an assigned control requires recorded rationale and appropriate approval.
 
-- changed-document consistency;
-- Markdown/rendering sanity where relevant;
-- links, paths, filenames, issue references and terminology;
-- confirmation that runtime code, executable configuration, schema and Production data were not changed.
+Existing approved designs, decision issues, audits or other recognized approval may satisfy the Change Level 3 proposal gate when they cover the actual scope. Reference them; do not request approval again unless scope changes, risk changes materially or coverage is insufficient. A required pending gate prevents `Ready`. Existing merge and Production approval gates remain in force at every level.
 
-Do not manually rerun the full application regression suite, Vercel runtime acceptance, browser/device tests, or migration tests solely for documentation changes. If normal CI runs automatically, it may complete as supporting evidence; do not duplicate unrelated checks manually.
+Verification remains **risk-based and scope-appropriate** at every Change Level:
 
-### Level 2 — UI/behavioral
+- Documentation-only work: verify consistency, Markdown/rendering, links/paths/references and no runtime/configuration/schema/Production-data changes. Do not rerun application suites, runtime Preview/device acceptance or migration tests solely for documentation changes.
+- Runtime/UI work: focused tests where practical, relevant syntax/release/diff/regression and browser-console checks; Vercel Preview for user-visible runtime changes; affected desktop and ~320/~390 px responsive widths; physical iPhone evidence when required by the issue/acceptance criteria. Change Level 1 does not waive applicable browser/device evidence.
+- High-risk implementation: applicable full relevant regression/integration, schema/migration replay, recovery/rollback, backup and source/destination content/relationship comparisons, retry/idempotency/concurrency and authorization/isolation/security checks; Preview and required physical-device/Production gates.
 
-Use for user-facing runtime behavior, responsive/layout work, ordinary features and low-risk application logic.
-
-Run only applicable evidence, such as:
-
-- focused automated coverage where practical;
-- relevant syntax/release/diff and regression checks;
-- browser-console verification where affected;
-- Vercel Preview for user-visible runtime changes;
-- affected desktop and narrow-phone widths (including ~320 and 390 px) for responsive UI;
-- physical iPhone testing only when the issue/acceptance criteria require it.
+Additional verification alone does not raise Change Level; newly discovered foundational risk does. An architecture-only proposal needs design/decision evidence rather than migration tests when no implementation exists. Historical validation labels remain valid historical evidence and are not rewritten.
 
 Never claim responsive Chromium proves physical Safari behavior. When physical checks are required, record actual device/iOS/browser/build/commit/results; otherwise state Not tested/pending rather than pretending.
 
-### Level 3 — Data/infrastructure/high-risk
-
-Use for authentication/authorization, schema, persistence, migrations, backup/restore, destructive operations, concurrency/retry, security-sensitive infrastructure and Production cutover.
-
-Run the applicable high-risk evidence, including where relevant:
-
-- full relevant regression/integration tests;
-- schema/migration replay and recovery/rollback checks;
-- backup and source/destination data comparisons;
-- retry/idempotency/concurrency testing;
-- authorization/isolation/security testing;
-- Preview validation and required physical-device/Production gates.
-
-Automatic CI is supporting evidence, not a requirement to manually repeat every suite. A PR must state the validation level selected, what was actually run, and what required evidence remains pending.
+Automatic CI is supporting evidence, not a requirement to manually repeat every suite. A PR must state the assigned Change Level, Validation approach, actual results and required evidence still pending.
 
 Do not weaken assertions, remove validation, or delete tests merely to obtain green results.
 
@@ -256,7 +236,7 @@ Report:
 - branch and PR;
 - user-visible behavior changes;
 - data/schema/migration impact;
-- validation level selected;
+- assigned Change Level and Validation approach;
 - tests/checks actually performed;
 - Preview/physical-device evidence when applicable;
 - known limitations or deferred acceptance items.
