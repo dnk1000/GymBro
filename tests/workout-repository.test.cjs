@@ -84,3 +84,27 @@ test("new snapshots/guidance retain recorded template labels after canonical ren
   const saved=await actions.execute("logGuidedSet",{sessionId:result.sessionId,planSlotId:"slot-1",expectedRevision:0,requestId:"new-canonical",exercise:id,weight:10,reps:8,originalLabel:"Smith Press"});
   assert.equal(saved.ok,true);assert.equal(saved.state.data.sets[0].exercise.originalLabel,"Smith Press");
 });
+test("request identity schemes distinguish UUID-shaped legacy labels from canonical IDs across reload",async()=>{
+  const f=await fixture(),doc=structuredClone(f.document);
+  const a=f.identity.resolveLabel(doc.catalog,"Smith Press"),b=f.identity.resolveLabel(doc.catalog,"Bench Press");
+  doc.catalog=f.identity.addAlias(doc.catalog,{label:a,exerciseId:b,provenance:"user-created"});
+  const legacy={sessionId:f.sessionId,planSlotId:"slot-1",exercise:a,weight:7,reps:2};
+  const signature=f.get("guidedRequestSignature")(legacy);
+  doc.data.sessions[0].guided.requests.push({id:"legacy-uuid-label",setId:"legacy-dead",signature});
+  let rows;
+  const repository=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=> {
+    if(name.endsWith("commit")) rows=plain(args.next_rows);
+    return {data:rows};
+  }}});
+  let actions=f.repository.createActions({initial:{document:doc,bodyweightIds:f.bodyweightIds},repository,createId:()=>"canonical-request-set"});
+  assert.equal((await actions.execute("logGuidedSet",{...legacy,exercise:b,requestId:"legacy-uuid-label",expectedRevision:3})).code,"REPLAY");
+  assert.equal((await actions.execute("substituteGuidedExercise",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,exercise:a})).ok,true);
+  const input={sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:4,requestId:"canonical-id",exercise:a,weight:10,reps:8};
+  assert.equal((await actions.execute("logGuidedSet",input)).ok,true);
+  const loaded=await repository.load();
+  assert.equal(loaded.signatureSchemes[JSON.stringify([f.sessionId,"canonical-id"])],"canonical-ids");
+  actions=f.repository.createActions({initial:loaded,repository,createId:()=>"unused"});
+  assert.equal((await actions.execute("logGuidedSet",input)).code,"REPLAY");
+  assert.equal((await actions.execute("logGuidedSet",{...input,weight:11})).code,"REQUEST_CONFLICT");
+  assert.equal(actions.getWorkoutState().data.sessions[0].guided.requests.find(r=>r.id==="legacy-uuid-label").signature,signature);
+});

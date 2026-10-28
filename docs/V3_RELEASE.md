@@ -1,6 +1,6 @@
 # V3 relational foundation candidate — issue #39
 
-Application version: `3.5.2-20261028T201618Z`
+Application version: `3.5.3-20261028T202536Z`
 Data schema: `8`
 Release status: **preparation**
 
@@ -96,3 +96,5 @@ Live setup approval: the user explicitly approved the project assignments and, a
 Preview lineage: `3.1.0-20261027T212930Z` introduced #38; `3.1.1-20261027T214344Z` fixes the CLI metadata-verification invocation. Both belong solely to #38, with no workout-schema change.
 
 #39 follow-up at `3.5.2-20261028T201618Z` explicitly stages deferred FK relationships on each atomic RPC invocation and forces validation before acknowledgement. The prior 3.5.1 run passed the main round trips/actions but found a second-owner initialization failure when a prior invocation had left constraints immediate; a note-target test was also corrected to exercise the intended FK rather than its already-tested immutable key. No constraint or assertion was weakened.
+
+The 3.5.2 code at `0ab0aa3` passed both jobs of [CI 40762442209](https://github.com/dnk1000/GymBro/actions/runs/40762442209), including fresh/reset relational integration. Final review adds an explicit relational request `signature_scheme` to distinguish legacy labels from new canonical UUID parameters without guessing or altering original signature bytes; the eight-test focused repository suite includes UUID-shaped alias/reload coverage. Candidate fix build: `3.5.3-20261028T202536Z`. Final SQL retest and staging remain pending.

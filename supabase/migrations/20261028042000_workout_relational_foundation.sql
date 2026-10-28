@@ -110,6 +110,7 @@ create table public.gymbro_guided_slots (
 create table public.gymbro_guided_requests (
   owner_id uuid not null references auth.users(id), session_id text not null, request_id text not null check(request_id<>''),
   set_id text not null check(set_id<>''), signature text not null check(signature<>''),
+  signature_scheme text not null check(signature_scheme in ('legacy-labels','canonical-ids')),
   position bigint not null check(position>=0), present text[] not null, extra jsonb not null check(jsonb_typeof(extra)='object'),
   primary key(owner_id,session_id,request_id), unique(owner_id,session_id,set_id), unique(owner_id,session_id,position) deferrable initially deferred,
   foreign key(owner_id,session_id) references public.gymbro_guidance(owner_id,session_id) deferrable initially deferred

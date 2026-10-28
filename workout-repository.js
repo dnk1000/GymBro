@@ -2,6 +2,7 @@
 const WorkoutRepository = (() => {
   const clone = (x) => structuredClone(x);
   const check = (x, message) => { if (!x) throw Error(message); };
+  const requestKey = (sessionId,requestId) => JSON.stringify([sessionId,requestId]);
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   const tables = ["workout_state", "templates", "template_slots", "sessions", "snapshot_slots", "sets", "bodyweights",
     "guidance", "guided_slots", "guided_requests", "imports", "session_notes", "exercise_session_notes", "exercise_setup_notes"];
@@ -68,7 +69,7 @@ const WorkoutRepository = (() => {
     if (refField) source[refField] = { exerciseId: row.exercise_id, originalLabel: row.original_label };
     return source;
   }
-  function project(document, owner, bodyweightIds) {
+  function project(document, owner, bodyweightIds, signatureSchemes = {}) {
     validate(document);
     check(uuid.test(owner), "Authenticated owner UUID required.");
     check(Array.isArray(bodyweightIds) && bodyweightIds.length === document.data.bodyweights.length && new Set(bodyweightIds).size === bodyweightIds.length && bodyweightIds.every(x => typeof x === "string" && x), "Supply persistent relational bodyweight keys.");
@@ -95,7 +96,11 @@ const WorkoutRepository = (() => {
       if (s.guided) {
         rows.guidance.push({ ...pack("guidance", s.guided, owner, 0, ["slots", "requests"]), session_id: s.id });
         s.guided.slots.forEach((slot, j) => rows.guided_slots.push({ ...pack("guided_slots", slot, owner, j, [], "actualExercise"), session_id: s.id }));
-        s.guided.requests.forEach((r, j) => rows.guided_requests.push({ ...pack("guided_requests", r, owner, j), session_id: s.id }));
+        s.guided.requests.forEach((r, j) => {
+          const scheme=signatureSchemes[requestKey(s.id,r.id)] ?? "legacy-labels";
+          check(["legacy-labels","canonical-ids"].includes(scheme),"Unsupported request identity scheme.");
+          rows.guided_requests.push({ ...pack("guided_requests", r, owner, j), session_id: s.id, signature_scheme:scheme });
+        });
       }
     });
     data.sets.forEach((s, i) => rows.sets.push({ ...pack("sets", s, owner, i, [], "exercise"),
@@ -139,9 +144,10 @@ const WorkoutRepository = (() => {
     // Reject extra/orphan rows, duplicate/order corruption and shadowed fields by
     // reprojecting the entire model; row order from PostgREST is immaterial.
     const keys = sorted("bodyweights").map(x=>x.bodyweight_id);
-    const projected = project(document, owner, keys);
+    const signatureSchemes=Object.fromEntries(rows.guided_requests.filter(r=>r.signature_scheme!=="legacy-labels").map(r=>[requestKey(r.session_id,r.request_id),r.signature_scheme]));
+    const projected = project(document, owner, keys,signatureSchemes);
     check(equalRows(projected,rows), "Relational content/relationships failed reconstruction.");
-    return { document, bodyweightIds: keys };
+    return { document, bodyweightIds: keys,signatureSchemes };
   }
   function equalRows(a,b) {
     function sorted(x) { return Array.isArray(x) ? x.map(sorted) : isObject(x) ? Object.fromEntries(Object.keys(x).sort().map(k=>[k,sorted(x[k])])) : x; }
@@ -167,12 +173,12 @@ const WorkoutRepository = (() => {
         return { initialized: true, ...assemble(rows,ownerId) };
       },
       async commit(before, after) {
-        const oldRows = before ? project(before.document, ownerId, before.bodyweightIds) : null;
-        const newRows = project(after.document, ownerId, after.bodyweightIds);
+        const oldRows = before ? project(before.document, ownerId, before.bodyweightIds,before.signatureSchemes) : null;
+        const newRows = project(after.document, ownerId, after.bodyweightIds,after.signatureSchemes);
         const rows = await rpc("gymbro_workout_commit", { previous_rows: oldRows, next_rows: newRows });
         const saved = assemble(rows,ownerId);
         // Read order for canonical catalog rows is unspecified.
-        check(equalRows(project(saved.document,ownerId,saved.bodyweightIds),newRows), "Database acknowledgement differs from submitted facts.");
+        check(equalRows(project(saved.document,ownerId,saved.bodyweightIds,saved.signatureSchemes),newRows), "Database acknowledgement differs from submitted facts.");
         return saved;
       },
     });
@@ -188,6 +194,7 @@ const WorkoutRepository = (() => {
         let saving = false;
         try {
           const document = state(), dto = clone(document.data);
+          const signatureSchemes=clone(committed.signatureSchemes ?? {});
           dto.version = 8;
           dto.exerciseLibrary = Object.fromEntries(document.catalog.exercises.map(e=>[e.id,{ primary:e.primary, secondary:clone(e.secondary), pattern:e.pattern, type:e.type, status:e.state }]));
           references(dto).forEach(([r,k])=>{ r[k]=r[k].exerciseId; });
@@ -195,6 +202,7 @@ const WorkoutRepository = (() => {
           // The private candidate view compares their known exercise field by
           // canonical identity, just like every other domain reference.
           dto.sessions.forEach(s=>s.guided?.requests.forEach(r=> {
+            if(signatureSchemes[requestKey(s.id,r.id)]==="canonical-ids") return;
             try { const p=JSON.parse(r.signature); if(isObject(p) && typeof p.exercise==="string") {
               const id=ExerciseIdentity.resolveLabel(document.catalog,p.exercise);
               if(id) r.signature=guidedRequestSignature({...p,exercise:id});
@@ -234,7 +242,8 @@ const WorkoutRepository = (() => {
             s.planSnapshot?.slots.forEach(p=>retain(p,"exercise",old?.planSnapshot?.slots.find(q=>q.id===p.id) ?? planned?.slots.find(q=>q.id===p.id)));
             s.guided?.slots.forEach(p=>retain(p,"actualExercise",old?.guided?.slots.find(q=>q.planSlotId===p.planSlotId) ??
               {actualExercise:s.planSnapshot?.slots.find(q=>q.id===p.planSlotId)?.exercise},args.find(isObject)));
-            s.guided?.requests.forEach(r=>{ const prior=old?.guided?.requests.find(p=>p.id===r.id); if(prior) r.signature=prior.signature; });
+            s.guided?.requests.forEach(r=>{ const prior=old?.guided?.requests.find(p=>p.id===r.id); if(prior) r.signature=prior.signature;
+              else signatureSchemes[requestKey(s.id,r.id)]="canonical-ids"; });
           });
           for(const scope of ["exercise","exerciseSession"]) next.noteScopes[scope].forEach(n=>retain(n,"exercise",document.data.noteScopes[scope].find(p=>
             p.exercise.exerciseId===n.exercise && p.sessionId===n.sessionId && p.planSlotId===n.planSlotId),args.find(isObject)));
@@ -243,7 +252,7 @@ const WorkoutRepository = (() => {
           const keys = committed.bodyweightIds.slice();
           while(keys.length < next.bodyweights.length) keys.push(createBodyweightId());
           saving = true;
-          const saved = await repository.commit(committed,{document,bodyweightIds:keys});
+          const saved = await repository.commit(committed,{document,bodyweightIds:keys,signatureSchemes});
           committed = clone(saved);
           return { ...result, code:"OK", state:state() };
         } catch {

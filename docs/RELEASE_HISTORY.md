@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 request identity fix candidate — not yet accepted
+
+`3.5.3-20261028T202536Z`, schema 8; #39 only. Relational request metadata explicitly distinguishes legacy exercise labels from canonical UUIDs; original signature bytes remain unchanged. Eight focused repository tests pass, including UUID-shaped aliases and replay after reload. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
 ## V3 relational transaction fix candidate — not yet accepted
 
 `3.5.2-20261028T201618Z`, schema 8; #39 only. Each RPC defers relationship staging then forces constraints before acknowledgement, including repeated invocations in one transaction. No scope or constraint reduction. Verification/acceptance is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).

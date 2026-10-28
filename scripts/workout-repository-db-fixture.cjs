@@ -10,18 +10,21 @@ async function buildSql() {
     bundles.push(args.next_rows);return {data:structuredClone(args.next_rows)};
   }};
   const repository=f.repository.create({client,ownerId:f.owner});
+  let sequence=0;
   const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository,
-    createId:()=>"synthetic-relational-new-set",createBodyweightId:()=>"synthetic-relational-new-bw",now:()=>"2026-10-28T04:30:00.000Z"});
+    createId:()=>`synthetic-relational-new-${++sequence}`,createBodyweightId:()=>"synthetic-relational-new-bw",now:()=>"2026-10-28T04:30:00.000Z"});
   const id=f.identity.resolveLabel(f.document.catalog,"Bench Press");
   const steps=[
     ["logSet",{date:"2026-10-28",exercise:id,weight:0,reps:8,rir:0,notes:"  saved through domain\n",sessionId:null}],
     ["saveScopedNote",{scope:"exercise",exercise:id,text:"new exact setup\n",expectedText:"  setup\n"}],
     ["cycleSlotRole",{templateId:"push",index:0}],
     ["logBodyweight",{date:"2026-10-28",value:200}],
-    ["editSet","synthetic-relational-new-set",{notes:"corrected after commit"}],
-    ["deleteSet","synthetic-relational-new-set"],
+    ["editSet","synthetic-relational-new-1",{notes:"corrected after commit"}],
+    ["deleteSet","synthetic-relational-new-1"],
     ["removeSlot",{templateId:"push",index:0}],
-    ["finishGuidedSession",{sessionId:f.sessionId,expectedRevision:3,allowPending:true}],
+    ["logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"canonical-new",exercise:id,weight:10,reps:8}],
+    ["finishGuidedSession",{sessionId:f.sessionId,expectedRevision:4,allowPending:true}],
+    ["editSet","synthetic-relational-new-2",{notes:"corrected completed-session fact"}],
   ];
   for(const [name,...args] of steps) {const result=await actions.execute(name,...args);if(!result.ok)throw Error(name+": "+JSON.stringify(result));}
   const literal=x=>"'"+JSON.stringify(x).replaceAll("'","''")+"'::jsonb";
@@ -44,7 +47,8 @@ select is(public.gymbro_workout_normalize(public.gymbro_workout_read()),public.g
   const last=bundles.length-1,session=f.sessionId,exercise=bundles[0].sets[0].exercise_id;
   sql.push(`select lives_ok($test$select public.gymbro_workout_commit((select rows from relational_expected where step=${last}),(select rows from relational_expected where step=${last}))$test$,'exact no-change bundle retains all facts');
 select is((select count(*)::int from public.gymbro_bodyweights),3,'equal date/value bodyweights are not collapsed');
-select is((select count(*)::int from public.gymbro_guided_requests),2,'request identities survive corrections/deletion/completion');
+select is((select count(*)::int from public.gymbro_guided_requests),3,'request identities survive corrections/deletion/completion');
+select is((select signature_scheme from public.gymbro_guided_requests where request_id='canonical-new'),'canonical-ids','new guided requests explicitly store canonical signature identity');
 select is((select count(*)::int from public.gymbro_exercise_session_notes),2,'planned and manual occurrences remain separate');
 select is((select count(*)::int from public.gymbro_imports),1,'duplicate protection summary retained');
 select ok((select extra->>'notes'='unclassified legacy session text' from public.gymbro_sessions),'legacy note not reclassified');
