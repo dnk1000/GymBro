@@ -1,12 +1,12 @@
 # V3 relational foundation candidate — issue #39
 
-Application version: `3.5.0-20261028T195515Z`
+Application version: `3.5.1-20261028T200955Z`
 Data schema: `8`
 Release status: **preparation**
 
 Approved mapping: 3.5.0 for #39 alone. Based on main `bec9d865cb41d9d56c204ba48468f2259f9664ab`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and additive migration `20261028042000`. The workout UI remains local; there is no personal migration or cutover. See [implementation and AC evidence](V3_RELATIONAL_PERSISTENCE.md).
 
-Local/CI/Preview results are pending validation; no accepted Production release or device verification is claimed. The sections below retain prior candidate evidence.
+The initial code CI passed 196/196 regressions but its database tests exposed an invalid xmin/subtransaction assumption in the lifecycle guard (initial bundle rejected, dependent cases then failed). The correction uses an immutable database-managed creation transaction, protects upserts/tombstones, and retains template provenance after canonical rename. Initial build was `3.5.0-20261028T195515Z`; the fix is `3.5.1-20261028T200955Z`. Current SQL/Preview results are pending validation; no accepted Production release or device verification is claimed. The sections below retain prior candidate evidence.
 
 # V3 scoped-notes release candidate
 

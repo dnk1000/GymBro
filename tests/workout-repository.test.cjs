@@ -70,3 +70,17 @@ test("repository transport uses single RPC loads and acknowledges complete match
   const uninitialized=f.repository.create({ownerId:f.owner,client:{rpc:async()=>({data:empty})}});
   assert.deepEqual(plain(await uninitialized.load()),{initialized:false});
 });
+test("new snapshots/guidance retain recorded template labels after canonical rename",async()=>{
+  const f=await fixture(),id=f.identity.resolveLabel(f.document.catalog,"Smith Press");
+  const doc=structuredClone(f.document);
+  doc.data.sessions=[];doc.data.activeSessionId=null;doc.data.sets=[];
+  doc.data.noteScopes.session=[];doc.data.noteScopes.exerciseSession=[];
+  doc.catalog=f.identity.renameExercise(doc.catalog,id,"Renamed canonical press");
+  const actions=f.repository.createActions({initial:{document:doc,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>after},createId:()=>"new-synthetic-session",now:()=>"2026-10-28T05:00:00.000Z"});
+  const result=await actions.execute("startGuidedSession",{date:"2026-10-28",templateId:"push",duration:60});
+  assert.equal(result.ok,true);
+  assert.equal(result.state.data.sessions[0].planSnapshot.slots[0].exercise.originalLabel,"Smith Press");
+  assert.equal(result.state.data.sessions[0].guided.slots[0].actualExercise.originalLabel,"Smith Press");
+  const saved=await actions.execute("logGuidedSet",{sessionId:result.sessionId,planSlotId:"slot-1",expectedRevision:0,requestId:"new-canonical",exercise:id,weight:10,reps:8,originalLabel:"Smith Press"});
+  assert.equal(saved.ok,true);assert.equal(saved.state.data.sets[0].exercise.originalLabel,"Smith Press");
+});

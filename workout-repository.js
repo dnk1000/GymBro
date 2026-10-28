@@ -225,12 +225,15 @@ const WorkoutRepository = (() => {
           });
           next.program.templates.forEach(t=>t.slots.forEach((s,i)=> {
             const index=name==="removeSlot" && args[0].templateId===t.id && i>=args[0].index ? i+1 : i;
-            retain(s,"exercise",document.data.program.templates.find(p=>p.id===t.id)?.slots[index]);
+            retain(s,"exercise",document.data.program.templates.find(p=>p.id===t.id)?.slots[index],args.find(isObject));
           }));
           next.sessions.forEach(s=> {
             const old=document.data.sessions.find(p=>p.id===s.id);
-            s.planSnapshot?.slots.forEach(p=>retain(p,"exercise",old?.planSnapshot?.slots.find(q=>q.id===p.id)));
-            s.guided?.slots.forEach(p=>retain(p,"actualExercise",old?.guided?.slots.find(q=>q.planSlotId===p.planSlotId),args.find(isObject)));
+            const template=document.data.program.templates.find(t=>t.id===s.templateId);
+            const planned=template ? snapshotPlan(template,s.duration) : null;
+            s.planSnapshot?.slots.forEach(p=>retain(p,"exercise",old?.planSnapshot?.slots.find(q=>q.id===p.id) ?? planned?.slots.find(q=>q.id===p.id)));
+            s.guided?.slots.forEach(p=>retain(p,"actualExercise",old?.guided?.slots.find(q=>q.planSlotId===p.planSlotId) ??
+              {actualExercise:s.planSnapshot?.slots.find(q=>q.id===p.planSlotId)?.exercise},args.find(isObject)));
             s.guided?.requests.forEach(r=>{ const prior=old?.guided?.requests.find(p=>p.id===r.id); if(prior) r.signature=prior.signature; });
           });
           for(const scope of ["exercise","exerciseSession"]) next.noteScopes[scope].forEach(n=>retain(n,"exercise",document.data.noteScopes[scope].find(p=>

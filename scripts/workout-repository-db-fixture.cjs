@@ -86,7 +86,7 @@ select is(public.gymbro_workout_normalize(public.gymbro_workout_read()),public.g
 select lives_ok($test$update public.gymbro_exercises set display_name=display_name||' renamed' where exercise_id='${exercise}'$test$,'canonical rename remains possible with actual workout references');
 select is((select count(*)::int from public.gymbro_sets s left join public.gymbro_exercises e using(owner_id,exercise_id) where e.exercise_id is null),0,'canonical rename leaves every actual set reference intact');
 select is((select count(*)::int from public.gymbro_snapshot_slots s left join public.gymbro_exercise_aliases a on a.owner_id=s.owner_id and a.label=s.original_label and a.exercise_id=s.exercise_id where a.exercise_id is null),0,'rename retains original snapshot provenance');
-insert into public.gymbro_sessions select owner_id,'owner-a-only',workout_date,status,created_at,completed_at,template_origin_id,duration,snapshot_name,snapshot_extra,999,present,extra from public.gymbro_sessions where session_id='${session}';
+insert into public.gymbro_sessions(owner_id,session_id,workout_date,status,created_at,completed_at,template_origin_id,duration,snapshot_name,snapshot_extra,position,present,extra) select owner_id,'owner-a-only',workout_date,status,created_at,completed_at,template_origin_id,duration,snapshot_name,snapshot_extra,999,present,extra from public.gymbro_sessions where session_id='${session}';
 select set_config('request.jwt.claim.sub','${other}',true);
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}',true);
 select throws_ok($test$update public.gymbro_sets set session_id='owner-a-only',session_position=99 where session_id is null$test$,'23503',null,'existing foreign-owner session cannot satisfy composite FK');

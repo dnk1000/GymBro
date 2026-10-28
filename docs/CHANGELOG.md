@@ -1,5 +1,9 @@
 # Changes
 
+## 3.5.1 — relational foundation validation fixes
+
+Correct database creation detection across subtransactions and preserve recorded template labels in new snapshots/guidance after canonical rename. Build `3.5.1-20261028T200955Z`; schema 8 unchanged. Initial SQL failure and retest evidence remain in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).
+
 ## 3.5.0 — #39 relational foundation candidate
 
 Owner-scoped relational workout schema, lossless canonical row mapping, and an opt-in DOM-free asynchronous repository under existing domain actions. No UI/storage-authority change or personal migration. Build `3.5.0-20261028T195515Z`; workout schema 8 is unchanged. Validation/acceptance evidence: [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md).

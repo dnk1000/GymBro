@@ -2,6 +2,10 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 relational foundation fix candidate — not yet accepted
+
+`3.5.1-20261028T200955Z`, schema 8; #39 only. Fixes initial SQL lifecycle validation and template-label preservation. Initial `3.5.0` CI regression passed; database integration failed and was diagnosed before any staging apply. Current validation is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md). No Production delivery or personal migration is claimed.
+
 ## V3 relational foundation candidate — not yet accepted
 
 `3.5.0-20261028T195515Z`, workout schema 8; #39 alone, approved October 28, 2026. Based on accepted main `bec9d86`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and migration `20261028042000`. Candidate lineage only; validation and acceptance remain pending in [the evidence record](V3_RELATIONAL_PERSISTENCE.md). No Production delivery, personal migration or cutover.

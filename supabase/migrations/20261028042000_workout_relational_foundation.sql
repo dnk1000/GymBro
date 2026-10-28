@@ -47,6 +47,7 @@ create table public.gymbro_sessions (
   completed_at text collate "C" check(completed_at ~ '^([0-9]{4}|[+-][0-9]{6})-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$' and completed_at>=created_at),
   template_origin_id text, duration int not null check(duration in (30,60)),
   snapshot_name text, snapshot_extra jsonb,
+  creation_transaction xid8 not null default pg_current_xact_id(),
   position bigint not null check(position>=0), present text[] not null, extra jsonb not null check(jsonb_typeof(extra)='object'),
   primary key(owner_id,session_id), unique(owner_id,session_id,workout_date),
   unique(owner_id,position) deferrable initially deferred,
@@ -150,13 +151,14 @@ begin
     end loop;
   end if;
   if tg_table_name='gymbro_sessions' then
+    if tg_op='INSERT' then new.creation_transaction:=pg_current_xact_id(); end if;
     if tg_op='UPDATE' and old.status='completed' and new is distinct from old then
       raise exception 'Completed session lifecycle is immutable' using errcode='23514';
     end if;
   end if;
   if tg_table_name in ('gymbro_snapshot_slots','gymbro_guidance','gymbro_guided_slots','gymbro_guided_requests') then
     select * into parent from public.gymbro_sessions where owner_id=new.owner_id and session_id=new.session_id;
-    if exists(select 1 from public.gymbro_sessions s where s.owner_id=new.owner_id and s.session_id=new.session_id and s.xmin<>pg_current_xact_id()::text::xid) then
+    if parent.creation_transaction<>pg_current_xact_id() then
       if tg_table_name='gymbro_snapshot_slots' or parent.status='completed' then
         raise exception 'Historical plan or completed guidance cannot be extended' using errcode='23514';
       end if;
@@ -167,15 +169,17 @@ begin
       (new.session_id,new.plan_slot_id,new.workout_date) is distinct from (old.session_id,old.plan_slot_id,old.workout_date) then
       raise exception 'Set membership is immutable' using errcode='23514';
     end if;
-    if (tg_op='INSERT' or old.session_id is distinct from new.session_id) and new.session_id is not null then
+    if ((tg_op='INSERT' and not exists(select 1 from public.gymbro_sets s where s.owner_id=new.owner_id and s.set_id=new.set_id)) or
+      (tg_op='UPDATE' and old.session_id is distinct from new.session_id)) and new.session_id is not null then
       select * into parent from public.gymbro_sessions where owner_id=new.owner_id and session_id=new.session_id;
       -- A new historical bundle may contain completed facts. Existing completed
       -- sessions never acquire new members. #28 owns personal migration.
-      if parent.status<>'active' and not exists(select 1 from public.gymbro_sessions s where s.owner_id=new.owner_id and s.session_id=new.session_id and s.xmin=pg_current_xact_id()::text::xid) then
+      if parent.status<>'active' and parent.creation_transaction<>pg_current_xact_id() then
         raise exception 'Cannot add membership to a completed session' using errcode='23514';
       end if;
     end if;
-    if tg_op='INSERT' and exists(select 1 from public.gymbro_guided_requests r where r.owner_id=new.owner_id and r.set_id=new.set_id and r.xmin<>pg_current_xact_id()::text::xid) then
+    if tg_op='INSERT' and exists(select 1 from public.gymbro_guided_requests r where r.owner_id=new.owner_id and r.set_id=new.set_id) and
+      not exists(select 1 from public.gymbro_sets s where s.owner_id=new.owner_id and s.set_id=new.set_id) then
       raise exception 'Submitted set identity cannot be reused' using errcode='23514';
     end if;
   end if;
@@ -237,7 +241,7 @@ begin
 end; $$;
 -- Snapshot facts and original request payloads have append-only grants.
 revoke update on public.gymbro_snapshot_slots,public.gymbro_guided_requests from authenticated;
-create trigger session_intent_guard before update on public.gymbro_sessions for each row execute function public.gymbro_workout_guard('workout_date','created_at','template_origin_id','duration','snapshot_name','snapshot_extra');
+create trigger session_intent_guard before update on public.gymbro_sessions for each row execute function public.gymbro_workout_guard('workout_date','created_at','template_origin_id','duration','snapshot_name','snapshot_extra','creation_transaction');
 
 create function public.gymbro_workout_normalize(rows jsonb) returns jsonb language sql immutable set search_path='' as $$
 select jsonb_object_agg(key,coalesce((select jsonb_agg(x order by x::text) from jsonb_array_elements(value) x),'[]'::jsonb)) from jsonb_each(rows)
@@ -247,7 +251,7 @@ declare t text; data jsonb; result jsonb := '{}'; who uuid := auth.uid();
 begin
   if who is null or (auth.jwt()->>'is_anonymous') is distinct from 'false' then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
   foreach t in array public.gymbro_workout_tables() loop
-    execute format('select coalesce(jsonb_agg(to_jsonb(r) order by to_jsonb(r)::text),''[]''::jsonb) from public.%I r where owner_id=$1',public.gymbro_workout_table(t)) into data using who;
+    execute format('select coalesce(jsonb_agg(to_jsonb(r)-''creation_transaction'' order by to_jsonb(r)::text),''[]''::jsonb) from public.%I r where owner_id=$1',public.gymbro_workout_table(t)) into data using who;
     result := result||jsonb_build_object(t,data);
   end loop;
   return result;
@@ -289,7 +293,7 @@ begin
     tbl:=public.gymbro_workout_table(t); keys:=public.gymbro_workout_keys(t);
     select string_agg(quote_ident(a.attname),',' order by a.attnum),
       string_agg(format('%I=excluded.%I',a.attname,a.attname),',' order by a.attnum) filter(where not a.attname=any(keys))
-      into columns,updates from pg_attribute a where a.attrelid=format('public.%I',tbl)::regclass and a.attnum>0 and not a.attisdropped;
+      into columns,updates from pg_attribute a where a.attrelid=format('public.%I',tbl)::regclass and a.attnum>0 and not a.attisdropped and a.attname<>'creation_transaction';
     for item in select value from jsonb_array_elements(next_rows->t) loop
       select value into prior from jsonb_array_elements(previous_rows->t) n where
         (select bool_and(n.value->key is not distinct from item->key) from unnest(keys) key);
