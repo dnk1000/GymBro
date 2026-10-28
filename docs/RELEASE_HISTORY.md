@@ -2,9 +2,13 @@
 
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
+## V3 opaque request-signature fix candidate — not yet accepted
+
+`3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; schema migration/SQL fixture are unchanged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
 ## V3 reviewed-import fix candidate — not yet accepted
 
-`3.5.4-20261028T204314Z`, schema 8; #39 only. The canonical adapter requires resolved IDs only for included import rows, retaining existing review/exclusion semantics, provenance and duplicate protection. Nine focused tests pass; the unchanged applied relational migration is retested with 110 SQL assertions. [Current evidence](V3_RELATIONAL_PERSISTENCE.md).
+`3.5.4-20261028T204314Z`, schema 8; #39 only. The canonical adapter requires resolved IDs only for included import rows, retaining existing review/exclusion semantics, provenance and duplicate protection. Nine focused tests pass; [final code CI](https://github.com/dnk1000/GymBro/actions/runs/40766039548) at `3646806` passed 199 application tests and fresh/reset SQL (190 each). The unchanged applied migration passed 110 hosted assertions, rollback/zero-owner checks and no-op reapply. Exact 3.5.4 Preview smoke passed. #27 and Level 3 acceptance remain pending; PR #59 is unmerged. [Current evidence](V3_RELATIONAL_PERSISTENCE.md).
 
 ## V3 request identity fix candidate — not yet accepted
 

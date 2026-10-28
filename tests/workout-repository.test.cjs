@@ -122,3 +122,12 @@ test("reviewed imports resolve only included rows and preserve duplicate protect
   assert.equal(result.state.catalog.aliases.some(a=>a.label==="unresolved excluded label"),false);
   assert.equal((await actions.execute("commitImport",draft)).code,"DUPLICATE_IMPORT");assert.equal(writes,1);
 });
+test("unknown legacy signature fields remain opaque and cannot become a false exact replay",async()=>{
+  const f=await fixture(),doc=structuredClone(f.document),id=f.identity.resolveLabel(doc.catalog,"Bench Press");
+  const signature=JSON.stringify({sessionId:f.sessionId,planSlotId:"slot-1",exercise:"Bench Press",weight:10,reps:8,futureMeaning:"must not discard"});
+  doc.data.sessions[0].guided.requests.push({id:"opaque-request",setId:"opaque-tombstone",signature});let writes=0;
+  const actions=f.repository.createActions({initial:{document:doc,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>{writes++;return after;}}});
+  const result=await actions.execute("logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"opaque-request",exercise:id,weight:10,reps:8});
+  assert.equal(result.code,"REQUEST_CONFLICT");assert.equal(writes,0);
+  assert.equal(actions.getWorkoutState().data.sessions[0].guided.requests.at(-1).signature,signature);
+});

@@ -1,5 +1,9 @@
 # Changes
 
+## 3.5.5 — preserve opaque request-signature meaning
+
+`3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; schema migration/SQL fixture are unchanged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
+
 ## 3.5.4 — preserve excluded reviewed-import rows
 
 `3.5.4-20261028T204314Z`, schema 8; #39 only. The canonical adapter requires resolved IDs only for included import rows, retaining existing review/exclusion semantics, provenance and duplicate protection. Nine focused tests pass; the unchanged applied relational migration is retested with 110 SQL assertions. [Current evidence](V3_RELATIONAL_PERSISTENCE.md).

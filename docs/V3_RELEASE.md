@@ -1,6 +1,6 @@
 # V3 relational foundation candidate — issue #39
 
-Application version: `3.5.4-20261028T204314Z`
+Application version: `3.5.5-20261028T205308Z`
 Data schema: `8`
 Release status: **preparation**
 
@@ -103,4 +103,8 @@ The 3.5.2 code at `0ab0aa3` passed both jobs of [CI 40762442209](https://github.
 
 ## Reviewed-import compatibility follow-up
 
-Candidate `3.5.4-20261028T204314Z` corrects the canonical adapter to resolve only included reviewed-import rows, preserving the accepted exclusion contract. A new regression failed before the one-line fix and now passes; final focused suite **9/9**. SQL fixture coverage now also persists an actual reviewed import with an unresolved excluded row (**110 assertions**). The schema migration is unchanged from the verified/applied 3.5.3 revision. Final CI/hosted retest is pending; prior 3.5.3 evidence above remains valid for its captured revision.
+Candidate `3.5.4-20261028T204314Z` corrects the canonical adapter to resolve only included reviewed-import rows, preserving the accepted exclusion contract. A new regression failed before the one-line fix and now passes; final focused suite **9/9**. SQL fixture coverage now also persists an actual reviewed import with an unresolved excluded row (**110 assertions**). The schema migration is unchanged from the verified/applied 3.5.3 revision. Final [CI 40766039548](https://github.com/dnk1000/GymBro/actions/runs/40766039548) at `3646806f5504c7e90bbdfcd1fae678388fd43f4b` passed **199/199** application tests and **190 SQL assertions on both fresh/reset DBs**. Hosted staging passed **110/110** with verified rollback/zero fixture owners and no-op reapply; the unchanged migration was not edited. Exact 3.5.4 Preview/console smoke passed. AC-1 through AC-8 technical evidence is PASS individually in the completion report; #27 and Level 3 acceptance remain pending. Prior 3.5.3 evidence above remains valid for its captured revision.
+
+## Opaque request-signature safety follow-up
+
+Candidate `3.5.5-20261028T205308Z` limits legacy signature normalization to the exact serialization emitted by the accepted domain signature function. Unknown fields/format stay opaque and reject replay conservatively. The added regression produced false REPLAY before the one-line guard and now passes; local focused suite **10/10**. The schema migration and 110-assertion SQL fixture are unchanged. Current CI/hosted retest is pending; the 3.5.4 verification remains evidence for that captured revision.

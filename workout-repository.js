@@ -205,7 +205,7 @@ const WorkoutRepository = (() => {
             if(signatureSchemes[requestKey(s.id,r.id)]==="canonical-ids") return;
             try { const p=JSON.parse(r.signature); if(isObject(p) && typeof p.exercise==="string") {
               const id=ExerciseIdentity.resolveLabel(document.catalog,p.exercise);
-              if(id) r.signature=guidedRequestSignature({...p,exercise:id});
+              if(id && r.signature===guidedRequestSignature(p)) r.signature=guidedRequestSignature({...p,exercise:id});
             } } catch { /* Opaque historical signatures are never reinterpreted. */ }
           }));
           const actions = createWorkoutActions({ getState:()=>dto, createId, now, prepareOnly:true });
