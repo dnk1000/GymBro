@@ -1,5 +1,9 @@
 # Changes
 
+## 3.5.2 — atomic relationship staging fix
+
+`3.5.2-20261028T201618Z`, schema 8; #39 only. Each RPC defers relationship staging then forces constraints before acknowledgement, including repeated invocations in one transaction. No scope or constraint reduction. Verification/acceptance is tracked in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).
+
 ## 3.5.1 — relational foundation validation fixes
 
 Correct database creation detection across subtransactions and preserve recorded template labels in new snapshots/guidance after canonical rename. Build `3.5.1-20261028T200955Z`; schema 8 unchanged. Initial SQL failure and retest evidence remain in [the implementation record](V3_RELATIONAL_PERSISTENCE.md).

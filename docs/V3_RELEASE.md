@@ -1,6 +1,6 @@
 # V3 relational foundation candidate — issue #39
 
-Application version: `3.5.1-20261028T200955Z`
+Application version: `3.5.2-20261028T201618Z`
 Data schema: `8`
 Release status: **preparation**
 
@@ -94,3 +94,5 @@ This is preparation/evidence, not Production acceptance or authorization to merg
 Live setup approval: the user explicitly approved the project assignments and, after the first Save exposed disabled anonymous Auth, approved enabling **Allow anonymous sign-ins** only on GymBro-Staging for the diagnostic. That setting was saved and verified; other Auth settings were preserved. Both hosted GitHub automatic database-production-deploy toggles are OFF (future Production already OFF; staging turned OFF). Vercel Production variables/schema/data were not changed. A read-only visit to the [Production config endpoint](https://gymbro-v15.vercel.app/api/supabase-probe-config) returned `{"enabled":false}`. No personal workout database or backup was accessed.
 
 Preview lineage: `3.1.0-20261027T212930Z` introduced #38; `3.1.1-20261027T214344Z` fixes the CLI metadata-verification invocation. Both belong solely to #38, with no workout-schema change.
+
+#39 follow-up at `3.5.2-20261028T201618Z` explicitly stages deferred FK relationships on each atomic RPC invocation and forces validation before acknowledgement. The prior 3.5.1 run passed the main round trips/actions but found a second-owner initialization failure when a prior invocation had left constraints immediate; a note-target test was also corrected to exercise the intended FK rather than its already-tested immutable key. No constraint or assertion was weakened.

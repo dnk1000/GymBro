@@ -52,11 +52,13 @@ select throws_ok($test$update public.gymbro_sessions set snapshot_name='rewritte
 select throws_ok($test$update public.gymbro_sets set session_id=null,plan_slot_id=null,session_position=null where session_id is not null$test$,'23514',null,'correction cannot silently detach membership');
 select throws_ok($test$update public.gymbro_sets set owner_id='${other}'$test$,'23514',null,'owner transfer rejected');
 select throws_ok($test$update public.gymbro_template_slots set exercise_id='11111111-1111-4111-8111-111111111111'$test$,'23503',null,'unknown canonical reference rejected');
-select throws_ok($test$update public.gymbro_exercise_session_notes set plan_slot_id='missing'$test$,'23503',null,'invalid snapshot note target rejected');
+select throws_ok($test$insert into public.gymbro_exercise_session_notes select owner_id,session_id,exercise_id,original_label,'missing',text,position+10,present,extra from public.gymbro_exercise_session_notes limit 1$test$,'23503',null,'invalid snapshot note target rejected');
 select throws_ok($test$insert into public.gymbro_imports select * from public.gymbro_imports$test$,'23505',null,'import ID uniqueness enforced');
 select throws_ok($test$insert into public.gymbro_exercise_session_notes select * from public.gymbro_exercise_session_notes where plan_slot_id is null$test$,'23505',null,'manual note null target uniqueness enforced');
 select throws_ok($test$update public.gymbro_sets set session_id='missing',session_position=0 where session_id is null$test$,'23503',null,'orphan session membership rejected');
 select throws_ok($test$update public.gymbro_guidance set current_slot_id='missing'$test$,'23503',null,'guided current slot must exist');
+select throws_ok($test$update public.gymbro_workout_state set selected_template_id='missing'$test$,'23503',null,'selected current template must exist');
+select throws_ok($test$insert into public.gymbro_sessions(owner_id,session_id,workout_date,status,created_at,completed_at,template_origin_id,duration,snapshot_name,snapshot_extra,position,present,extra) select owner_id,'active-one',workout_date,'active',created_at,null,template_origin_id,duration,snapshot_name,snapshot_extra,1000,present,extra from public.gymbro_sessions where session_id='${session}'; insert into public.gymbro_sessions(owner_id,session_id,workout_date,status,created_at,completed_at,template_origin_id,duration,snapshot_name,snapshot_extra,position,present,extra) select owner_id,'active-two',workout_date,'active',created_at,null,template_origin_id,duration,snapshot_name,snapshot_extra,1001,present,extra from public.gymbro_sessions where session_id='${session}'$test$,'23505',null,'two active sessions are rejected atomically');
 select throws_ok($test$update public.gymbro_guided_slots set position=position+50$test$,'23514',null,'guided order must exactly follow snapshot');
 select throws_ok($test$update public.gymbro_snapshot_slots set role='substitute'$test$,'42501',null,'snapshot update is not granted');
 select throws_ok($test$update public.gymbro_guided_requests set signature='changed'$test$,'42501',null,'request signature update is not granted');
@@ -72,6 +74,7 @@ select ok(not has_table_privilege('anon','public.${full}','SELECT'),'${table} si
   }
   sql.push(`select is_empty($test$update public.gymbro_sets set notes='other user' returning *$test$,'cross-user update affects zero');
 select is_empty($test$delete from public.gymbro_sets returning *$test$,'cross-user delete affects zero');
+select throws_ok($test$insert into public.gymbro_session_notes select x.* from relational_expected,jsonb_populate_recordset(null::public.gymbro_session_notes,rows->'session_notes') x where step=0$test$,'42501',null,'direct table insert cannot claim another owner');
 select throws_ok($test$select public.gymbro_workout_commit(null,(select rows from relational_expected where step=0))$test$,'42501',null,'RPC cannot supply another owner');
 select lives_ok($test$select public.gymbro_workout_commit(null,${literal(f.repository.project(f.document,other,f.bodyweightIds))})$test$,'second owner can use same exercise IDs privately');
 select throws_ok($test$update public.gymbro_sets set session_id='cross-owner-session',session_position=0 where session_id is null$test$,'23503',null,'another owner cannot supply missing relationship');

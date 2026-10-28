@@ -278,6 +278,10 @@ begin
     if jsonb_typeof(next_rows->t)<>'array' or exists(select 1 from jsonb_array_elements(next_rows->t) r where (r->>'owner_id') is distinct from who::text) then
       raise exception 'Wrong owner or malformed row bundle' using errcode='42501'; end if;
   end loop;
+  -- A caller may already have made constraints immediate earlier in its
+  -- transaction. Stage this graph with deferred FKs, then force validation
+  -- before acknowledgement below on every invocation.
+  set constraints all deferred;
   -- Remove only explicitly removed facts for supported deletion operations.
   foreach t in array array['sets','template_slots'] loop
     tbl:=public.gymbro_workout_table(t); keys:=public.gymbro_workout_keys(t);
