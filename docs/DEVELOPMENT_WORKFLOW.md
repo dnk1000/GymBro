@@ -210,7 +210,7 @@ Identify remaining work, known negative evidence, blockers and pending actions i
 
 Provide this report for completed work and partial/blocked handoffs. Keep it proportionate; use `None` or `Not applicable` where appropriate and link evidence rather than repeating logs. Include:
 
-- **Scope and delivery:** issue or approved work package; branch; final commit; PR; exact files changed; concise implementation summary and user-visible behavior changes/preservation.
+- **Scope and delivery:** issue or approved work package; branch; final commit; PR; exact files changed; concise implementation summary and user-visible behavior changes/preservation; unexpected changes (or `None`); repository scope-check method and result.
 - **Classification and verification:** assigned Change Level and rationale; issue-specific Validation approach; actual tests/checks and results; applicable exact Preview environment/revision/build and browser/device evidence (actual device/iOS/browser/build/commit/results for required physical iPhone checks).
 - **Acceptance evidence:** every stable AC identifier mapped as `AC-N → method/evidence → PASS / FAIL / UNVERIFIED`; make failed or unverified criteria explicit.
 - **Data and documentation:** data/schema/migration and supported-compatibility impact; owning documentation changes; applicable release/version handling based on actual evidence.
