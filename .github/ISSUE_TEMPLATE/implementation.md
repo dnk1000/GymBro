@@ -48,7 +48,7 @@ Keep identifiers stable so completion evidence can reference them. Implementatio
 
 **Required checks:** Specify known test/fixture, Preview, browser/device, migration or other evidence requirements. Otherwise let the agent select a proportionate verification mechanism for each criterion.
 
-**Completion report:** Return branch, commit, PR, exact files changed and a concise implementation summary; assigned Change Level, actual verification/results and applicable Preview/browser/device evidence; data/schema impact, documentation changes, deviations, unresolved risks, unverified criteria and anything requiring human acceptance.
+**Completion report:** Use the canonical [Completion report](../../docs/DEVELOPMENT_WORKFLOW.md#completion-report) in `docs/DEVELOPMENT_WORKFLOW.md`.
 
 Map every acceptance criterion to actual evidence:
 
@@ -75,5 +75,7 @@ Do not mark `Ready` while a material governing product, architecture, data, secu
 ## Codex execution contract
 
 This issue inherits all repository agent invariants in `AGENTS.md`.
+
+Completion is governed by the repository [Definition of Done](../../AGENTS.md#definition-of-done) in `AGENTS.md`.
 
 It also inherits the repository source-of-truth hierarchy and the conflict procedure in `docs/DEVELOPMENT_WORKFLOW.md`. Read governing references and dependencies before implementation; implement only approved issue scope. Escalate material unresolved decisions under that procedure and provide acceptance evidence before claiming completion.
