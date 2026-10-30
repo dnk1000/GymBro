@@ -2,6 +2,8 @@
 
 Issue #20 adds collapsed-by-default session/date cards over this existing grouping/detail contract; see [History disclosure](HISTORY_DISCLOSURE.md) for current interaction behavior and acceptance evidence. The milestone record below retains its original release context.
 
+Issue #21 adds collapsed exercise occurrences inside expanded session/date cards. A consecutive run of the exact recorded exercise name is one display occurrence; A → B → A stays three occurrences, including when a source filter hides B. Each summary shows its matching set count and up to three recorded load/unit/reps tuples, retaining zero values, missing values and explicit incompleteness without rankings or unit conversion. Open an exercise to see its unchanged set rows/actions. Expand all / Collapse all continue to affect session/date cards, preserving independent exercise choices. Exercise choices share the existing transient History-visit lifecycle; no presentation state is saved. Notes/guided status remain at their existing scopes. No schema, identity or historical fact changes; the mobile set-layout work in #36 remains separate. Current #21 verification/acceptance belongs in its PR completion report.
+
 Historical milestone documentation: Milestone 4 adds schema 7 and guided actions; see [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md) for current guidance contracts. Existing unguided behavior remains supported.
 
 This milestone starts from accepted main `14b12a88166d8c9cb7dfb3d70bccb0f68d0c8d34`. Application version is the independent canonical 2.3.0 build in `app-version.js`. Data schema stays **6**, storage key stays `daveGymTrackerV1`, and no migration or workout-action changes are introduced.

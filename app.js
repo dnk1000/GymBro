@@ -635,12 +635,11 @@ function renderToday() {
     : `<div class="sub">No sets logged for ${d}.</div>`;
 }
 
-function historySetTable(group) {
-  const rows = group.sets;
-  return `<table><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td>${s.date}</td><td><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : index + 1}.</span> ${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td>${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td>${esc(s.notes || "—")}<details class="set-record"><summary>Record details</summary><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+function historySetTable(group, rows = group.sets) {
+  return `<table><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td>${s.date}</td><td><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : group.sets.indexOf(s) + 1}.</span> ${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td>${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td>${esc(s.notes || "—")}<details class="set-record"><summary>Record details</summary><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
 }
 function rememberHistoryExpansion() {
-  historyTable.querySelectorAll(".history-disclosure").forEach((el) => {
+  historyTable.querySelectorAll("[data-history-key]").forEach((el) => {
     if (el.open) expandedHistoryGroups.add(el.dataset.historyKey);
     else expandedHistoryGroups.delete(el.dataset.historyKey);
   });
@@ -650,6 +649,18 @@ function setHistoryExpanded(open) {
     el.open = open;
   });
   rememberHistoryExpansion();
+}
+function historyExerciseDisclosures(group, key) {
+  return group.exerciseGroups.map((run) => {
+    const runKey = JSON.stringify([key, run.firstSetId]);
+    const performance = run.sets.slice(0, 3).map((set) =>
+      `${fmt(set.weight)} ${esc(set.unit)} × ${fmt(set.reps)}${set.complete === false ? " (incomplete)" : ""}`,
+    ).join(" · ");
+    return `<details class="history-exercise" data-history-key="${esc(runKey)}" ${expandedHistoryGroups.has(runKey) ? "open" : ""}>
+      <summary class="history-summary history-exercise-summary"><strong>${esc(run.exercise)}</strong><span class="sub history-counts">${run.sets.length} ${run.sets.length === 1 ? "set" : "sets"} · ${performance}${run.sets.length > 3 ? ` · +${run.sets.length - 3} more` : ""}</span></summary>
+      <div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(run.exercise)} set details">${historySetTable(group, run.sets)}</div>
+    </details>`;
+  }).join("");
 }
 function renderHistory() {
   // Read native details state synchronously before replacing the DOM; a toggle
@@ -682,7 +693,7 @@ function renderHistory() {
       <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
       ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul><p class="sub">Set records below show the actual exercise performed, including earlier substitutions.</p></details>` : ""}
       ${session ? historyScopedNotes(session) : ""}
-      ${group.sets.length ? `<p class="sub">Edit or delete sets from any source. Import IDs remain recorded to prevent accidental reimport. Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
+      ${group.sets.length ? `<p class="sub">Open an exercise to review, edit or delete its sets. Import IDs remain recorded to prevent accidental reimport. Scroll the table sideways for all fields and actions.</p>${historyExerciseDisclosures(group, key)}` : ""}
       </div></details>
     </article>`;
       })

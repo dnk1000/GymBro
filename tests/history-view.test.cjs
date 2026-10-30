@@ -84,3 +84,28 @@ test("source filtering preserves set order, original totals, and sessionless rec
   assert.equal(imported[0].sets[0].complete, false);
   assert.deepEqual(plain(groups(source, "unknown")), []);
 });
+
+test("exercise occurrences follow authoritative order before filtering and stay detached", () => {
+  const source = data();
+  source.sets = [
+    { id: "a2", exercise: "A", source: "manual", sessionId: "first" },
+    { id: "b", exercise: "B", source: "chatgpt", sessionId: "first" },
+    { id: "a1", exercise: "A", source: "chatgpt", sessionId: "first" },
+    { id: "a3", exercise: "A", source: "manual", sessionId: "first" },
+    ...["A", "A", "B", "A"].map((exercise, i) => ({
+      id: `l${i}`, date: "2026-10-23", exercise,
+      source: i === 2 ? "chatgpt" : "manual",
+    })),
+  ];
+  source.sessions = [{ ...source.sessions[0], setIds: ["a1", "a2", "b", "a3"] }];
+  const original = structuredClone(source);
+  const all = plain(groups(source));
+  assert.deepEqual(all[0].exerciseGroups.map(run => run.sets.map(set => set.id)), [["a1", "a2"], ["b"], ["a3"]]);
+  assert.deepEqual(all[1].exerciseGroups.map(run => run.sets.map(set => set.id)), [["l0", "l1"], ["l2"], ["l3"]]);
+  const manual = plain(groups(source, "manual"));
+  assert.deepEqual(manual[0].exerciseGroups.map(run => [run.firstSetId, run.sets.map(set => set.id)]), [["a1", ["a2"]], ["a3", ["a3"]]]);
+  assert.deepEqual(manual[1].exerciseGroups.map(run => run.sets.map(set => set.id)), [["l0", "l1"], ["l3"]]);
+  assert.equal(manual[1].session, undefined);
+  all[0].exerciseGroups[0].sets[0].exercise = "changed";
+  assert.deepEqual(source, original);
+});

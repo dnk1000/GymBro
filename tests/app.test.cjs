@@ -56,6 +56,7 @@ async function app(t, options = {}) {
 async function showHistoryDetails(page) {
   await page.locator('[data-view="history"]').click();
   await page.getByRole('button', { name: 'Expand all', exact: true }).click();
+  await page.locator('.history-exercise').evaluateAll(els => els.forEach(el => { el.open = true; }));
 }
 async function stored(page) {
   return page.evaluate((key) => localStorage.getItem(key), KEY);
@@ -1484,6 +1485,120 @@ async function sessionHistoryFixture(p) {
   });
 }
 
+async function exerciseHistoryFixture(p) {
+  return p.evaluate(() => {
+    const ok = result => { if (!result.ok) throw Error(JSON.stringify(result)); return result; };
+    const date = "2026-10-24";
+    const sessionId = ok(workoutActions.createSession({ date, templateId: "push", duration: 60 })).sessionId;
+    const inputs = [
+      { exercise: "Seated Row", weight: 100, unit: "lb", reps: 8 },
+      { exercise: "Seated Row", weight: 0, unit: "bodyweight", reps: 10 },
+      { exercise: "Bench Press", weight: 45, unit: "lb/side", reps: 6 },
+      { exercise: "Seated Row", weight: 25, unit: "assist lb", reps: null, complete: false },
+    ];
+    const ids = inputs.map(input => ok(workoutActions.logSet({ date, ...input })).setId);
+    ok(workoutActions.completeSession(sessionId));
+    const legacyIds = inputs.map(input => ok(workoutActions.logSet({ date, sessionId: null, ...input })).setId);
+    // Deliberately hide the intervening B and the first A under the manual filter.
+    for (const id of [ids[0], ids[2], legacyIds[0], legacyIds[2]]) db.sets.find(set => set.id === id).source = "chatgpt";
+    // Explicit session order must come from setIds, not physical array order.
+    db.sets = [...db.sets.filter(set => !ids.includes(set.id)), ...ids.slice().reverse().map(id => db.sets.find(set => set.id === id))];
+    renderAll();
+    return { sessionId, ids, legacyIds };
+  });
+}
+
+test("exercise disclosure preserves consecutive occurrences, source/state boundaries and data without writes", async (t) => {
+  const p = await app(t);
+  const { sessionId, ids, legacyIds } = await exerciseHistoryFixture(p);
+  const original = await backup(p), raw = await stored(p);
+  await p.evaluate(() => {
+    window.disclosureWrites = 0;
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (...args) { window.disclosureWrites++; return write.apply(this, args); };
+  });
+  await p.locator('[data-view="history"]').click();
+  const session = p.locator(`[data-session-id="${sessionId}"]`);
+  await session.locator(':scope > details > summary').click();
+  const runs = session.locator('.history-exercise');
+  assert.equal(await runs.count(), 3);
+  assert.equal(await session.locator('tbody tr:visible').count(), 0);
+  assert.deepEqual(await runs.locator(':scope > summary > strong').allTextContents(), ['Seated Row', 'Bench Press', 'Seated Row']);
+  assert.match(await runs.nth(0).locator(':scope > summary').innerText(), /2 sets · 100 lb × 8 · 0 bodyweight × 10/);
+  assert.match(await runs.nth(2).locator(':scope > summary').innerText(), /25 assist lb × — \(incomplete\)/);
+  await runs.nth(0).locator(':scope > summary').click();
+  assert.deepEqual(await session.locator('tbody tr:visible').evaluateAll(rows => rows.map(row => row.dataset.setId)), ids.slice(0, 2));
+  await runs.nth(2).locator(':scope > summary').click();
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true);
+  await runs.nth(2).locator(':scope > summary').click();
+  assert.equal(await runs.nth(2).evaluate(el => el.open), false);
+  await p.locator('#historyFilter').selectOption('manual');
+  assert.equal(await runs.count(), 2, 'hidden intervening exercise never combines repeated A');
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true, 'key survives filtering out first set');
+  assert.deepEqual(await session.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), [ids[1], ids[3]]);
+  await p.locator('#historyFilter').selectOption('imported');
+  await p.locator('#historyFilter').selectOption('all');
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true);
+  await p.evaluate(() => { renderAll(); renderHistory(); });
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true);
+  await session.locator(':scope > details > summary').click();
+  await session.locator(':scope > details > summary').click();
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true, 'outer disclosure retains inner choice');
+  const legacy = p.locator('[data-legacy-date="2026-10-24"]');
+  await legacy.locator(':scope > details > summary').click();
+  assert.equal(await legacy.locator('.history-exercise').count(), 3);
+  assert.deepEqual(await legacy.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), legacyIds);
+  assert.match(await legacy.locator('tbody tr').nth(2).textContent(), /3\. Bench Press/);
+  assert.deepEqual(await session.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), ids);
+  await p.getByRole('button', { name: 'Expand all', exact: true }).click();
+  assert.equal(await runs.nth(1).evaluate(el => el.open), false, 'session bulk control preserves exercise choices');
+  await p.getByRole('button', { name: 'Collapse all', exact: true }).click();
+  await p.locator('[data-view="dashboard"]').click();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-exercise[open]').count(), 0);
+  assert.equal(await p.evaluate(() => window.disclosureWrites), 0);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-exercise[open]').count(), 0);
+});
+
+for (const width of [320, 390, 1280]) {
+  test(`exercise disclosure supports full-summary touch, keyboard and escaped text at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 }, hasTouch: true });
+    const { sessionId, ids } = await exerciseHistoryFixture(p);
+    await p.evaluate(id => {
+      db.sets.find(set => set.id === id).exercise = '<img src=x onerror="window.exerciseXss=1">' + 'LongExerciseName'.repeat(8);
+      renderHistory();
+    }, ids[2]);
+    await p.locator('[data-view="history"]').click();
+    const session = p.locator(`[data-session-id="${sessionId}"] > details`);
+    await session.locator(':scope > summary').click();
+    const run = session.locator('.history-exercise').nth(1), summary = run.locator(':scope > summary');
+    assert.equal(await p.locator('#historyTable img').count(), 0);
+    assert.equal(await p.evaluate(() => window.exerciseXss), undefined);
+    assert.match(await summary.innerText(), /<img src=x/);
+    assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    const box = await summary.boundingBox();
+    assert.ok(box.height >= 44 && box.width >= 150);
+    await summary.tap({ position: { x: box.width - 8, y: box.height - 8 } });
+    assert.equal(await run.evaluate(el => el.open), true);
+    assert.equal(await session.evaluate(el => el.open), true);
+    assert.ok(await run.getByRole('button', { name: 'Edit', exact: true }).isVisible());
+    await run.locator('.set-record > summary').click();
+    assert.equal(await run.evaluate(el => el.open), true);
+    await summary.focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await run.evaluate(el => el.open), false);
+    await p.keyboard.press('Space');
+    assert.equal(await run.evaluate(el => el.open), true);
+    assert.match(await summary.evaluate(el => getComputedStyle(el, '::after').transform), /matrix\(0, 1, -1, 0/);
+    assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await p.locator('#history').screenshot({ path: `test-results/issue21-${width}.png` });
+  });
+}
+
 test("History disclosure preserves independent session/date state through filters and rerenders without writing", async (t) => {
   const p = await app(t);
   const ids = await sessionHistoryFixture(p);
@@ -1516,6 +1631,7 @@ test("History disclosure preserves independent session/date state through filter
   assert.equal(await second.evaluate(el => el.open), true);
   await legacy.locator(':scope > summary').click();
   assert.match(await legacy.locator('.history-details').innerText(), /no saved session identity/);
+  await legacy.locator('.history-exercise > summary').first().click();
   await legacy.locator('.set-record summary').first().click();
   assert.equal(await legacy.evaluate(el => el.open), true, 'nested metadata does not toggle its card');
   await p.evaluate(() => { renderAll(); renderHistory(); });
@@ -1595,6 +1711,7 @@ for (const width of [320, 390, 1280]) {
     assert.equal(await card.evaluate(el => el.open), false);
     await p.keyboard.press('Space');
     assert.equal(await card.evaluate(el => el.open), true);
+    await card.locator('.history-exercise > summary').first().click();
     assert.ok(await card.getByRole('button', { name: 'Edit', exact: true }).first().isVisible());
     assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     for (const name of ['Expand all', 'Collapse all']) {
