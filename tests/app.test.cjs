@@ -3036,6 +3036,6 @@ for (const width of [320, 390, 1280]) {
     assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(await backup(p), before);
     assert.equal(await stored(p), raw);
-    await p.locator('#historyTable').screenshot({ path: 'test-results/issue36-' + width + '.png' });
+    await row.screenshot({ path: 'test-results/issue36-' + width + '.png' });
   });
 }
