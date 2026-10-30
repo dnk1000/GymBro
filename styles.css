@@ -530,7 +530,8 @@ canvas {
   line-height: 1;
   color: var(--accent);
 }
-.history-disclosure[open] > .history-summary::after {
+.history-disclosure[open] > .history-summary::after,
+.history-exercise[open] > .history-summary::after {
   transform: rotate(90deg);
 }
 .history-summary:focus-visible {
@@ -558,6 +559,18 @@ canvas {
 }
 .history-details {
   padding: 0 14px 14px;
+}
+.history-exercise {
+  min-width: 0;
+  margin-top: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.history-exercise-summary {
+  padding-left: 10px;
+}
+.history-exercise > .history-set-scroll {
+  margin: 0 10px 10px;
 }
 .history-group h3 {
   margin: 0;

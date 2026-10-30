@@ -1,3 +1,11 @@
+# History exercise disclosure candidate — issue #21
+
+Application version: `3.8.0-20261030T150933Z`
+Data schema: `8`
+Release status: **preparation**
+
+User-approved mapping: **3.8.0 for #21 alone**, October 30, 2026. Based on accepted main `b3ca7ae`; branch `codex/issue-21-exercise-disclosure`. Change Level 2. Consecutive exercise occurrences have independent collapsed summaries inside session/date cards. Summaries show recorded load/unit/reps; expanding reveals the existing ordered set table and correction actions. No data/schema/persistence change. Physical iPhone Safari remains unverified; this is not an accepted Production release. Current verification and acceptance evidence belong in the issue #21 PR completion report.
+
 # Issue #20 compact-layout refinement
 
 Application version: `3.7.1-20261030T144204Z`

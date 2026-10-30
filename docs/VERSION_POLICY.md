@@ -70,3 +70,5 @@ Keep workout `DATA_VERSION`, any future explicitly versioned cloud/backup schema
 The user explicitly approved **3.6.0 for #40 alone** on October 30, 2026, with the [concurrency design](V3_CONCURRENCY_PROPOSAL.md). This is a candidate mapping, not Production acceptance or merge approval.
 
 The user explicitly approved **3.7.0 for #20 alone** on October 30, 2026 in the #20 implementation conversation. This maps the History disclosure feature to its own candidate; no acceptance, merge or Production approval is implied.
+
+The user explicitly approved **3.8.0 for #21 alone** on October 30, 2026 in the #21 implementation conversation. This maps exercise-level History disclosure to its own candidate; no acceptance, merge or Production approval is implied.

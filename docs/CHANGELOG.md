@@ -1,5 +1,9 @@
 # Changes
 
+## 3.8.0 — History exercise disclosure candidate
+
+`3.8.0-20261030T150933Z`, #21 alone; schema 8 unchanged. Consecutive exercise occurrences have independent collapsed summaries inside session/date cards. Recorded load/unit/reps summaries reveal existing ordered sets/actions. No data/schema/persistence change. Candidate verification belongs in the #21 PR; physical iPhone Safari remains unverified. No accepted Production release is claimed.
+
 ## 3.7.1 — compact History summaries
 
 `3.7.1-20261030T144204Z`, #20 alone. Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED.
