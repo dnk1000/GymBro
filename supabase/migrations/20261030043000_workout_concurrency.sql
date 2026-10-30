@@ -82,7 +82,7 @@ $$;
 
 -- Rebind only Auth lookups in the existing invoker helpers; preserve the exact
 -- original row-diff, immutable-intent and relationship constraints.
-create or replace function public.gymbro_workout_read() returns jsonb language plpgsql stable security invoker set search_path='' as $
+create or replace function public.gymbro_workout_read() returns jsonb language plpgsql stable security invoker set search_path='' as $$
 declare t text; data jsonb; result jsonb := '{}'; who uuid := public.gymbro_request_owner();
 begin
   if who is null or public.gymbro_request_permanent() is not true then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
@@ -91,9 +91,9 @@ begin
     result := result||jsonb_build_object(t,data);
   end loop;
   return result;
-end; $;
+end; $$;
 create or replace function public.gymbro_workout_commit(previous_rows jsonb,next_rows jsonb) returns jsonb
-language plpgsql security invoker set search_path='' as $
+language plpgsql security invoker set search_path='' as $$
 declare current_rows jsonb; t text; tbl text; item jsonb; prior jsonb; keys text[]; key_match text; columns text; updates text; who uuid := public.gymbro_request_owner();
 begin
   if who is null or public.gymbro_request_permanent() is not true then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
@@ -152,7 +152,7 @@ begin
   if public.gymbro_workout_normalize(current_rows) is distinct from public.gymbro_workout_normalize(next_rows) then
     raise exception 'Incomplete or contradictory commit acknowledgement' using errcode='23514'; end if;
   return current_rows;
-end; $;
+end; $$;
 
 -- STABLE read functions see the same statement snapshot for revision and facts.
 create function public.gymbro_workout_snapshot() returns jsonb

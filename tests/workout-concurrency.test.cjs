@@ -76,3 +76,12 @@ test('definitive rollback keeps state and request reuse with altered packet cann
   const p=f.calls.at(-1).args.packet,changed=structuredClone(p);changed.args[0].notes='altered';
   assert.equal((await f.repository.submit(changed)).code,'REQUEST_CONFLICT');assert.equal(f.getSaved().revision,'1');
 });
+test('a stale local no-op checks fresh state and conflicts without automatically preparing a new write',async()=>{
+  const f=await serverFixture(),a=f.create();
+  assert.equal((await a.execute('clearPlan')).ok,true);
+  const b=f.create();assert.equal((await a.execute('selectPlan',{templateId:'push',duration:60})).code,'OK');
+  const writes=f.calls.filter(c=>c.name==='gymbro_workout_mutate').length;
+  assert.equal((await b.execute('clearPlan')).code,'CONFLICT');
+  assert.equal(f.calls.filter(c=>c.name==='gymbro_workout_mutate').length,writes,'no automatic rebase/write');
+  await b.refresh();assert.equal((await b.execute('clearPlan')).code,'OK');
+});

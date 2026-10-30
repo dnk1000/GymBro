@@ -88,14 +88,14 @@ const WorkoutConcurrency = (() => {
           const prepared = await prepare(base, name, clone(args));
           if (!alive || currentGeneration !== generation) return result("DISPOSED");
           if (!prepared.candidate) {
-            if (prepared.result.code === "REPLAY") {
+            if (["REPLAY","NO_CHANGE"].includes(prepared.result.code)) {
               try {
                 const loaded = await repository.load();
                 if (!alive || currentGeneration !== generation) return result("DISPOSED");
                 adopt(loaded);
                 const replay = await prepare(clone(committed),name,clone(args));
                 if (!alive || currentGeneration !== generation) return result("DISPOSED");
-                if (replay.candidate || replay.result.code !== "REPLAY") { phase="CONFLICT";return result("CONFLICT"); }
+                if (replay.candidate || replay.result.code !== prepared.result.code) { phase="CONFLICT";return result("CONFLICT"); }
                 phase="READY";return { ...replay.result,state:state() };
               } catch { phase="LOAD_ERROR";return result("LOAD_ERROR"); }
             }
