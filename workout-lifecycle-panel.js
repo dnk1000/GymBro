@@ -53,8 +53,10 @@ const WorkoutLifecyclePanel = (() => {
       const candidate=mode==='merge'?WorkoutLifecycle.merge(base,incoming,ownerId):incoming;
       if(!live||id!==sequence)return;
       review={text,mode,fingerprint:base.fingerprint,revision:base.revision};
-      const d=candidate.document.data;
-      el('summary').textContent=`File: ${file.name}\n${mode==='merge'?'HISTORY MERGE — current settings/program and existing set IDs win':'COMPLETE RESTORE — replaces all cloud workout data'}\nResult: ${d.sets.length} sets, ${d.sessions.length} sessions, ${d.bodyweights.length} bodyweights, ${d.imports.length} imports. Active workout: ${d.activeSessionId??'none'}.\nAccount: ${ownerId}; ${environment}. Account access, transport receipts and local recovery files are retained.`;
+      const d=candidate.document.data,metadata=JSON.parse(text);
+      const schema=incoming.kind==='cloud'?metadata.source.workoutVersion:metadata.version??1;
+      const build=typeof metadata.appVersion==='string'?metadata.appVersion:'not recorded (older backup)';
+      el('summary').textContent=`File: ${file.name}\nData schema: ${schema} · Exporting application: ${build}\n${mode==='merge'?'HISTORY MERGE — current settings/program and existing set IDs win':'COMPLETE RESTORE — replaces all cloud workout data'}\nResult: ${d.sets.length} sets, ${d.sessions.length} sessions, ${d.bodyweights.length} bodyweights, ${d.imports.length} imports. Active workout: ${d.activeSessionId??'none'}.\nAccount: ${ownerId}; ${environment}. Account access, transport receipts and local recovery files are retained.`;
       paint();say('File validated. Review the operation and recovery requirements before confirming.');
     });
     el('verify').onclick=()=>guard(async()=>{

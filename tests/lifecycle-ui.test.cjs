@@ -56,6 +56,7 @@ test('desktop/390/320 complete download, reopened safety file, confirmation canc
     const incoming=structuredClone(file);incoming.payload.document.data.sets[0].notes='  exact replacement\n🚀';
     const text=JSON.stringify(incoming);
     await upload(p,'[data-incoming]','incoming.json',text);await p.locator('[data-review]').click();await p.waitForFunction(()=>document.querySelector('[data-summary]').textContent.includes('COMPLETE RESTORE'));
+    assert.match(await p.locator('[data-summary]').textContent(),new RegExp(`Data schema: 8 · Exporting application: ${file.appVersion.replaceAll('.','\\.')}`));
     await p.locator('[data-commit]').click();await p.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('Verify the saved'));
     assert.equal(f.calls.filter(c=>c.name==='gymbro_lifecycle_mutate').length,0);
     await upload(p,'[data-safety]','safety.json',safetyText);await p.locator('[data-verify]').click();await p.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('recovery file verified'));
