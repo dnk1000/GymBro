@@ -12,11 +12,13 @@ It **does not change V3.x into the AI-integration generation** and does not make
 
 It does supersede the narrower statement in `GymBro_PRD.md` that external AI/provider work is simply “future/optional integration concept — not currently scheduled” to the following extent:
 
-- a repository-managed **Workout Coach skill** is now approved design/product work;
+- a repository-managed **Workout Coach skill** is approved and implemented as issue #63 under `skills/workout-coach/`;
 - **Workout Coach onboarding** is approved and tracked by GitHub issue #60;
 - a future **GymBro MCP/API connector plus skill update** is approved backlog work and tracked by GitHub issue #61;
 - the MCP/runtime implementation remains gated behind sufficiently stable GymBro database/domain contracts and is not a V3.x core-completion blocker;
 - voice remains separately scoped unless explicitly approved later.
+
+The repository-owned skill is a version-controlled coaching policy/procedure. Its existence in the repository does not by itself mean the skill is installed in ChatGPT, connected live to GymBro, or capable of authoritative writes.
 
 All other V3.x core-product sequencing, migration gates, production authority and acceptance requirements remain unchanged unless another approved product decision changes them.
 
@@ -60,6 +62,16 @@ A coaching recommendation is not a workout fact. GymBro should persist what the 
 
 Recommendations may be transient coaching state or optionally auditable metadata in a separately approved future design, but they must never masquerade as completed sets or overwrite observed performance.
 
+## Coaching North Star
+
+Workout Coach v1 uses the approved coaching principle:
+
+> **Minimum effective punishment, maximum useful stimulus.**
+
+The coach should preserve productive hard training while limiting avoidable joint stress, unnecessary fatigue and junk volume. Available gym time is a planning constraint, not a requirement to fill the clock with more work.
+
+Joint safety outranks progression. Progression should be based on recent comparable evidence, clean execution/ROM, effort, pain/compensation, cumulative session exposure and relevant recent training state rather than a single universal rep-count rule.
+
 ## Contextual workout lifecycle
 
 The Workout Coach must not depend on fixed magic phrases to begin or end coaching.
@@ -72,6 +84,8 @@ Once an active workout exists, that state becomes the strongest interpretation c
 
 General workout discussion outside an active session does not by itself create a session.
 
+When Workout Coach first activates for a workout lifecycle, it should **announce that activation conversationally once** as part of the normal coaching reply. This is a UX acknowledgement, not a fixed banner or exact sentence, and it must not imply that GymBro persistence/connector access exists when it does not.
+
 ### Contextual closure
 
 The coach should infer session-ending intent from clear natural context: for example being done for the night, heading to the showers/leaving the gym, requesting the completed GymBro upload/export, or otherwise clearly transitioning out of the live workout.
@@ -79,6 +93,23 @@ The coach should infer session-ending intent from clear natural context: for exa
 These are examples, not hard-coded trigger strings.
 
 If closure is ambiguous, keep the session active rather than silently complete it. If GymBro’s authoritative action contract requires confirmation before finishing with pending work, preserve that contract. “Explicit” intent means unambiguous user intent; it does not require one exact phrase.
+
+When the workout clearly ends, Workout Coach should **announce closure conversationally once** so the user knows subsequent shorthand is no longer being treated as part of that workout. It must distinguish conversational closure from successful GymBro persistence when a connector write is unavailable or fails.
+
+## Daily Workout Coach skill v1
+
+Issue #63 implements the initial repository-owned daily coaching skill at:
+
+`skills/workout-coach/SKILL.md`
+
+The package also retains:
+
+- pilot evidence documenting the real October 2026 coaching interactions used to reconstruct the policy; and
+- behavioral scenarios covering contextual activation/closure, live state, progression, joint safety, ambiguity, junk-volume control, degraded mode and persistence boundaries.
+
+Workout Coach v1 is transport-agnostic. It must work through the interim/manual GymBro context path today and preserve the same policy when issue #61 later introduces a live connector.
+
+Athlete-specific pilot facts such as one user's knee/shoulder constraints, machine settings and working loads belong to athlete/profile/evidence data. They are not universal Workout Coach rules.
 
 ## Interim operation before MCP
 
@@ -95,7 +126,8 @@ During this period:
 - performed workout facts are returned in GymBro-compatible structured form;
 - recommendations are not persisted as performance;
 - the next workout should reconstruct state from GymBro again;
-- insufficient/currently unavailable GymBro history causes a degraded-data mode, not fabricated historical certainty.
+- insufficient/currently unavailable GymBro history causes a degraded-data mode, not fabricated historical certainty;
+- ChatGPT must not claim a workout was saved to GymBro when no authoritative write occurred.
 
 The manual interchange is a temporary transport, not an alternate system of record.
 
@@ -137,7 +169,7 @@ The Workout Coach skill can be authored and exercised now using the interim adap
 
 The live MCP/API connector should wait until the relevant GymBro system-of-record, identity, session, ownership and concurrency contracts are stable enough to expose safely.
 
-Neither #60 nor #61 is automatically part of V3.x release acceptance unless a later product decision explicitly moves it into that scope.
+Neither #60, #61 nor #63 is automatically part of V3.x release acceptance unless a later product decision explicitly moves it into that scope.
 
 ## Non-goals established by this decision
 
