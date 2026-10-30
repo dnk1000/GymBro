@@ -1,3 +1,27 @@
+# Mobile History candidate — integrated main
+
+Application version: `3.11.0-20261030T164140Z`
+Data schema: `8`
+Release status: **preparation**
+
+On October 30, 2026 the user approved remapping #36/PR #69 to 3.11.0 after #22/PR #70 merged as main 24fa0a3. This supersedes the original 3.9.x mapping for future builds; earlier evidence below remains historical. Conflict resolution preserves accepted #22 filters, #36 phone set layout, desktop tables, compact copy and both test groups. No data/schema/persistence change or merge approval. Current verification and physical Safari status belong in PR #69.
+
+# Compact History copy refinement — issue #36
+
+Application version: `3.9.1-20261030T163206Z`
+Data schema: `8`
+Release status: **preparation**
+
+User requested removal of redundant History guidance and repeated exercise lists on October 30, 2026. Expanded cards retain exercise headings, recorded facts/notes and actions. Legacy / sessionless remains visible; its date-group explanation is available as a heading tooltip. No stored data/action/filter changes. Change Level 1 refinement within the existing issue PR. Current verification and physical Safari status belong in that PR completion report; not accepted or merged.
+
+# Mobile History candidate — issue #36
+
+Application version: `3.9.0-20261030T155016Z`
+Data schema: `8`
+Release status: **preparation**
+
+User approved 3.9.0 for #36 alone on October 30, 2026. Base 77bd5ab. Change Level 2. Narrow History set rows stack with full labels, key facts and reachable actions; desktop tables and existing selectors/actions remain. No data/schema change. Verification and pending physical Safari acceptance belong in the PR completion report. Not accepted or merged.
+
 # Compact History copy refinement — issue #22
 
 Application version: `3.10.1-20261030T163206Z`

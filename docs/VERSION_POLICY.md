@@ -73,4 +73,7 @@ The user explicitly approved **3.7.0 for #20 alone** on October 30, 2026 in the 
 
 The user explicitly approved **3.8.0 for #21 alone** on October 30, 2026 in the #21 implementation conversation. This maps exercise-level History disclosure to its own candidate; no acceptance, merge or Production approval is implied.
 
+The user approved **3.9.0 for #36 alone** on October 30, 2026 in its implementation conversation. Separate unmerged PR; no Production or acceptance approval.
 The user approved **3.10.0 for #22 alone** on October 30, 2026, following #36 in a separate PR from accepted main. No acceptance, merge or Production approval.
+
+On October 30, 2026 the user approved **3.11.0 for #36/PR #69** after #22/PR #70 merged as 3.10.1. This supersedes #36's prior 3.9.x mapping for subsequent builds; historical builds/evidence remain intact. No merge, Production or device acceptance approval.
