@@ -1,3 +1,23 @@
+# Issue #20 compact-layout refinement
+
+Application version: `3.7.1-20261030T144204Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED. Current evidence will be recorded in [PR #66](https://github.com/dnk1000/GymBro/pull/66).
+
+# V3 History disclosure candidate — issue #20
+
+Application version: `3.7.0-20261030T135802Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved mapping: **3.7.0 for #20 alone**, approved by the user on October 30, 2026. Based on accepted main `2da1ef92bd7fa491b499c5f5a1d674bb7eeef546`; branch `codex/issue-20-history-collapse`. Change Level 2: History presentation interactions within the existing data boundary. No migration, identity, persistence or cloud-workout activation change.
+
+Cards start collapsed, retain concise summaries, open independently and offer Expand all / Collapse all for the current filter. Existing detail order, scoped notes, guidance, correction and deletion actions remain within expanded cards. State is transient for a History visit and survives rerenders/source filtering. See [contract and acceptance evidence](HISTORY_DISCLOSURE.md).
+
+Local full regression passed 225/225 with no failures/skips; syntax/release/diff and focused History checks passed. Runtime revision `d0f10bd` passed both jobs of [CI 41068557901](https://github.com/dnk1000/GymBro/actions/runs/41068557901). Signed-in exact Preview checks at approximately 320/390/1280 px and warning/error console checks passed; see the linked report for methods and tool limitations. [Draft PR #66](https://github.com/dnk1000/GymBro/pull/66) remains unmerged. Physical iPhone Safari acceptance is UNVERIFIED. No Production data, personal backup, migration, acceptance or merge is claimed. The earlier candidate evidence below remains historical.
+
 # V3 concurrency candidate — issue #40
 
 Issue #40 candidate: protocol 1, owner revisions, durable receipts and cancellation fencing. All seven technical ACs pass; ready for explicit Level 3 human acceptance. Current workouts remain local. See [concurrency contract](V3_CONCURRENCY.md).

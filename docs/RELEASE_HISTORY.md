@@ -1,5 +1,14 @@
 # GymBro release history
 
+## History compact-layout candidate — not yet accepted
+
+`3.7.1-20261030T144204Z`, #20 alone; schema 8 unchanged. Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED.
+
+
+## V3 History disclosure candidate — not yet accepted
+
+`3.7.0-20261030T135802Z`, #20 alone; workout schema 8 unchanged. Collapsed session/date summaries with independent native disclosure and bulk controls. Presentation state does not write workout data. Verification and required physical Safari evidence: [History disclosure](HISTORY_DISCLOSURE.md). This is a candidate, not an accepted Production release.
+
 ## V3 concurrency completion-order correction candidate — not yet accepted
 
 `3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Technical verification now passes all seven ACs, including 221 application tests, 335 SQL assertions per replay pass, hosted assertions/races and actual signed Preview contexts. Explicit Level 3 acceptance remains pending; see [V3_CONCURRENCY.md](V3_CONCURRENCY.md).

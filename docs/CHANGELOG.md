@@ -1,5 +1,14 @@
 # Changes
 
+## 3.7.1 — compact History summaries
+
+`3.7.1-20261030T144204Z`, #20 alone. Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED.
+
+
+## 3.7.0 — History collapsible workout sessions candidate
+
+`3.7.0-20261030T135802Z`, #20 alone; schema 8 unchanged. Session/date cards start collapsed with dates, saved names, counts and exercise summaries. Whole-header disclosure, Expand all / Collapse all and transient state preserve the existing ordered tables, notes, guidance and correction actions. [Acceptance evidence](HISTORY_DISCLOSURE.md); physical iPhone Safari remains unverified.
+
 ## 3.6.6 — apply final guidance before session completion
 
 `3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Technical verification now passes all seven ACs, including 221 application tests, 335 SQL assertions per replay pass, hosted assertions/races and actual signed Preview contexts. Explicit Level 3 acceptance remains pending; see [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
