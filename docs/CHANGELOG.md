@@ -1,5 +1,9 @@
 # Changes
 
+## 3.6.4 — preserve uncertainty for unreadable recovery metadata
+
+`3.6.4-20261030T052148Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Unreadable/future recovery markers remain blocked across refresh and no longer imply the prior request was never sent. SQL source is unchanged from the 329-assertion fresh pass; race/replay and hosted evidence remain pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
 ## 3.6.3 — SQL delimiter and stale no-op corrections
 
 `3.6.3-20261030T050807Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Preserve literal SQL dollar delimiters in copied invoker helpers. Local no-op/replay outcomes check fresh cloud state and cannot silently rebase a newly necessary mutation. SQL/hosted verification remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).

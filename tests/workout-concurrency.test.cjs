@@ -21,7 +21,16 @@ test('failed recovery marker prevents all transmission; malformed marker never b
   const f=await serverFixture(); const denied={getItem:()=>null,setItem:()=>{throw Error('quota');}};
   const a=f.create({recoveryStorage:denied});assert.equal((await a.execute('logSet',input(f))).code,'RECOVERY_ERROR');assert.equal(f.calls.length,0);
   const corrupt=storage();corrupt.setItem(`gymbro-request-recovery-v1-${f.owner}`,'broken');
-  const b=f.create({recoveryStorage:corrupt});assert.equal((await b.execute('logSet',input(f))).code,'RECOVERY_ERROR');assert.equal(f.calls.length,0);
+  const b=f.create({recoveryStorage:corrupt});assert.equal((await b.execute('logSet',input(f))).code,'RECOVERY_BLOCKED');assert.equal(f.calls.length,0);
+});
+test('unsupported recovery metadata remains blocked after refresh and never claims the prior operation was unsent',async()=>{
+  const f=await serverFixture(),store=storage(),key=`gymbro-request-recovery-v1-${f.owner}`;
+  const raw=JSON.stringify({protocolVersion:2,ownerId:f.owner,operation:['logSet','unknown-prior']});store.setItem(key,raw);
+  const a=f.create({recoveryStorage:store});assert.equal(a.getStatus().phase,'RECOVERY_BLOCKED');
+  assert.doesNotMatch(a.getStatus().message,/Nothing was sent|not saved|Saved\./);
+  await a.refresh();assert.equal(a.getStatus().phase,'RECOVERY_BLOCKED');assert.equal(store.getItem(key),raw);
+  assert.equal((await a.execute('logSet',input(f))).code,'RECOVERY_BLOCKED');
+  assert.equal(f.calls.filter(c=>c.name==='gymbro_workout_mutate').length,0);
 });
 test('reload resolves committed request and a cancellation fences late original packets',async()=>{
   const f=await serverFixture(),store=storage();const a=f.create({recoveryStorage:store});

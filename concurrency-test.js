@@ -43,7 +43,7 @@
       if(el('arguments').value==='[]') el('arguments').value=JSON.stringify([{date:initial.document.data.sessions[0]?.date??'2026-10-28',
         exercise:initial.document.catalog.exercises[0].id,weight:0,reps:8,rir:0,complete:false,notes:'  synthetic draft\n',sessionId:null}],null,2);
       paint();
-    } catch {if(current===epoch) message('Synthetic session could not be opened. Check access and the expected fixture. No workout mutation was sent.');}
+    } catch {if(current===epoch) message('Synthetic session could not be opened. Check access and the expected fixture. Saving remains paused.');}
   }
   async function run(method,args=[]) {
     if(!controller) return;

@@ -8,6 +8,7 @@ const WorkoutConcurrency = (() => {
     REQUEST_CONFLICT: "This request identity was used with different input. Your entry has been kept. Check the original result before submitting again.",
     CANCELLED: "The unresolved submission did not commit and was cancelled. Review saved data before submitting a new request.",
     RECOVERY_ERROR: "Request recovery could not be recorded. Nothing was sent. Keep your entry and restore session storage before retrying.",
+    RECOVERY_BLOCKED: "Request recovery could not be read. Saving is paused. Keep this tab and recover the original request information before submitting again.",
     LOAD_ERROR: "Saved data could not be refreshed. Your entry has been kept; saving is paused.",
     AUTHORIZATION_ERROR: "Account access could not be verified. Your entry has been kept; saving is paused.",
     VALIDATION_ERROR: "The request was rejected. Your entry has been kept.",
@@ -34,7 +35,7 @@ const WorkoutConcurrency = (() => {
         if (marker.protocolVersion !== 1 || marker.ownerId !== ownerId || !validOperation(marker.operation)) throw Error("marker");
         operation = clone(marker.operation); phase = "OUTCOME_UNKNOWN";
       }
-    } catch { phase = "RECOVERY_ERROR"; }
+    } catch { phase = "RECOVERY_BLOCKED"; }
     function mark(op) {
       const raw = JSON.stringify({ protocolVersion: 1, ownerId, operation: op });
       recoveryStorage.setItem(key, raw);
@@ -119,7 +120,7 @@ const WorkoutConcurrency = (() => {
           if (!alive || currentGeneration !== generation) return result("DISPOSED");
           if (sequence !== refreshSequence) return result("NO_CHANGE");
           adopt(loaded);
-          if (!operation && !awaiting && phase !== "RECOVERY_ERROR") phase = "READY";
+          if (!operation && !awaiting && !["RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) phase = "READY";
           return result("NO_CHANGE", { revision: committed.revision });
         } catch {
           if (!alive || currentGeneration !== generation) return result("DISPOSED");

@@ -11,8 +11,8 @@ function checkRelease(root) {
   const version = vm.runInContext("APP_VERSION", runtime);
   assert.deepEqual(
     [version.major, version.minor, version.patch],
-    [3, 6, 3],
-    "Expected issue #40 concurrency application version 3.6.3",
+    [3, 6, 4],
+    "Expected issue #40 concurrency application version 3.6.4",
   );
   assert.ok(Object.isFrozen(version), "Canonical version must be immutable");
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
@@ -27,7 +27,7 @@ function checkRelease(root) {
     iso.replace("Z", ".000Z"),
     "Build must be a valid UTC date/time",
   );
-  assert.equal(version.version, `3.6.3-${b}`);
+  assert.equal(version.version, `3.6.4-${b}`);
   const schemaRuntime = vm.createContext({});
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);
@@ -48,7 +48,7 @@ function checkRelease(root) {
   );
   assert.match(
     read("docs/CHANGELOG.md"),
-    /^## 3\.6\.3\b/m,
+    /^## 3\.6\.4\b/m,
     "Changelog is missing the concurrency release",
   );
   const html = read("index.html");

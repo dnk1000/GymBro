@@ -2,7 +2,7 @@
 
 Issue #40 candidate: protocol 1, owner revisions, durable receipts and cancellation fencing. Implementation verification pending; current workouts remain local. See [concurrency contract](V3_CONCURRENCY.md).
 
-Application version: `3.6.3-20261030T050807Z`
+Application version: `3.6.4-20261030T052148Z`
 Data schema: `8`
 Release status: **preparation**
 
