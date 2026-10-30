@@ -1,3 +1,11 @@
+# Cloud data lifecycle candidate — #41
+
+Application version: `3.12.7-20261030T184803Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved #41-only mapping and lifecycle design at `75f2247`. Opt-in synthetic Preview boundary, complete canonical JSON recovery, confirmed atomic restore, emergency recovery, history merge and inactive-local-copy cleanup. Relational model 1/protocol 1 remain independent; additive migration `20261030180000`. Normal workouts still use their current local adapter. [PR #79 completion/AC evidence](https://github.com/dnk1000/GymBro/pull/79) owns actual verification and remaining gates. No Production acceptance, personal migration, cutover or merge is claimed.
+
 # Heritage Utility shared shell candidate — #71 then #72
 
 Application version: `3.11.2-20261030T170057Z`

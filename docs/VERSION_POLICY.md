@@ -45,6 +45,8 @@ The user explicitly approved **3.5.0 for #39 alone** on October 28, 2026. The ap
 
 ## When to change the version
 
+The owner approved **3.12.0 for #41 alone** on October 30, 2026 by requesting completion against the exact [lifecycle design](V3_DATA_LIFECYCLE_PROPOSAL.md) at `75f2247`. This is a candidate mapping, not acceptance, merge, personal migration or Production cutover approval.
+
 On October 27, 2026 the user explicitly approved **`3.4.0` for #25 alone** in the #25 implementation conversation. Its independent workout schema is 8 for explicit note scopes; this mapping is not Production acceptance or merge approval.
 
 - Documentation-only changes, planning decisions and release-history corrections change neither version components nor BUILD, even if the hosting integration automatically republishes the unchanged application.

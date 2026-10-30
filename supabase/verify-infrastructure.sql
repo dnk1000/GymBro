@@ -2,6 +2,11 @@
 -- Returns metadata only: never diagnostic values, users or credentials.
 select jsonb_build_object(
   'postgres_version', current_setting('server_version'),
+  'lifecycle', jsonb_build_object(
+    'writer_role', (select jsonb_build_object('login',rolcanlogin,'superuser',rolsuper,'bypassrls',rolbypassrls,'inherit',rolinherit) from pg_roles where rolname='gymbro_lifecycle_writer'),
+    'browser_can_assume_writer', (select pg_has_role('authenticated'::regrole,oid,'MEMBER') from pg_roles where rolname='gymbro_lifecycle_writer'),
+    'functions', (select jsonb_agg(jsonb_build_object('name',proname,'owner',pg_get_userbyid(proowner),'definer',prosecdef,'settings',proconfig)) from pg_proc
+      where pronamespace='public'::regnamespace and proname in ('gymbro_lifecycle_mutate','gymbro_lifecycle_resolve','gymbro_lifecycle_snapshot'))),
   'concurrency_protocol', jsonb_build_object(
     'writer_role', (select jsonb_build_object('login',rolcanlogin,'superuser',rolsuper,'bypassrls',rolbypassrls,'create_role',rolcreaterole) from pg_roles where rolname='gymbro_workout_writer'),
     'browser_can_assume_writer', pg_has_role('authenticated'::regrole,(select oid from pg_roles where rolname='gymbro_workout_writer'),'MEMBER'),
