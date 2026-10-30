@@ -1,10 +1,22 @@
-# Heritage Utility foundation candidate — issue #71 only
+# Heritage Utility shared shell candidate — #71 then #72
 
-Application version: `3.11.3-20261030T171451Z`
+Application version: `3.11.2-20261030T170057Z`
 Data schema: `8`
 Release status: **preparation**
 
-Presentation-only patch from accepted main 2255a91 for revised #71: canonical BRAND_AND_UI guidance, approved directional board, shared tokens/components and chart colors. No #72 app-shell pass or domain/schema/storage changes. Verification and acceptance belong in the focused #71 PR; no Production acceptance or merge. The earlier combined PR #76 remains separate and unmerged.
+Presentation-only patch under VERSION_POLICY.md. User requested one sequential branch/PR. #71 was technically verified at 1f4ae48 before #72 started; see [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). #72 applies the same tokens to the header, navigation and version footer without changing domain/data behavior. Not accepted, merged or deployed to Production.
+
+## #78 documentation integration
+
+[PR #78](https://github.com/dnk1000/GymBro/pull/78) resolves against accepted main 4278e34 after PR #76 merged. All runtime/configuration/schema/test files remain identical to main; the remaining scope is [BRAND_AND_UI.md](BRAND_AND_UI.md), its unchanged approved reference and documentation. Canonical application metadata remains main's `3.11.2-20261030T170057Z`; documentation-only integration creates no new build. Original #78 Preview `3.11.3-20261030T171451Z` at 0e4824f is historical evidence for that earlier source, not the current runtime. No new Production or device acceptance is claimed.
+
+# Heritage Utility shared-system candidate — #71
+
+Application version: `3.11.1-20261030T165311Z`
+Data schema: `8`
+Release status: **preparation**
+
+Presentation-only patch under VERSION_POLICY.md. Based on accepted main 2255a91. Shared tokens/components and chart colors; no domain/schema/storage changes. Verification and pending review are tracked in [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). Not accepted, merged or deployed to Production.
 
 # Mobile History candidate — integrated main
 

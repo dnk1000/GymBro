@@ -223,11 +223,15 @@ document.querySelectorAll(".tab").forEach(
       }
       document
         .querySelectorAll(".tab")
-        .forEach((x) => x.classList.remove("active"));
+        .forEach((x) => {
+          x.classList.remove("active");
+          x.removeAttribute("aria-current");
+        });
       document
         .querySelectorAll(".view")
         .forEach((x) => x.classList.remove("active"));
       t.classList.add("active");
+      t.setAttribute("aria-current", "page");
       document.getElementById(t.dataset.view).classList.add("active");
       if (t.dataset.view === "exercises") renderExercises();
       if (t.dataset.view === "history") renderHistory();
