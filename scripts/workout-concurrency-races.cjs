@@ -45,7 +45,7 @@ function normalize(rows) {
 async function run(mode) {
   const query=queryClient(mode),owners=[],evidence=[];
   try {
-    for(const name of ['start-start','edit-delete','log-finish','finish-log','duplicate-submit','cancel-original','original-cancel']) {
+    for(const name of ['start-start','edit-delete','delete-edit','log-finish','finish-log','done-log','skip-log','navigate-substitute','guided-guided','duplicate-submit','cancel-original','original-cancel']) {
       const f=await fixture();f.owner=randomUUID();owners.push(f.owner);
       if(name==='start-start') {f.document.data.sessions=[];f.document.data.sets=[];f.document.data.activeSessionId=null;f.document.data.noteScopes.session=[];f.document.data.noteScopes.exerciseSession=[];}
       const repo=f.repository.create({client:{},ownerId:f.owner});
@@ -58,13 +58,23 @@ async function run(mode) {
       if(name==='start-start') {
         a=await prepare(f,initial,'createSession',[{date:'2026-10-28',templateId:'push',duration:60}],'race-start-a');
         b=await prepare(f,initial,'createSession',[{date:'2026-10-28',templateId:'push',duration:60}],'race-start-b');
-      } else if(name==='edit-delete') {
+      } else if(name==='edit-delete'||name==='delete-edit') {
         a=await prepare(f,initial,'editSet',[f.document.data.sets[0].id,{notes:'first connection correction'}],'race-edit');
         b=await prepare(f,initial,'deleteSet',[f.document.data.sets[0].id],'race-delete');
+        if(name==='delete-edit') [a,b]=[b,a];
       } else if(name==='log-finish'||name==='finish-log') {
         a=await prepare(f,initial,'logSet',[log],'race-log');
         b=await prepare(f,initial,'finishGuidedSession',[{sessionId:f.sessionId,expectedRevision:3,allowPending:true}],'race-finish');
         if(name==='finish-log') [a,b]=[b,a];
+      } else if(name==='done-log'||name==='skip-log') {
+        a=await prepare(f,initial,'setGuidedSlotStatus',[{sessionId:f.sessionId,planSlotId:'slot-1',expectedRevision:3,status:name==='done-log'?'completed':'skipped'}],'race-status');
+        b=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided'}],'race-guided');
+      } else if(name==='navigate-substitute') {
+        a=await prepare(f,initial,'selectGuidedSlot',[{sessionId:f.sessionId,planSlotId:'slot-2',expectedRevision:3}],'race-navigation');
+        b=await prepare(f,initial,'substituteGuidedExercise',[{sessionId:f.sessionId,planSlotId:'slot-1',expectedRevision:3,exercise:f.identity.resolveLabel(f.document.catalog,'Smith Press')}],'race-substitute');
+      } else if(name==='guided-guided') {
+        a=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided-one'}],'race-guided-one');
+        b=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided-two'}],'race-guided-two');
       } else {
         a=await prepare(f,initial,'logSet',[log],'race-identical');b=a;
         resolveA=name==='cancel-original';resolveB=name==='original-cancel';

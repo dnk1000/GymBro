@@ -44,6 +44,8 @@ select ok(not exists(select 1 from pg_roles where rolname='gymbro_workout_writer
 select ok(not has_schema_privilege('gymbro_workout_writer','public','CREATE'),'writer cannot create objects');
 select ok(not has_table_privilege('authenticated','public.gymbro_mutation_receipts','INSERT'),'browser cannot forge receipts');
 select ok(not has_table_privilege('gymbro_workout_writer','public.gymbro_mutation_receipts','UPDATE'),'even checked writer cannot rewrite receipt');
+select ok((select bool_and(not prosecdef and prosqlbody is not null) from pg_proc where oid in ('public.gymbro_request_owner()'::regprocedure,'public.gymbro_request_permanent()'::regprocedure)),'provider claim helpers are bound invokers, not privilege elevation');
+select ok(not has_schema_privilege('authenticated','public','CREATE'),'browser cannot replace qualified public helpers');
 select ok((select bool_and(prosecdef and proowner='gymbro_workout_writer'::regrole and proconfig @> array['search_path=""']) from pg_proc where oid in ('public.gymbro_workout_mutate(jsonb)'::regprocedure,'public.gymbro_workout_resolve(jsonb)'::regprocedure)),'only scoped role owns fixed-search-path entry points');`);
   for(const t of f.repository.tables) {
     const full=t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t;
@@ -56,11 +58,20 @@ select ok((select bool_and(prosecdef and proowner='gymbro_workout_writer'::regro
   bad.sets[0].exercise_id='11111111-1111-4111-8111-111111111111';
   const invalid={...all[last],operation:['editSet','atomic-failure'],action:'editSet',args:['synthetic'],expectedRevision:String(all.length),base:lastRows,next:bad};
   const badBase=structuredClone(invalid);badBase.operation=['editSet','wrong-base'];badBase.base=bad;badBase.next=lastRows;
+  const precise=structuredClone(lastRows),big='9007199254740993123456789';
+  precise.bodyweights.push({...precise.bodyweights.at(-1),bodyweight_id:'decimal-precision-bw',position:precise.bodyweights.length});
+  const precision={...invalid,action:'logBodyweight',args:[{date:'2026-10-28',value:200}],operation:['logBodyweight','decimal-precision'],expectedRevision:big,base:lastRows,next:precise,result:{bodyweightIndex:precise.bodyweights.length-1}};
   sql.push(`select is(public.gymbro_workout_mutate(${literal(badBase)})->>'code','CONFLICT','matching revision cannot bypass full-base comparison');
 select throws_ok($test$select public.gymbro_workout_mutate(${literal(invalid)})$test$,'23503',null,'constraint fault rolls back entire mutation');
 select is((select count(*)::int from public.gymbro_mutation_receipts where operation='["editSet","atomic-failure"]'),0,'rollback leaves no receipt');
 select is(public.gymbro_workout_snapshot()->>'revision','${all.length}','rollback leaves revision unchanged');
 select is(public.gymbro_workout_normalize(public.gymbro_workout_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(lastRows)}),'rollback preserves every original fact and relationship');
+reset role;
+update public.gymbro_workout_versions set revision=${big} where owner_id='${owner}';
+set local role authenticated;
+select is(public.gymbro_workout_snapshot()->>'revision','${big}','revision above JavaScript precision is exact decimal text');
+select is(jsonb_typeof(public.gymbro_workout_snapshot()->'revision'),'string','revision transport is a JSON string');
+select is(public.gymbro_workout_mutate(${literal(precision)})->>'operationRevision','9007199254740993123456790','server increments large decimal exactly once');
 select set_config('request.jwt.claim.sub','${other}',true);
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}',true);
 select is_empty('select * from public.gymbro_mutation_receipts','other owner cannot inspect receipts');

@@ -24,19 +24,19 @@ before(async()=> {
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 });
 after(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));});
-async function pageFor(t,f,width=390,configured=true) {
+async function pageFor(t,f,width=390,configured=true,connectNow=true) {
   const context=await browser.newContext({viewport:{width,height:844}});t.after(()=>context.close());
   const errors=[];
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(['error','warning'].includes(m.type())) errors.push(m.text());});
   await context.route('**/api/concurrency-config',route=>route.fulfill({json:configured?concurrencyConfig({...env,GYMBRO_CONCURRENCY_TEST_OWNERS:f.owner}):{enabled:false}}));
-  await context.route('**/vendor/supabase-2.118.0.js',route=>route.fulfill({contentType:'text/javascript',body:`window.supabase={createClient:()=>({auth:{getUser:async()=>({data:{user:{id:${JSON.stringify(f.owner)},is_anonymous:false}}}),onAuthStateChange:()=>{},signOut:async()=>({}),signInWithPassword:async()=>({})},rpc:async(name,args)=>{const response=await fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})});return response.json();}})};`}));
+  await context.route('**/vendor/supabase-2.118.0.js',route=>route.fulfill({contentType:'text/javascript',body:`window.supabase={createClient:()=>({auth:{getUser:async()=>({data:{user:{id:${JSON.stringify(f.owner)},is_anonymous:false}}}),onAuthStateChange:callback=>{window.emitSyntheticAuth=callback;},signOut:async()=>({}),signInWithPassword:async()=>({})},rpc:async(name,args)=>{const response=await fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})});return response.json();}})};`}));
   await context.route('**/synthetic-rpc',async route=> {
     const {name,args}=route.request().postDataJSON();
     try {await route.fulfill({json:await f.client.rpc(name,args)});}catch {await route.abort();}
   });
   await page.goto(origin+'/concurrency-test.html');
-  if(configured) {await page.waitForFunction(()=>!document.getElementById('access').disabled);await page.locator('#connect').click();await page.waitForFunction(()=>!document.getElementById('mutation').disabled);}
+  if(configured) {await page.waitForFunction(()=>!document.getElementById('access').disabled);if(connectNow){await page.locator('#connect').click();await page.waitForFunction(()=>!document.getElementById('mutation').disabled);}}
   t.after(()=>assert.deepEqual(errors,[],'uncaught browser errors'));
   return page;
 }
@@ -92,4 +92,16 @@ test('reload resolves unknown operation and delayed acknowledgement cannot regre
   assert.equal(await p.locator('#submit').isDisabled(),true);
   await p.locator('#refresh').click();await settled(p);await p.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Saved. Revision 2.'));
   assert.match(await p.locator('#saved').textContent(),/"revision": "2"/);
+});
+test('account change while initial load is pending cannot publish the old owner snapshot',async t=>{
+  const f=await synthetic(),original=f.client.rpc;let release,entered;
+  const waiting=new Promise(r=>{entered=r;});
+  f.client.rpc=async(name,args)=>{if(name==='gymbro_workout_snapshot'){await new Promise(r=>{release=r;entered();});}return original(name,args);};
+  const p=await pageFor(t,f,390,true,false);await p.locator('#connect').click();await waiting;
+  await p.evaluate(()=>window.emitSyntheticAuth('SIGNED_IN',{user:{id:'88888888-8888-4888-8888-888888888840'}}));
+  const response=p.waitForResponse('**/synthetic-rpc');release();await response;
+  await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  assert.equal(await p.locator('#mutation').evaluate(el=>el.disabled),true);
+  assert.equal(await p.locator('#saved').textContent(),'Not connected.');
+  assert.match(await status(p),/Account changed/);
 });

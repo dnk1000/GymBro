@@ -1,5 +1,9 @@
 # GymBro release history
 
+## V3 concurrency Auth-boundary correction candidate — not yet accepted
+
+`3.6.2-20261030T050312Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Bind provider claim helpers as SECURITY INVOKER SQL bodies at definition time, requiring no broader Auth-schema grant. Account changes during initial load invalidate its response. Focused 24/24 tests pass. SQL/replay/race/staging evidence remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
 ## V3 concurrency verification candidate — not yet accepted
 
 `3.6.1-20261030T044400Z`, schema 8/model 1/protocol 1, #40 only. Fixes operator SET ROLE verification while browser write/role denial remains enforced. Adds the approved synthetic UI and actual-connection/upgrade verification. Initial CI 41003113730 passed 208 application tests but SQL stopped on operator SET ROLE denial. Verification remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).

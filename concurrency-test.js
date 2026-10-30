@@ -1,7 +1,7 @@
 // Explicit staging-only adapter. Never imported by normal GymBro startup.
 (() => {
   const el=id=>document.getElementById(id);
-  let client,config,controller,ownerId=null,epoch=0;
+  let client,config,controller,ownerId=null,authIdentity=null,epoch=0;
   el('build').textContent=APP_VERSION.version;
   const message=text=>{el('status').textContent=text;};
   function invalidate() {epoch++;controller?.dispose();controller=null;ownerId=null;el('mutation').disabled=true;el('saved').textContent='Not connected.';}
@@ -79,7 +79,8 @@
       if(!response.ok || !config.enabled || !config.configured) {message('Concurrency checks are disabled or unconfigured for this environment.');return;}
       client=window.supabase.createClient(config.url,config.publishableKey,{auth:{storageKey:`gymbro-concurrency-test-auth-${config.projectRef}`,persistSession:true,autoRefreshToken:false,detectSessionInUrl:false}});
       client.auth.onAuthStateChange((event,session)=> {
-        if(event==='SIGNED_OUT' || (ownerId && session?.user?.id!==ownerId)) {invalidate();message('Account changed. Connect the intended synthetic account before continuing.');}
+        const next=session?.user?.id??null;
+        if(event==='SIGNED_OUT' || next!==authIdentity) {authIdentity=next;invalidate();message('Account changed. Connect the intended synthetic account before continuing.');}
       });
       el('access').disabled=false;message('Staging checks enabled. Connect a dedicated synthetic account.');
     } catch {message('Staging configuration could not load. No workout mutation was sent.');}

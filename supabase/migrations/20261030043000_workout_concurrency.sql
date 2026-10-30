@@ -12,8 +12,15 @@ do $$ begin
     raise exception 'Unexpected writer role capabilities or membership';
   end if;
 end $$;
-grant usage on schema public,auth to gymbro_workout_writer;
-grant execute on function auth.uid(),auth.jwt() to gymbro_workout_writer;
+grant usage on schema public to gymbro_workout_writer;
+-- Bind the provider's Auth functions at definition time. Supabase's operator
+-- has Auth USAGE without grant option; no broader Auth privilege is needed.
+create function public.gymbro_request_owner() returns uuid
+language sql stable security invoker set search_path='' begin atomic select auth.uid(); end;
+create function public.gymbro_request_permanent() returns boolean
+language sql stable security invoker set search_path='' begin atomic select (auth.jwt()->>'is_anonymous')='false'; end;
+revoke all on function public.gymbro_request_owner(),public.gymbro_request_permanent() from public,anon,authenticated;
+grant execute on function public.gymbro_request_owner(),public.gymbro_request_permanent() to authenticated,gymbro_workout_writer;
 
 create table public.gymbro_workout_versions (
   owner_id uuid primary key references auth.users(id),
@@ -73,22 +80,96 @@ select case when jsonb_typeof(operation)='array' then
 else false end
 $$;
 
+-- Rebind only Auth lookups in the existing invoker helpers; preserve the exact
+-- original row-diff, immutable-intent and relationship constraints.
+create or replace function public.gymbro_workout_read() returns jsonb language plpgsql stable security invoker set search_path='' as $
+declare t text; data jsonb; result jsonb := '{}'; who uuid := public.gymbro_request_owner();
+begin
+  if who is null or public.gymbro_request_permanent() is not true then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
+  foreach t in array public.gymbro_workout_tables() loop
+    execute format('select coalesce(jsonb_agg(to_jsonb(r)-''creation_transaction'' order by to_jsonb(r)::text),''[]''::jsonb) from public.%I r where owner_id=$1',public.gymbro_workout_table(t)) into data using who;
+    result := result||jsonb_build_object(t,data);
+  end loop;
+  return result;
+end; $;
+create or replace function public.gymbro_workout_commit(previous_rows jsonb,next_rows jsonb) returns jsonb
+language plpgsql security invoker set search_path='' as $
+declare current_rows jsonb; t text; tbl text; item jsonb; prior jsonb; keys text[]; key_match text; columns text; updates text; who uuid := public.gymbro_request_owner();
+begin
+  if who is null or public.gymbro_request_permanent() is not true then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
+  -- Foundation equality precondition only; no automatic retry/rebase or #40
+  -- revision protocol. Serialize even the first synthetic initialization.
+  perform pg_advisory_xact_lock(hashtextextended(who::text,39));
+  current_rows := public.gymbro_workout_read();
+  if previous_rows is null then
+    if jsonb_array_length(current_rows->'workout_state')<>0 then raise exception 'Account already initialized' using errcode='40001'; end if;
+    previous_rows := current_rows;
+  elsif public.gymbro_workout_normalize(current_rows) is distinct from public.gymbro_workout_normalize(previous_rows) then
+    raise exception 'Saved workout differs from prepared base' using errcode='40001';
+  end if;
+  if (select array_agg(key order by key) from jsonb_object_keys(next_rows) key) is distinct from
+    (select array_agg(q.name order by q.name) from unnest(public.gymbro_workout_tables()) q(name)) or jsonb_array_length(next_rows->'workout_state')<>1 then
+    raise exception 'Incomplete workout bundle' using errcode='23514'; end if;
+  foreach t in array public.gymbro_workout_tables() loop
+    if jsonb_typeof(next_rows->t)<>'array' or exists(select 1 from jsonb_array_elements(next_rows->t) r where (r->>'owner_id') is distinct from who::text) then
+      raise exception 'Wrong owner or malformed row bundle' using errcode='42501'; end if;
+  end loop;
+  -- A caller may already have made constraints immediate earlier in its
+  -- transaction. Stage this graph with deferred FKs, then force validation
+  -- before acknowledgement below on every invocation.
+  set constraints all deferred;
+  -- Remove only explicitly removed facts for supported deletion operations.
+  foreach t in array array['sets','template_slots'] loop
+    tbl:=public.gymbro_workout_table(t); keys:=public.gymbro_workout_keys(t);
+    select string_agg(format('r.%I is not distinct from ($1->>%L)::%s',k,k,
+      case when k='owner_id' then 'uuid' when k='position' then 'bigint' else 'text' end),' and ') into key_match from unnest(keys) k;
+    for item in select value from jsonb_array_elements(previous_rows->t) loop
+      if not exists(select 1 from jsonb_array_elements(next_rows->t) n where (select bool_and(n->key is not distinct from item->key) from unnest(keys) key)) then
+        execute format('delete from public.%I r where %s',tbl,key_match) using item;
+      end if;
+    end loop;
+  end loop;
+  foreach t in array public.gymbro_workout_tables() loop
+    tbl:=public.gymbro_workout_table(t); keys:=public.gymbro_workout_keys(t);
+    select string_agg(quote_ident(a.attname),',' order by a.attnum),
+      string_agg(format('%I=excluded.%I',a.attname,a.attname),',' order by a.attnum) filter(where not a.attname=any(keys))
+      into columns,updates from pg_attribute a where a.attrelid=format('public.%I',tbl)::regclass and a.attnum>0 and not a.attisdropped and a.attname<>'creation_transaction';
+    for item in select value from jsonb_array_elements(next_rows->t) loop
+      select value into prior from jsonb_array_elements(previous_rows->t) n where
+        (select bool_and(n.value->key is not distinct from item->key) from unnest(keys) key);
+      if prior is not distinct from item then continue; end if;
+      if t in ('snapshot_slots','guided_requests','aliases') and prior is not null then raise exception 'Append-only fact changed' using errcode='23514'; end if;
+      if t='snapshot_slots' and exists(select 1 from jsonb_array_elements(previous_rows->'sessions') s where s->>'session_id'=item->>'session_id') then
+        raise exception 'Existing session snapshot cannot be extended' using errcode='23514';
+      end if;
+      execute format('insert into public.%I (%s) select %s from jsonb_populate_record(null::public.%I,$1) on conflict (%s) %s',
+        tbl,columns,columns,tbl,(select string_agg(quote_ident(key),',') from unnest(keys) key),
+        case when updates is null or t in ('snapshot_slots','guided_requests','aliases') then 'do nothing' else 'do update set '||updates end) using item;
+    end loop;
+  end loop;
+  set constraints all immediate;
+  current_rows:=public.gymbro_workout_read();
+  if public.gymbro_workout_normalize(current_rows) is distinct from public.gymbro_workout_normalize(next_rows) then
+    raise exception 'Incomplete or contradictory commit acknowledgement' using errcode='23514'; end if;
+  return current_rows;
+end; $;
+
 -- STABLE read functions see the same statement snapshot for revision and facts.
 create function public.gymbro_workout_snapshot() returns jsonb
 language sql stable security invoker set search_path='' as $$
-select jsonb_build_object('protocolVersion',1,'ownerId',auth.uid(),
-  'revision',coalesce((select revision::text from public.gymbro_workout_versions where owner_id=auth.uid()),'0'),
+select jsonb_build_object('protocolVersion',1,'ownerId',public.gymbro_request_owner(),
+  'revision',coalesce((select revision::text from public.gymbro_workout_versions where owner_id=public.gymbro_request_owner()),'0'),
   'rows',public.gymbro_workout_read())
 $$;
 
 create function public.gymbro_workout_mutate(packet jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare who uuid:=auth.uid(); receipt public.gymbro_mutation_receipts; current_revision numeric;
+declare who uuid:=public.gymbro_request_owner(); receipt public.gymbro_mutation_receipts; current_revision numeric;
   fingerprint text; answer jsonb; saved jsonb; op jsonb:=packet->'operation';
 begin
-  if who is null or (auth.jwt()->>'is_anonymous') is distinct from 'false' then
+  if who is null or public.gymbro_request_permanent() is not true then
     raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
-  if jsonb_typeof(packet) is distinct from 'object' or packet->>'protocolVersion' is distinct from '1' or
+  if jsonb_typeof(packet) is distinct from 'object' or packet->'protocolVersion' is distinct from '1'::jsonb or
     packet->>'ownerId' is distinct from who::text or not coalesce(public.gymbro_operation_valid(op),false) or
     packet->>'action' is distinct from op->>0 or jsonb_typeof(packet->'args') is distinct from 'array' or
     jsonb_typeof(packet->'result') is distinct from 'object' or jsonb_typeof(packet->'expectedRevision') is distinct from 'string' or
@@ -130,9 +211,9 @@ end $$;
 
 create function public.gymbro_workout_resolve(operation jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare who uuid:=auth.uid(); receipt public.gymbro_mutation_receipts; answer jsonb;
+declare who uuid:=public.gymbro_request_owner(); receipt public.gymbro_mutation_receipts; answer jsonb;
 begin
-  if who is null or (auth.jwt()->>'is_anonymous') is distinct from 'false' then
+  if who is null or public.gymbro_request_permanent() is not true then
     raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
   if not coalesce(public.gymbro_operation_valid(operation),false) then raise exception 'Invalid operation identity' using errcode='23514'; end if;
   perform pg_advisory_xact_lock(hashtextextended(who::text,39));
