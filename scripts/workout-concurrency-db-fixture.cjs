@@ -10,6 +10,7 @@ async function buildSql() {
   const call=i=>`public.gymbro_workout_mutate((select packet from protocol_packets where step=${i}))`;
   const sql=[`begin;
 create extension if not exists pgtap with schema extensions;
+grant usage on schema extensions to gymbro_workout_writer;
 set local search_path=public,extensions;
 select no_plan();
 insert into auth.users(id) values('${owner}'),('${other}');

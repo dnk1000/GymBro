@@ -19,6 +19,7 @@ async function buildSql() {
   // prematurely creating #39's authoritative set/session schema.
   return `begin;
 create extension if not exists pgtap with schema extensions;
+grant usage on schema extensions to gymbro_workout_writer;
 set local search_path = public, extensions;
 select plan(9);
 insert into auth.users(id) values ('${owner}');

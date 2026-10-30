@@ -36,6 +36,7 @@ async function buildSql(capture) {
   const literal=x=>"'"+JSON.stringify(x).replaceAll("'","''")+"'::jsonb";
   const sql=[`begin;
 create extension if not exists pgtap with schema extensions;
+grant usage on schema extensions to gymbro_workout_writer;
 set local search_path=public,extensions;
 select no_plan();
 insert into auth.users(id) values ('${f.owner}'),('${other}');

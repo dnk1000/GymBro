@@ -1,5 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
+grant usage on schema extensions to gymbro_workout_writer;
 set local search_path = public, extensions;
 select plan(36);
 select has_table('public', 'gymbro_exercises', 'canonical exercises exist');
