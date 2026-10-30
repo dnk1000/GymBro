@@ -1,5 +1,10 @@
 # GymBro release history
 
+## Earlier #71-only Preview — historical, not accepted
+
+`3.11.3-20261030T171451Z`, schema 8 unchanged, was the original [PR #78](https://github.com/dnk1000/GymBro/pull/78) Preview from main 2255a91. After PR #76 merged as main 4278e34, the conflict resolution preserves that accepted runtime unchanged. Remaining #78 changes are the canonical design authority/reference and documentation; they produce no new application build. Its earlier Preview evidence remains historical, not current runtime or Production acceptance.
+
+
 ## Heritage Utility #71/#72 candidate — not accepted
 
 `3.11.2-20261030T170057Z`, schema 8 unchanged. Shared-system foundation followed by global-shell styling in PR #76. [Delivery evidence](https://github.com/dnk1000/GymBro/pull/76) owns checks and pending acceptance. No merge/Production acceptance.

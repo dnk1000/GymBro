@@ -1,3 +1,7 @@
+## Documentation integration — #71 / PR #78
+
+Add the canonical BRAND_AND_UI authority and approved directional reference while preserving accepted main's shared-system/app-shell runtime. No new app build. The earlier 3.11.3 candidate was Preview-only before PR #76 merged; current runtime metadata remains main's 3.11.2.
+
 ## 3.11.2 — Heritage Utility app shell candidate
 
 #72 follows verified #71: compact branded header, simplified tagline, underlined current navigation, unchanged destinations and separated version footer. Data/workflows unchanged.

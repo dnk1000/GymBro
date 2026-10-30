@@ -115,6 +115,6 @@ Apply the [material conflict and decision-resolution procedure](DEVELOPMENT_WORK
 
 Issue #40 adds an opt-in checked [concurrency/retry boundary](V3_CONCURRENCY.md) and synthetic staging verification. Current normal workouts retain their local adapter; this does not activate cloud workout migration or cutover. Verification status is recorded in that document.
 
-## Shared presentation
+## Current visual design authority
 
-[Heritage Utility](DESIGN_SYSTEM.md) owns shared visual tokens/components from #71. It changes presentation only; existing domain, storage and workflow contracts remain in force.
+[BRAND_AND_UI.md](BRAND_AND_UI.md) is the canonical Heritage Utility design authority for shared presentation and future UI issues. It implements product intent without changing domain, storage or workflow contracts. Its committed design board is directional, not pixel-perfect.

@@ -6,6 +6,10 @@ Release status: **preparation**
 
 Presentation-only patch under VERSION_POLICY.md. User requested one sequential branch/PR. #71 was technically verified at 1f4ae48 before #72 started; see [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). #72 applies the same tokens to the header, navigation and version footer without changing domain/data behavior. Not accepted, merged or deployed to Production.
 
+## #78 documentation integration
+
+[PR #78](https://github.com/dnk1000/GymBro/pull/78) resolves against accepted main 4278e34 after PR #76 merged. All runtime/configuration/schema/test files remain identical to main; the remaining scope is [BRAND_AND_UI.md](BRAND_AND_UI.md), its unchanged approved reference and documentation. Canonical application metadata remains main's `3.11.2-20261030T170057Z`; documentation-only integration creates no new build. Original #78 Preview `3.11.3-20261030T171451Z` at 0e4824f is historical evidence for that earlier source, not the current runtime. No new Production or device acceptance is claimed.
+
 # Heritage Utility shared-system candidate — #71
 
 Application version: `3.11.1-20261030T165311Z`

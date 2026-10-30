@@ -74,6 +74,6 @@ The Workout Coach skill is approved and implemented in the repository through is
 
 [V3_ACCOUNT_ACCESS.md](V3_ACCOUNT_ACCESS.md) defines Preview email-link recovery, private ownership requirements for #39, setup and pending acceptance evidence. Local workout schema remains 7.
 
-## Shared presentation
+## Current visual design authority
 
-[Heritage Utility](DESIGN_SYSTEM.md) owns shared visual tokens/components from #71. It changes presentation only; existing domain, storage and workflow contracts remain in force.
+[BRAND_AND_UI.md](BRAND_AND_UI.md) is the canonical Heritage Utility design authority for shared presentation and future UI issues. It implements product intent without changing domain, storage or workflow contracts. Its committed design board is directional, not pixel-perfect.
