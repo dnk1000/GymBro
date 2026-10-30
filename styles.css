@@ -56,7 +56,6 @@ header {
   top: 0;
   z-index: 5;
   background: var(--bg);
-  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
 .wrap {
@@ -66,29 +65,31 @@ header {
 }
 .top {
   display: flex;
-  gap: 14px;
+  gap: var(--space-4);
   align-items: center;
-  justify-content: center;
-  min-height: 90px;
+  justify-content: space-between;
+  min-height: 80px;
 }
 .brand {
+  min-width: 0;
   display: flex;
-  gap: 14px;
+  gap: var(--space-3);
   align-items: center;
 }
 .brand-logo {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
   object-position: center 42%;
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   border: 1px solid var(--line);
   background: var(--heritage);
   box-shadow: var(--shadow-panel);
   flex: 0 0 auto;
 }
 .brand-copy h1 {
-  font-size: 24px;
+  color: var(--heritage);
+  font-size: 28px;
   margin: 0;
   font-family: var(--font-brand);
   letter-spacing: 0.02em;
@@ -101,25 +102,31 @@ header {
 }
 .tabs {
   display: flex;
-  gap: 8px;
-  overflow: auto;
-  padding: 10px 24px;
+  gap: var(--space-1);
+  overflow-x: auto;
+  padding: 0 var(--space-5);
+  scrollbar-width: thin;
+  scrollbar-color: var(--control-line) var(--bg);
   border-top: 1px solid var(--line);
   max-width: 1240px;
   margin: 0 auto;
 }
 .tab {
+  flex: 0 0 auto;
+  min-height: 48px;
   border: 0;
+  border-bottom: 3px solid transparent;
   background: transparent;
   color: var(--muted);
-  padding: 9px 12px;
-  border-radius: var(--radius-control);
+  padding: var(--space-3);
+  border-radius: 0;
   cursor: pointer;
   white-space: nowrap;
 }
 .tab.active {
-  background: var(--panel2);
-  color: var(--text);
+  border-bottom-color: var(--accent-text);
+  background: var(--panel);
+  color: var(--heritage);
 }
 main {
   max-width: 1240px;
@@ -421,9 +428,6 @@ canvas {
   .formgrid .span6 {
     grid-column: 1/-1;
   }
-  .top {
-    align-items: flex-start;
-  }
   .desktopOnly {
     display: none;
   }
@@ -434,7 +438,7 @@ canvas {
     padding: 12px 14px;
   }
   .tabs {
-    padding: 8px 12px;
+    padding: 0 var(--space-3);
   }
   .grid.cols4 {
     grid-template-columns: 1fr;
@@ -446,16 +450,19 @@ canvas {
     font-size: 23px;
   }
   .brand-logo {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
   }
-  .brand-copy h1 {
-    font-size: 20px;
-  }
+  .brand { gap: var(--space-2); }
+  .brand-copy h1 { font-size: 22px; }
+  .brand-copy p { display: none; }
   .top {
-    justify-content: flex-start;
-    min-height: 72px;
+    gap: var(--space-2);
+    min-height: 64px;
+    padding: var(--space-2) var(--space-3);
   }
+  .header-tools { gap: var(--space-1); }
+  .header-tools .btn { padding-inline: var(--space-2); }
 }
 
 /* Keep complete local dates readable; wide history stays in its scroll container. */
@@ -473,7 +480,8 @@ canvas {
   gap: 8px;
 }
 .header-tools {
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 .history-actions {
@@ -794,4 +802,17 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 }
 button:not(:disabled):not(.secondary):not(.danger):not(.tab):active {
   background: var(--accent-active);
+}
+
+/* #72: the shell carries the identity; content keeps its existing layout. */
+.tab:focus-visible { outline-offset: -4px; }
+@media (hover: hover) {
+  .tab:not(.active):hover { color: var(--text); background: var(--panel); }
+}
+#appVersion {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-3);
+  margin: var(--space-5) 0 var(--space-4);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }

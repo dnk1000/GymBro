@@ -1,3 +1,11 @@
+# Heritage Utility shared shell candidate — #71 then #72
+
+Application version: `3.11.2-20261030T170057Z`
+Data schema: `8`
+Release status: **preparation**
+
+Presentation-only patch under VERSION_POLICY.md. User requested one sequential branch/PR. #71 was technically verified at 1f4ae48 before #72 started; see [delivery evidence](HERITAGE_UTILITY_EVIDENCE.md). #72 applies the same tokens to the header, navigation and version footer without changing domain/data behavior. Not accepted, merged or deployed to Production.
+
 # Heritage Utility shared-system candidate — #71
 
 Application version: `3.11.1-20261030T165311Z`

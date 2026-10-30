@@ -1,3 +1,7 @@
+## 3.11.2 — Heritage Utility app shell candidate
+
+#72 follows verified #71: compact branded header, simplified tagline, underlined current navigation, unchanged destinations and separated version footer. Data/workflows unchanged.
+
 ## 3.11.1 — Heritage Utility shared system candidate
 
 #71: charcoal/ivory/oxblood tokens, shared components, heading/data hierarchy and chart palette. Behavior/data unchanged.

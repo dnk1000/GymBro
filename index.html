@@ -18,7 +18,7 @@
           />
           <div class="brand-copy">
             <h1>GymBro</h1>
-            <p>Your training log + program + ChatGPT inbox</p>
+            <p>Your training ledger</p>
           </div>
         </div>
         <div class="header-tools">
@@ -35,15 +35,15 @@
           </button>
         </div>
       </div>
-      <div class="tabs">
-        <button class="tab active" data-view="dashboard">Dashboard</button>
+      <nav class="tabs" aria-label="Main navigation">
+        <button class="tab active" data-view="dashboard" aria-current="page">Dashboard</button>
         <button class="tab" data-view="program">Program</button>
         <button class="tab" data-view="workout">Workout</button>
         <button class="tab" data-view="history">History</button>
         <button class="tab" data-view="inbox">ChatGPT Inbox</button>
         <button class="tab" data-view="exercises">Exercises</button>
         <button class="tab" data-view="data">Data</button>
-      </div>
+      </nav>
     </header>
     <main>
       <div id="storageNotice" class="notice status-bad" role="alert" hidden>

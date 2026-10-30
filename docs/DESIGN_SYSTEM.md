@@ -30,3 +30,7 @@ Retain existing responsive grids, scroll containers, disclosure behavior and 16 
 ## Validation and state
 
 Change Level 1: reversible presentation changes within existing product, architecture, data and compatibility boundaries. Validation covers baseline/final visual inspection, all seven views at desktop/390/320 px, navigation, focus/control states, representative contrast pairs, console errors, unchanged navigation storage, existing browser/domain regressions and syntax/release/diff checks. Exact results and acceptance mapping belong in [the delivery evidence](HERITAGE_UTILITY_EVIDENCE.md). Responsive Chrome does not establish physical iPhone Safari acceptance.
+
+## Shared app shell (#72)
+
+The unchanged strongman logo sits beside the ivory serif wordmark. The supporting “Your training ledger” line is hidden on phones up to 480 px; the wordmark/logo and Help/Backup remain visible in one row. The header uses a flat charcoal surface and divider. Navigation retains horizontal scrolling, seven labeled native buttons and 48 px targets; current view has an ivory label and warm underline, with matching `aria-current` state. Keyboard focus stays inside the scroll container. No alternate menu or hidden destination is introduced. Desktop keeps a left brand/right utility alignment; phone top-row spacing is reduced. The global version footer has a divider and wrapping build label. Screen-specific layouts, content and workflows continue to inherit shared components without redesign.
