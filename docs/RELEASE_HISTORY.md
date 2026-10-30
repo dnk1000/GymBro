@@ -2,12 +2,12 @@
 
 ## Heritage Utility #71/#72 candidate — not accepted
 
-`3.11.2-20261030T170057Z`, schema 8 unchanged. Shared-system foundation followed by global-shell styling in PR #76. [Delivery evidence](HERITAGE_UTILITY_EVIDENCE.md) owns checks and pending acceptance. No merge/Production acceptance.
+`3.11.2-20261030T170057Z`, schema 8 unchanged. Shared-system foundation followed by global-shell styling in PR #76. [Delivery evidence](https://github.com/dnk1000/GymBro/pull/76) owns checks and pending acceptance. No merge/Production acceptance.
 
 
 ## Heritage Utility #71 candidate — not accepted
 
-`3.11.1-20261030T165311Z`, schema 8 unchanged. Non-functional shared styling patch. Evidence: [delivery report](HERITAGE_UTILITY_EVIDENCE.md). No Production acceptance or merge.
+`3.11.1-20261030T165311Z`, schema 8 unchanged. Non-functional shared styling patch. Evidence: [delivery report](https://github.com/dnk1000/GymBro/pull/76). No Production acceptance or merge.
 
 
 ## Mobile History 3.11.0 candidate — not yet accepted

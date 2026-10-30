@@ -29,7 +29,7 @@ Retain existing responsive grids, scroll containers, disclosure behavior and 16 
 
 ## Validation and state
 
-Change Level 1: reversible presentation changes within existing product, architecture, data and compatibility boundaries. Validation covers baseline/final visual inspection, all seven views at desktop/390/320 px, navigation, focus/control states, representative contrast pairs, console errors, unchanged navigation storage, existing browser/domain regressions and syntax/release/diff checks. Exact results and acceptance mapping belong in [the delivery evidence](HERITAGE_UTILITY_EVIDENCE.md). Responsive Chrome does not establish physical iPhone Safari acceptance.
+Change Level 1: reversible presentation changes within existing product, architecture, data and compatibility boundaries. Validation covers baseline/final visual inspection, all seven views at desktop/390/320 px, navigation, focus/control states, representative contrast pairs, console errors, unchanged navigation storage, existing browser/domain regressions and syntax/release/diff checks. Exact results and acceptance mapping belong in [the delivery evidence](https://github.com/dnk1000/GymBro/pull/76). Responsive Chrome does not establish physical iPhone Safari acceptance.
 
 ## Shared app shell (#72)
 

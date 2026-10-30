@@ -4,7 +4,7 @@ Application version: `3.11.2-20261030T170057Z`
 Data schema: `8`
 Release status: **preparation**
 
-Presentation-only patch under VERSION_POLICY.md. User requested one sequential branch/PR. #71 was technically verified at 1f4ae48 before #72 started; see [delivery evidence](HERITAGE_UTILITY_EVIDENCE.md). #72 applies the same tokens to the header, navigation and version footer without changing domain/data behavior. Not accepted, merged or deployed to Production.
+Presentation-only patch under VERSION_POLICY.md. User requested one sequential branch/PR. #71 was technically verified at 1f4ae48 before #72 started; see [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). #72 applies the same tokens to the header, navigation and version footer without changing domain/data behavior. Not accepted, merged or deployed to Production.
 
 # Heritage Utility shared-system candidate — #71
 
@@ -12,7 +12,7 @@ Application version: `3.11.1-20261030T165311Z`
 Data schema: `8`
 Release status: **preparation**
 
-Presentation-only patch under VERSION_POLICY.md. Based on accepted main 2255a91. Shared tokens/components and chart colors; no domain/schema/storage changes. Verification and pending review are tracked in [delivery evidence](HERITAGE_UTILITY_EVIDENCE.md). Not accepted, merged or deployed to Production.
+Presentation-only patch under VERSION_POLICY.md. Based on accepted main 2255a91. Shared tokens/components and chart colors; no domain/schema/storage changes. Verification and pending review are tracked in [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). Not accepted, merged or deployed to Production.
 
 # Mobile History candidate — integrated main
 
