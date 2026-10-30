@@ -19,6 +19,10 @@ For application numbering and release mapping, use [VERSION_POLICY.md](VERSION_P
 
 For new implementation work, the **target GitHub issue is the executable specification**. Documents provide durable cross-cutting rules and context; a roadmap paragraph alone does not authorize implementation.
 
+## Proposed designs awaiting approval
+
+- [V3_CONCURRENCY_PROPOSAL.md](V3_CONCURRENCY_PROPOSAL.md) — #40 concurrency matrix, owner revision/request-retry design, write-permission transition, guarded synthetic Preview UI and validation plan. Proposed only; runtime implementation and release mapping await approval.
+
 ## Current subsystem contracts
 
 - [V3_RELATIONAL_SCHEMA_PROPOSAL.md](V3_RELATIONAL_SCHEMA_PROPOSAL.md) — approved #39 relational model, persistence boundary and verification plan.
