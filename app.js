@@ -662,12 +662,43 @@ function historyExerciseDisclosures(group, key) {
     </details>`;
   }).join("");
 }
+function historyFilterValues() {
+  return Object.fromEntries([['exercise', 'historyExercise'], ['workout', 'historyWorkout'], ['from', 'historyFrom'], ['to', 'historyTo']]
+    .map(([key, id]) => [key, document.getElementById(id).value]));
+}
+function resetHistoryFilters() {
+  historyFilter.value = 'all';
+  for (const id of ['historyExercise', 'historyWorkout', 'historyFrom', 'historyTo']) document.getElementById(id).value = '';
+  renderHistory();
+}
+function renderHistoryFilterOptions(state) {
+  const fill = (id, values, allLabel) => {
+    const el = document.getElementById(id), selected = el.value;
+    // Keep a selected value even if its final matching record is corrected/deleted.
+    // Silently broadening a filter would misrepresent the current selection.
+    if (selected && !values.some(([value]) => value === selected)) values.push([selected, el.selectedOptions[0].textContent]);
+    el.innerHTML = '<option value="">' + allLabel + '</option>' + values.map(([value, label]) =>
+      '<option value="' + esc(value) + '">' + esc(label) + '</option>').join('');
+    el.value = selected;
+  };
+  fill('historyExercise', unique(state.sets.map(set => set.exercise)).sort().map(name => [name, name]), 'All exercises');
+  const names = unique(state.sessions.map(session => session.planSnapshot?.name || 'Unplanned workout')).sort();
+  fill('historyWorkout', [...names.map(name => ['session:' + name, name]), ['legacy', 'Legacy / sessionless']], 'All workouts / sessions');
+}
 function renderHistory() {
   // Read native details state synchronously before replacing the DOM; a toggle
   // event may still be queued when a filter/action causes another render.
   rememberHistoryExpansion();
   const filter = historyFilter?.value || "all";
-  const groups = getHistoryGroups(getWorkoutState(), filter);
+  const state = getWorkoutState();
+  renderHistoryFilterOptions(state);
+  const filters = historyFilterValues();
+  const invalidRange = filters.from && filters.to && filters.from > filters.to;
+  const groups = invalidRange ? [] : getHistoryGroups(state, filter, filters);
+  const setFiltered = filter !== 'all' || !!filters.exercise;
+  document.getElementById('historyFilterStatus').textContent = invalidRange
+    ? 'From date must be on or before Through date.'
+    : groups.length + ' workout/session groups shown. Exercise and source filters show matching sets.';
   historyTable.innerHTML =
     groups
       .map((group) => {
@@ -677,7 +708,7 @@ function renderHistory() {
         const heading = `<h3>${esc(group.date)} · ${esc(session ? name : "Legacy / sessionless")}</h3>`;
         const count = (n) => `${n} ${n === 1 ? "set" : "sets"}`;
         const countText =
-          session && filter !== "all"
+          session && setFiltered
             ? `${group.sets.length} matching ${group.sets.length === 1 ? "set" : "sets"} · ${count(group.totalSetCount)} in session`
             : count(group.sets.length);
         const key = JSON.stringify([group.kind, session ? session.id : group.date]);
@@ -685,7 +716,7 @@ function renderHistory() {
       <details class="history-disclosure" data-history-key="${esc(key)}" ${expandedHistoryGroups.has(key) ? "open" : ""}>
       <summary class="history-summary">
         ${heading}
-        <span class="sub history-counts">${countText} · ${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"}${filter === "all" ? "" : " shown"}</span>
+        <span class="sub history-counts">${countText} · ${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"}${setFiltered ? " shown" : ""}</span>
         <span class="history-exercise-preview"><span>${exercises.length ? exercises.slice(0, 2).map(esc).join(" · ") : "No sets logged in this session."}</span>${exercises.length > 2 ? `<span class="history-more">· +${exercises.length - 2}</span>` : ""}</span>
       </summary>
       <div class="history-details">
@@ -697,7 +728,7 @@ function renderHistory() {
       </div></details>
     </article>`;
       })
-      .join("") || '<p class="sub">No history matches this source filter.</p>';
+      .join("") || '<p class="sub">No history matches these filters.</p>';
 }
 // Legacy dates are display groups only, never inferred persisted sessions.
 function exerciseSessionCount(records) {

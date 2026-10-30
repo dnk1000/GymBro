@@ -1,3 +1,11 @@
+# History filters candidate — issue #22
+
+Application version: `3.10.0-20261030T161206Z`
+Data schema: `8`
+Release status: **preparation**
+
+User approved 3.10.0 for #22 alone on October 30, 2026, with a separate unmerged PR based on accepted main 77bd5ab. Change Level 2. Exact exercise labels, saved workout names, inclusive date ranges and existing source filters compose without stored-data changes. Reset clears every filter. #36 remains in its separate PR. PR completion report owns verification and pending acceptance; no Production acceptance or merge.
+
 # History exercise disclosure candidate — issue #21
 
 Application version: `3.8.0-20261030T150933Z`

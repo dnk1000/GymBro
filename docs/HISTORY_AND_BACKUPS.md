@@ -20,6 +20,10 @@ This milestone starts from accepted main `14b12a88166d8c9cb7dfb3d70bccb0f68d0c8d
 
 `getHistoryGroups(data, source)` in `history-view.js` creates detached, DOM-free display data. It never writes or adds fields to persisted records. It assumes validated application data, like the existing UI.
 
+## History search and filters — issue #22 candidate
+
+Exercise selection matches exact recorded labels in the current name-key local runtime; the separate canonical conversion is not activated. Workout / session matches immutable saved snapshot names (or Unplanned workout); Legacy / sessionless selects date display groups without assigning identity. Date bounds are inclusive local calendar dates, using each explicit session's date or legacy set date. Source and exercise filters intersect and reveal matching sets, retaining full-session counts and original order/occurrence boundaries. Empty explicit sessions remain under unrestricted exercise/source selection. A reversed range shows an explanation and no results; no matches show an explicit empty state. Reset clears exercise, workout, both dates and source. Controls and expansion choices are transient UI state with no writes; selected options survive corrections removing their last record until reset. Notes, actions and historical context remain at existing scopes. PR completion report owns current verification and acceptance.
+
 ## Backup and recovery
 
 1. **Complete backup:** Export JSON or header Backup exports the entire supported database. It includes sessions/active pointer, sets, bodyweights, program/templates, library, preferences, import metadata, unknown preserved fields, schema `version` and the canonical exporting `appVersion`. CSV is explicitly sets-only and cannot restore the database.

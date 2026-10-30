@@ -109,3 +109,32 @@ test("exercise occurrences follow authoritative order before filtering and stay 
   all[0].exerciseGroups[0].sets[0].exercise = "changed";
   assert.deepEqual(source, original);
 });
+
+test('History exercise/workout/date filters intersect without inferred identity or reordered facts', () => {
+  const source = data();
+  source.sets.forEach(set => { set.exercise = set.id === 'b' ? 'Bench press' : 'Bench Press'; });
+  const original = structuredClone(source);
+  const selected = plain(groups(source, 'all', { exercise: 'Bench Press', from: '2026-10-23', to: '2026-10-23' }));
+  assert.deepEqual(selected.map(g => g.session?.id || g.kind), ['second', 'first', 'legacy']);
+  assert.deepEqual(selected[1].sets.map(s => s.id), ['a']);
+  assert.equal(selected[1].totalSetCount, 2);
+  assert.deepEqual(plain(groups(source, 'all', { exercise: 'Bench press' })).map(g => g.sets.map(s => s.id)), [['b']]);
+  assert.deepEqual(plain(groups(source, 'manual', { exercise: 'Bench Press' })).map(g => g.session.id), ['second']);
+  assert.deepEqual(plain(groups(source, 'all', { workout: 'session:saved plan' })).map(g => g.session.id), ['first']);
+  assert.deepEqual(plain(groups(source, 'all', { workout: 'session:Unplanned workout' })).map(g => g.session.id), ['empty', 'second']);
+  assert.deepEqual(plain(groups(source, 'all', { workout: 'legacy' })).map(g => g.kind), ['legacy']);
+  assert.equal(plain(groups(source, 'all', { from: '2026-10-24' })).length, 1);
+  assert.equal(plain(groups(source, 'all', { to: '2026-10-22' })).length, 0);
+  assert.equal(plain(groups(source, 'all', { from: '2026-10-24', to: '2026-10-23' })).length, 0);
+  assert.deepEqual(source, original);
+});
+
+test('exercise filtering never combines non-consecutive occurrences hidden by that filter', () => {
+  const source = data();
+  source.sessions = [source.sessions[0]];
+  source.sessions[0].setIds = ['a', 'b', 'c'];
+  source.sets = ['A','B','A'].map((exercise, i) => ({ id: ['a','b','c'][i], date: '2026-10-23', sessionId: 'first', source: 'manual', exercise }));
+  const filtered = plain(groups(source, 'all', { exercise: 'A' }));
+  assert.deepEqual(filtered[0].sets.map(s => s.id), ['a','c']);
+  assert.deepEqual(filtered[0].exerciseGroups.map(g => g.firstSetId), ['a','c']);
+});

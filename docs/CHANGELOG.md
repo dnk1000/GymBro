@@ -1,3 +1,7 @@
+## 3.10.0 — History filters candidate
+
+Filter by exact recorded exercise, saved workout name, inclusive dates and source; reset all filters or see a clear no-match state. No stored-data change.
+
 # Changes
 
 ## 3.8.0 — History exercise disclosure candidate
