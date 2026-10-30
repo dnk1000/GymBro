@@ -68,3 +68,5 @@ Application versions do not define storage, backup or interchange compatibility.
 Keep workout `DATA_VERSION`, any future explicitly versioned cloud/backup schemas, database migration identifiers and `gym-tracker-chatgpt-v1` interchange semantics independent of application MINOR/PATCH/BUILD. A schema change requires its own approved migration and backward-compatibility contract; neither bumping an app version nor assigning a release authorizes one. Record applicable schema versions/migration identifiers alongside each release, without inventing future values here. Code rollback never implies safe data downgrade.
 
 The user explicitly approved **3.6.0 for #40 alone** on October 30, 2026, with the [concurrency design](V3_CONCURRENCY_PROPOSAL.md). This is a candidate mapping, not Production acceptance or merge approval.
+
+The user explicitly approved **3.7.0 for #20 alone** on October 30, 2026 in the #20 implementation conversation. This maps the History disclosure feature to its own candidate; no acceptance, merge or Production approval is implied.

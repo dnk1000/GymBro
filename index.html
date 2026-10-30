@@ -316,6 +316,10 @@
           <div class="split">
             <div>
               <h2>Workout history</h2>
+              <div class="history-controls">
+                <button class="btn secondary" onclick="setHistoryExpanded(true)">Expand all</button>
+                <button class="btn secondary" onclick="setHistoryExpanded(false)">Collapse all</button>
+              </div>
               <div class="sub">
                 Explicit sessions preserve their recorded workout and set order.
                 Legacy/sessionless records remain available below. Source
@@ -619,7 +623,11 @@
       <h3>History</h3>
       <p>
         Review explicit sessions with their saved plan name, mode, status and
-        ordered sets. Multiple workouts on one date remain separate.
+        ordered sets. Cards start collapsed; tap anywhere in a card header to
+        show or hide its details. Expand all and Collapse all affect the cards
+        in the current source filter. Cards keep their state while you remain
+        in History; returning to History starts collapsed again.
+        Multiple workouts on one date remain separate.
         Legacy/sessionless records are grouped by date for display only, without
         creating sessions. Source filters show matching sets and keep session
         order; sessions without matching sets are omitted while a filter is

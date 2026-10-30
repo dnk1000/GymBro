@@ -1,5 +1,9 @@
 # GymBro release history
 
+## V3 History disclosure candidate — not yet accepted
+
+`3.7.0-20261030T135802Z`, #20 alone; workout schema 8 unchanged. Collapsed session/date summaries with independent native disclosure and bulk controls. Presentation state does not write workout data. Verification and required physical Safari evidence: [History disclosure](HISTORY_DISCLOSURE.md). This is a candidate, not an accepted Production release.
+
 ## V3 concurrency completion-order correction candidate — not yet accepted
 
 `3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Technical verification now passes all seven ACs, including 221 application tests, 335 SQL assertions per replay pass, hosted assertions/races and actual signed Preview contexts. Explicit Level 3 acceptance remains pending; see [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
