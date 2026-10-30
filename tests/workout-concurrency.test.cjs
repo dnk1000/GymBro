@@ -28,9 +28,35 @@ test('unsupported recovery metadata remains blocked after refresh and never clai
   const raw=JSON.stringify({protocolVersion:2,ownerId:f.owner,operation:['logSet','unknown-prior']});store.setItem(key,raw);
   const a=f.create({recoveryStorage:store});assert.equal(a.getStatus().phase,'RECOVERY_BLOCKED');
   assert.doesNotMatch(a.getStatus().message,/Nothing was sent|not saved|Saved\./);
+  const original=f.client.rpc;f.client.rpc=async()=>{throw Error('read unavailable');};
+  await a.refresh();assert.equal(a.getStatus().phase,'RECOVERY_BLOCKED');f.client.rpc=original;
   await a.refresh();assert.equal(a.getStatus().phase,'RECOVERY_BLOCKED');assert.equal(store.getItem(key),raw);
   assert.equal((await a.execute('logSet',input(f))).code,'RECOVERY_BLOCKED');
   assert.equal(f.calls.filter(c=>c.name==='gymbro_workout_mutate').length,0);
+});
+test('a stale refresh cannot clear a newer conflict or permit a new mutation',async()=>{
+  const f=await serverFixture(),a=f.create(),b=f.create(),original=f.client.rpc;let release,entered;
+  const waiting=new Promise(r=>{entered=r;});let hold=true;
+  f.client.rpc=async(name,args)=>{
+    const response=await original(name,args);
+    if(name==='gymbro_workout_snapshot'&&hold){hold=false;await new Promise(r=>{release=r;entered();});}
+    return response;
+  };
+  const refresh=b.refresh();await waiting;
+  assert.equal((await a.execute('logSet',input(f))).code,'OK');
+  assert.equal((await b.execute('logSet',input(f))).code,'CONFLICT');
+  release();await refresh;assert.equal(b.getStatus().phase,'CONFLICT');
+  assert.equal((await b.execute('logSet',input(f))).code,'CONFLICT');
+  await b.refresh();assert.equal(b.getStatus().phase,'READY');
+});
+test('confirmed results with failed marker cleanup remain blocked and retry without another mutation',async()=>{
+  const f=await serverFixture(),store=storage(),remove=store.removeItem;let denied=true;
+  store.removeItem=key=>{if(denied)throw Error('marker removal unavailable');remove(key);};
+  const a=f.create({recoveryStorage:store});
+  assert.equal((await a.execute('logSet',input(f))).code,'RECOVERY_PENDING');
+  assert.equal(a.getStatus().revision,'1');assert.match(a.getStatus().message,/result was confirmed/);
+  assert.equal((await a.execute('logSet',input(f))).code,'RECOVERY_PENDING');
+  denied=false;assert.equal((await a.retry()).code,'REPLAY');assert.equal(f.getSaved().revision,'1');
 });
 test('reload resolves committed request and a cancellation fences late original packets',async()=>{
   const f=await serverFixture(),store=storage();const a=f.create({recoveryStorage:store});

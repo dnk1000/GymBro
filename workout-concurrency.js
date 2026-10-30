@@ -9,6 +9,7 @@ const WorkoutConcurrency = (() => {
     CANCELLED: "The unresolved submission did not commit and was cancelled. Review saved data before submitting a new request.",
     RECOVERY_ERROR: "Request recovery could not be recorded. Nothing was sent. Keep your entry and restore session storage before retrying.",
     RECOVERY_BLOCKED: "Request recovery could not be read. Saving is paused. Keep this tab and recover the original request information before submitting again.",
+    RECOVERY_PENDING: "The request result was confirmed, but its recovery marker could not be cleared. Keep this tab and check the result before submitting again.",
     LOAD_ERROR: "Saved data could not be refreshed. Your entry has been kept; saving is paused.",
     AUTHORIZATION_ERROR: "Account access could not be verified. Your entry has been kept; saving is paused.",
     VALIDATION_ERROR: "The request was rejected. Your entry has been kept.",
@@ -22,7 +23,7 @@ const WorkoutConcurrency = (() => {
     recoveryStorage = globalThis.sessionStorage, createRequestId = () => crypto.randomUUID() }) {
     if (!revision(initial.revision) || initial.protocolVersion !== 1 || initial.ownerId !== ownerId)
       throw Error("A verified protocol-1 load handle is required.");
-    let committed = clone(initial), phase = "READY", alive = true, generation = 0, refreshSequence = 0;
+    let committed = clone(initial), phase = "READY", alive = true, generation = 0, refreshSequence = 0, activity = 0;
     let packet = null, operation = null, awaiting = false;
     const key = `gymbro-request-recovery-v1-${ownerId}`;
     const state = () => committed.document ? clone(committed.document) : null;
@@ -47,21 +48,23 @@ const WorkoutConcurrency = (() => {
     }
     function adopt(handle) {
       if (handle.protocolVersion !== 1 || handle.ownerId !== ownerId || !revision(handle.revision)) throw Error("snapshot");
-      if (BigInt(handle.revision) >= BigInt(committed.revision)) committed = clone(handle);
+      if (BigInt(handle.revision) < BigInt(committed.revision)) return false;
+      committed = clone(handle);return true;
     }
     async function send(resolving = false) {
       if (!alive) return result("DISPOSED");
       if (awaiting) return result("PENDING");
       if (!operation || (!resolving && !packet)) return result(phase);
       const currentGeneration = generation;
-      awaiting = true; phase = "PENDING";
-      let response;
+      awaiting = true; phase = "PENDING";activity++;
+      let response, acknowledged = false;
       try {
         response = resolving ? await repository.resolve(operation) : await repository.submit(packet);
         if (!alive || currentGeneration !== generation) return result("DISPOSED");
         if (!["OK","REPLAY","NO_CHANGE","CANCELLED","CONFLICT","REQUEST_CONFLICT","VALIDATION_ERROR","AUTHORIZATION_ERROR"].includes(response.code)) throw Error("response");
         if (response.code === "REQUEST_CONFLICT") { phase = "REQUEST_CONFLICT"; return result("REQUEST_CONFLICT"); }
         if (["OK","REPLAY","NO_CHANGE","CANCELLED"].includes(response.code)) adopt(response.saved);
+        acknowledged = true;
         // Clear only an acknowledged terminal operation. Failure to clear leaves
         // the recovery marker and request frozen so a reload remains safe.
         clear();
@@ -71,8 +74,8 @@ const WorkoutConcurrency = (() => {
           revision: committed.revision, changes: response.code === "OK" ? response.result?.changes ?? [] : [] });
       } catch {
         if (!alive || currentGeneration !== generation) return result("DISPOSED");
-        phase = "OUTCOME_UNKNOWN";
-        return result("OUTCOME_UNKNOWN");
+        phase = acknowledged ? "RECOVERY_PENDING" : "OUTCOME_UNKNOWN";
+        return result(phase);
       } finally { awaiting = false; }
     }
     return Object.freeze({
@@ -82,7 +85,7 @@ const WorkoutConcurrency = (() => {
       async execute(name, ...args) {
         if (!alive) return result("DISPOSED");
         if (phase !== "READY") return result(phase);
-        phase = "PENDING";
+        phase = "PENDING";activity++;
         const currentGeneration = generation;
         const base = clone(committed);
         try {
@@ -114,17 +117,19 @@ const WorkoutConcurrency = (() => {
       resolve: () => send(true),
       async refresh() {
         if (!alive) return result("DISPOSED");
-        const sequence = ++refreshSequence, currentGeneration = generation;
+        const sequence = ++refreshSequence, currentGeneration = generation, currentActivity = activity, priorPhase = phase;
         try {
           const loaded = await repository.load();
           if (!alive || currentGeneration !== generation) return result("DISPOSED");
           if (sequence !== refreshSequence) return result("NO_CHANGE");
-          adopt(loaded);
-          if (!operation && !awaiting && !["RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) phase = "READY";
+          const accepted=adopt(loaded);
+          if (accepted && currentActivity===activity && phase===priorPhase && !operation && !awaiting &&
+            !["PENDING","RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) phase = "READY";
           return result("NO_CHANGE", { revision: committed.revision });
         } catch {
           if (!alive || currentGeneration !== generation) return result("DISPOSED");
-          if (!operation && !awaiting) phase = "LOAD_ERROR";
+          if(sequence!==refreshSequence || currentActivity!==activity || phase!==priorPhase) return result("NO_CHANGE");
+          if (!operation && !awaiting && !["PENDING","RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) phase = "LOAD_ERROR";
           return result("LOAD_ERROR");
         }
       },

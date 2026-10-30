@@ -1,5 +1,9 @@
 # Changes
 
+## 3.6.5 — fence stale refresh presentation and marker cleanup errors
+
+`3.6.5-20261030T054112Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Old refreshes cannot release newer conflict/pending states; unreadable recovery metadata stays blocked through failed/successful refreshes. Confirmed results with failed marker cleanup remain blocked with an accurate message and exact retry. Evidence remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
 ## 3.6.4 — preserve uncertainty for unreadable recovery metadata
 
 `3.6.4-20261030T052148Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Unreadable/future recovery markers remain blocked across refresh and no longer imply the prior request was never sent. SQL source is unchanged from the 329-assertion fresh pass; race/replay and hosted evidence remain pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
