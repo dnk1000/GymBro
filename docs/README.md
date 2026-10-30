@@ -9,10 +9,11 @@ This directory contains both **current authorities** and **historical milestone 
 3. [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md) — approved V3 cloud-transition decisions and gates.
 4. [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md) — current deployed V2 architecture versus approved V3 target architecture.
 5. [WORKOUT_COACH_ARCHITECTURE.md](WORKOUT_COACH_ARCHITECTURE.md) — GymBro/ChatGPT authority boundary, contextual skill activation/closure, temporary session state, interim data adapter, degraded-data mode, and future MCP boundary.
-6. [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md) — ordered V3 issue/backlog view. Workout Coach onboarding (#60) and MCP integration (#61) are separately approved trainer work and are not V3.x core-completion blockers.
-7. [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md) — issue-driven Chat → issue → Codex PR → acceptance workflow.
-8. Root [AGENTS.md](../AGENTS.md) — mandatory repository/Codex rules.
-9. Root [README.md](../README.md) — concise current product/run/data summary.
+6. [`skills/workout-coach/SKILL.md`](../skills/workout-coach/SKILL.md) — repository-owned daily Workout Coach v1 policy/procedure for contextual live coaching. Pilot evidence and behavior scenarios live beside the skill. This repository file does not by itself install the skill into ChatGPT or provide a live GymBro connector.
+7. [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md) — ordered V3 issue/backlog view. Workout Coach v1 (#63), onboarding (#60), and MCP integration (#61) are separately approved trainer work and are not V3.x core-completion blockers.
+8. [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md) — issue-driven Chat → issue → Codex PR → acceptance workflow.
+9. Root [AGENTS.md](../AGENTS.md) — mandatory repository/Codex rules.
+10. Root [README.md](../README.md) — concise current product/run/data summary.
 
 For application numbering and release mapping, use [VERSION_POLICY.md](VERSION_POLICY.md), the issue #43 decision. It supersedes older milestone-to-minor wording; `app-version.js` remains the canonical application-version source.
 
@@ -31,6 +32,7 @@ For new implementation work, the **target GitHub issue is the executable specifi
 - [V3_RELEASE.md](V3_RELEASE.md) — current V3 candidate and actual acceptance evidence; not a Production release declaration.
 
 - [WORKOUT_COACH_ARCHITECTURE.md](WORKOUT_COACH_ARCHITECTURE.md) — approved coaching-system boundary and provider-neutral adapter contract. The current implementation path uses manual/interchange context until a future live connector exists.
+- [`skills/workout-coach/SKILL.md`](../skills/workout-coach/SKILL.md) — daily coaching policy implementing that architecture for the interim/manual data path. See issue #63. The skill's pilot evidence is explanatory provenance; authoritative workout history remains GymBro data.
 
 These remain relevant to the deployed V2 baseline and must be preserved or deliberately migrated by V3 issues:
 
@@ -63,7 +65,7 @@ The current V3 backlog is intentionally issue-driven rather than encoded as a lo
 
 Foundation/database work includes issues #27–#29 plus exercise identity issue #16. Core data/product work includes exercise/catalog/import issues #17–#18, History/UI issues #20–#26, note semantics #25, and live-workout adaptation #30. Release acceptance is issue #31.
 
-The Workout Coach skill and onboarding are now approved product work, with onboarding tracked by #60. External live GymBro/AI-provider connectivity remains beyond V3.x core completion; the future MCP/API connector and corresponding skill update are tracked by #61. Voice remains separately deferred unless another explicit product decision changes that boundary.
+The Workout Coach skill is approved and implemented in the repository through issue #63; onboarding is tracked by #60. External live GymBro/AI-provider connectivity remains beyond V3.x core completion; the future MCP/API connector and corresponding skill update are tracked by #61. Voice remains separately deferred unless another explicit product decision changes that boundary.
 
 ## Issue #27 account candidate
 
