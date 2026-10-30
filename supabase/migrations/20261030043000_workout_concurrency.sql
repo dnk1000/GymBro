@@ -80,8 +80,8 @@ select case when jsonb_typeof(operation)='array' then
 else false end
 $$;
 
--- Rebind only Auth lookups in the existing invoker helpers; preserve the exact
--- original row-diff, immutable-intent and relationship constraints.
+-- Rebind Auth lookups in the invoker helpers. The commit also defers parent
+-- completion until its child changes; original guards/constraints remain.
 create or replace function public.gymbro_workout_read() returns jsonb language plpgsql stable security invoker set search_path='' as $$
 declare t text; data jsonb; result jsonb := '{}'; who uuid := public.gymbro_request_owner();
 begin

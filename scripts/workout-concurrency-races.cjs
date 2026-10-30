@@ -66,7 +66,7 @@ async function run(mode) {
   const query=queryClient(mode),owners=[],evidence=[],workers=[];
   let originalFailure;
   try {
-    for(const name of ['start-start','edit-delete','delete-edit','log-finish','finish-log','done-log','skip-log','navigate-substitute','guided-guided','duplicate-submit','cancel-original','original-cancel']) {
+    for(const name of ['start-start','edit-delete','delete-edit','log-finish','finish-log','done-log','skip-log','navigate-substitute','guided-guided','duplicate-import','duplicate-submit','cancel-original','original-cancel']) {
       const f=await fixture();f.owner=randomUUID();owners.push(f.owner);
       if(name==='start-start') {f.document.data.sessions=[];f.document.data.sets=[];f.document.data.activeSessionId=null;f.document.data.noteScopes.session=[];f.document.data.noteScopes.exerciseSession=[];}
       const repo=f.repository.create({client:{},ownerId:f.owner});
@@ -96,6 +96,11 @@ async function run(mode) {
       } else if(name==='guided-guided') {
         a=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided-one'}],'race-guided-one');
         b=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided-two'}],'race-guided-two');
+      } else if(name==='duplicate-import') {
+        const batch={importId:'race-reviewed-import',date:'2026-10-28',template:'synthetic',duration:30,sessionNotes:'  reviewed\n',bodyweight:null,
+          sets:[{include:true,exercise,weight:0,reps:8,unit:'lb',rpe:null,rir:0,pain:0,painArea:'',notes:'  exact\n',complete:false}]};
+        a=await prepare(f,initial,'commitImport',[batch],'race-import-a');
+        b=await prepare(f,initial,'commitImport',[batch],'race-import-b');
       } else {
         a=await prepare(f,initial,'logSet',[log],'race-identical');b=a;
         resolveA=name==='cancel-original';resolveB=name==='original-cancel';
@@ -120,6 +125,7 @@ async function run(mode) {
       assert.equal(two.reply.snapshot.revision,resolveA?'1':'2');
       const current=two.reply.snapshot.rows;
       f.repository.assemble(current,f.owner);
+      if(name==='duplicate-import') assert.equal(current.imports.filter(row=>row.import_id==='race-reviewed-import').length,1);
       // Prepared arrays originate in the isolated domain VM. Compare their
       // canonical full JSON content rather than JavaScript realm prototypes.
       assert.equal(JSON.stringify(normalize(current)),JSON.stringify(normalize(resolveA?init.next:a.next)),'complete post-race facts/relationships');
