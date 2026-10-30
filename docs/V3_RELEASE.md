@@ -1,3 +1,11 @@
+# Issue #20 compact-layout refinement
+
+Application version: `3.7.1-20261030T144204Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED. Current evidence will be recorded in [PR #66](https://github.com/dnk1000/GymBro/pull/66).
+
 # V3 History disclosure candidate — issue #20
 
 Application version: `3.7.0-20261030T135802Z`

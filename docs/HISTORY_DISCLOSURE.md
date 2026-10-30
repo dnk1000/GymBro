@@ -2,7 +2,11 @@
 
 Candidate from accepted main `2da1ef92bd7fa491b499c5f5a1d674bb7eeef546`, branch `codex/issue-20-history-collapse`. The user requested #20 alone and approved **3.7.0 for #20 alone** on October 30, 2026. Change Level **2**: new History presentation interactions within the existing model, with no foundational data/security change or separate proposal gate.
 
-## Interaction contract
+## Approved compact refinement — 3.7.1 candidate
+
+Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED. Normal collapsed rows now show date/name, set/exercise counts, and a single-line preview of two names plus +N remaining exercises. All names, reliable mode/status badges and the legacy explanation remain in expanded details. Padding is 10 px vertically and gaps are 6 px; short-title rows target 85–100 px while long titles may wrap. The user approved this change in the current #20 conversation. Current AC evidence belongs in [PR #66](https://github.com/dnk1000/GymBro/pull/66); the original 3.7.0 evidence below remains historical.
+
+## Original interaction contract — 3.7.0
 
 Each explicit session and legacy/date display group has an independent native `details` disclosure. Cards start collapsed on entering History or reloading. The whole summary is a keyboard/touch target with a visible chevron. It shows the local date, saved snapshot name or Unplanned workout, reliable existing mode/status, set and exercise counts and exercise names. Legacy/sessionless wording and the explanation that no saved session identity exists remain visible.
 

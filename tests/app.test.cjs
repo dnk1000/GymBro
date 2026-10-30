@@ -1502,10 +1502,10 @@ test("History disclosure preserves independent session/date state through filter
   const legacy = p.locator('[data-legacy-date="2026-10-23"] .history-disclosure');
   assert.equal(await p.locator('.history-disclosure[open]').count(), 0);
   assert.equal(await p.locator('#historyTable tbody tr:visible').count(), 0);
-  assert.match(await first.locator(':scope > summary').innerText(), /2 sets · 2 exercises shown/);
+  assert.match(await first.locator(':scope > summary').innerText(), /2 sets · 2 exercises/);
   assert.match(await first.locator(':scope > summary').innerText(), /Seated Row · Bench Press/);
   assert.match(await legacy.locator(':scope > summary').innerText(), /Legacy \/ sessionless/);
-  assert.match(await legacy.locator(':scope > summary').innerText(), /no saved session identity/);
+  assert.doesNotMatch(await legacy.locator(':scope > summary').innerText(), /no saved session identity/);
   assert.equal(await first.getByRole('button', { name: 'Edit', exact: true }).count(), 0);
   await first.locator(':scope > summary').click();
   assert.equal(await first.evaluate(el => el.open), true);
@@ -1515,6 +1515,7 @@ test("History disclosure preserves independent session/date state through filter
   assert.equal(await first.evaluate(el => el.open), false);
   assert.equal(await second.evaluate(el => el.open), true);
   await legacy.locator(':scope > summary').click();
+  assert.match(await legacy.locator('.history-details').innerText(), /no saved session identity/);
   await legacy.locator('.set-record summary').first().click();
   assert.equal(await legacy.evaluate(el => el.open), true, 'nested metadata does not toggle its card');
   await p.evaluate(() => { renderAll(); renderHistory(); });
@@ -1553,6 +1554,7 @@ for (const width of [320, 390, 1280]) {
     const ids = await sessionHistoryFixture(p);
     await p.evaluate((id) => {
       const session = db.sessions.find(row => row.id === id);
+      db.sessions.find(row => row.id !== id).planSnapshot.name = 'Push';
       session.planSnapshot.name = '<img src=x onerror="window.historyXss=1"> ' + 'LongWorkoutName'.repeat(12);
       db.noteScopes.session.push({ sessionId: id, text: 'Session context preserved' });
       renderAll();
@@ -1564,6 +1566,22 @@ for (const width of [320, 390, 1280]) {
     assert.equal(await p.locator('#historyTable img').count(), 0);
     assert.equal(await p.evaluate(() => window.historyXss), undefined);
     assert.match(await summary.innerText(), /<img src=x/);
+    const compact = p.locator('[data-legacy-date="2026-10-21"]');
+    const preview = compact.locator('.history-exercise-preview');
+    assert.match(await preview.innerText(), /Seated Row · Lat Pulldown.*\+5/s);
+    assert.doesNotMatch(await preview.innerText(), /Rope Triceps Pushdown/);
+    assert.equal(await preview.locator('span').first().evaluate(el => getComputedStyle(el).whiteSpace), 'nowrap');
+    assert.equal(await preview.locator('.history-more').isVisible(), true);
+    assert.equal(await compact.locator('.history-details').isVisible(), false);
+    const short = p.locator('[data-session-id="' + ids.second + '"] > details > summary');
+    const shortBox = await short.boundingBox();
+    assert.ok(shortBox.height >= 80 && shortBox.height <= 100, 'ordinary short-title row stays compact');
+    assert.equal(await short.locator('.history-badges').count(), 0);
+    assert.equal(await summary.evaluate(el => getComputedStyle(el).paddingTop), '10px');
+    await compact.locator(':scope > details > summary').click();
+    assert.match(await compact.locator('.history-exercises').innerText(), /Rope Triceps Pushdown/);
+    assert.match(await compact.locator('.history-details').innerText(), /no saved session identity/);
+    await compact.locator(':scope > details > summary').click();
     const box = await summary.boundingBox();
     assert.ok(box.height >= 44 && box.width >= 150);
     assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

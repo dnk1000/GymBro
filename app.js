@@ -663,10 +663,7 @@ function renderHistory() {
         const session = group.session;
         const name = session?.planSnapshot?.name || "Unplanned workout";
         const exercises = unique(group.sets.map((set) => set.exercise));
-        const heading =
-          group.kind === "session"
-            ? `<h3>${esc(group.date)} · ${esc(name)}</h3><span class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></span>`
-            : `<h3>${esc(group.date)} · Legacy / sessionless</h3><span class="sub">Grouped by date for display only. These records have no saved session identity.</span>`;
+        const heading = `<h3>${esc(group.date)} · ${esc(session ? name : "Legacy / sessionless")}</h3>`;
         const count = (n) => `${n} ${n === 1 ? "set" : "sets"}`;
         const countText =
           session && filter !== "all"
@@ -677,13 +674,15 @@ function renderHistory() {
       <details class="history-disclosure" data-history-key="${esc(key)}" ${expandedHistoryGroups.has(key) ? "open" : ""}>
       <summary class="history-summary">
         ${heading}
-        <span class="sub history-counts">${countText} · ${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"} shown</span>
-        <span class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</span>
+        <span class="sub history-counts">${countText} · ${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"}${filter === "all" ? "" : " shown"}</span>
+        <span class="history-exercise-preview"><span>${exercises.length ? exercises.slice(0, 2).map(esc).join(" · ") : "No sets logged in this session."}</span>${exercises.length > 2 ? `<span class="history-more">· +${exercises.length - 2}</span>` : ""}</span>
       </summary>
       <div class="history-details">
+      ${session ? `<div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>` : `<p class="sub">Grouped by date for display only. These records have no saved session identity.</p>`}
+      <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
       ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul><p class="sub">Set records below show the actual exercise performed, including earlier substitutions.</p></details>` : ""}
       ${session ? historyScopedNotes(session) : ""}
-      ${group.sets.length ? `<p class="sub">Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
+      ${group.sets.length ? `<p class="sub">Edit or delete sets from any source. Import IDs remain recorded to prevent accidental reimport. Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
       </div></details>
     </article>`;
       })
