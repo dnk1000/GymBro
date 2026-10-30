@@ -76,7 +76,7 @@ select set_config('request.jwt.claim.sub','${other}',true);
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}',true);
 select is_empty('select * from public.gymbro_mutation_receipts','other owner cannot inspect receipts');
 select is_empty('select * from public.gymbro_workout_versions','other owner cannot inspect revision');
-select is(jsonb_array_length(public.gymbro_workout_snapshot()->'rows'->'sets'),0,'signed second owner sees no workout facts');
+select is(jsonb_array_length(public.gymbro_workout_snapshot()->'rows'->'sets'),0,'second authenticated-role owner sees no workout facts');
 select throws_ok($test$select ${call(0)}$test$,'23514',null,'cross-owner packet fails before mutation');
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":true}',true);
 select throws_ok($test$select public.gymbro_workout_snapshot()$test$,'42501',null,'anonymous auth cannot read snapshot');

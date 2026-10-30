@@ -128,6 +128,35 @@ async function run(mode) {
       evidence.push({case:name,pids:[one.pid,two.pid],transactions:[one.transaction,two.transaction],overlap:true,codes:expected,...checks});
       console.log(`Independent ${name}: ${expected.join('/')} at revision ${checks.revision}; one terminal receipt; full relationships preserved.`);
     }
+    // Real commit, then deliberately drop its acknowledgement at the transport
+    // boundary used by the actual repository/controller. Retrying must send the
+    // same frozen packet and recover the original result without another fact.
+    const f=await fixture();f.owner=randomUUID();owners.push(f.owner);
+    const init=f.repository.create({ownerId:f.owner,client:{}}).prepare(null,f,{action:'initialize',args:[],operation:['initialize','lost-ack-fixture'],result:{}});
+    const seeded=await query(`begin;insert into auth.users(id) values('${f.owner}');set local role authenticated;${claims(f.owner)}select jsonb_build_object('reply',public.gymbro_workout_mutate(${literal(init)})) as evidence;commit;`);
+    assert.equal(seeded.reply.code,'OK');
+    const initial={...f.repository.assemble(seeded.reply.snapshot.rows,f.owner),initialized:true,protocolVersion:1,ownerId:f.owner,revision:'1'};
+    let lose=true;const submitted=[];
+    const repository=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=> {
+      assert.equal(name,'gymbro_workout_mutate');submitted.push(JSON.stringify(args.packet));
+      const committed=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('reply',public.gymbro_workout_mutate(${literal(args.packet)})) as evidence;commit;`);
+      if(lose) {lose=false;assert.equal(committed.reply.code,'OK');throw Error('Deliberate acknowledgement loss after real commit');}
+      return {data:committed.reply};
+    }}});
+    const controller=f.repository.createActions({initial,repository,recoveryStorage:storage(),createId:()=> 'lost-ack-fact',createRequestId:()=> 'lost-ack-request'});
+    const unknown=await controller.execute('logSet',{date:'2026-10-28',exercise:f.identity.resolveLabel(f.document.catalog,'Bench Press'),weight:0,reps:8,complete:false,notes:'  real commit\n',sessionId:null});
+    assert.equal(unknown.code,'OUTCOME_UNKNOWN');assert.equal(controller.getStatus().revision,'1');
+    const replay=await controller.retry();assert.equal(replay.code,'REPLAY');assert.equal(replay.setId,JSON.parse(submitted[0]).result.setId);
+    assert.equal(submitted.length,2);assert.equal(submitted[0],submitted[1],'retry preserves every packet property');
+    const check=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('revision',public.gymbro_workout_snapshot()->>'revision','receipts',(select count(*) from public.gymbro_mutation_receipts where operation='["logSet","lost-ack-request"]'),'rows',public.gymbro_workout_snapshot()->'rows') as evidence;commit;`);
+    // The canonical adapter prefixes its generated set identity; use the packet
+    // identity for the database fact count instead of assuming an ID format.
+    const packet=JSON.parse(submitted[0]);
+    assert.equal(check.rows.sets.filter(s=>s.set_id===packet.result.setId).length,1);
+    assert.equal(check.revision,'2');assert.equal(check.receipts,1);
+    assert.equal(JSON.stringify(normalize(check.rows)),JSON.stringify(normalize(packet.next)));
+    evidence.push({case:'lost-acknowledgement',codes:[unknown.code,replay.code],revision:check.revision,facts:1,receipts:check.receipts,identicalPackets:true});
+    console.log('Real committed mutation lost acknowledgement: OUTCOME_UNKNOWN/REPLAY; one fact/receipt/revision increment; identical packet and original ID.');
     fs.writeFileSync(path.join(dir,'concurrency-races.json'),JSON.stringify(evidence,null,2));
     return evidence;
   } catch(error) {originalFailure=error;throw error;} finally {
