@@ -35,7 +35,9 @@ const WorkoutLifecyclePanel = (() => {
       el('commit').disabled=state.phase!=='READY'||!review;
       for(const n of ['export','legacy','csv'])el(n).disabled=state.phase!=='READY'||handle.status!=='healthy';
       el('retry').disabled=!state.canRetry;el('resolve').disabled=!state.canResolve;
-      if(state.message)say(state.message);else if(result)say(result.ok?`Cloud request ${result.code}. Revision ${state.revision}.`:result.errors?.join(' ')||result.code);
+      if(state.message)say(state.message);
+      else if(handle.status!=='healthy')say(`Cloud state is ${handle.status}. This is not an empty valid backup. Download raw diagnostic material before separately confirmed emergency restore.`);
+      else if(result)say(result.ok?`Cloud request ${result.code}. Revision ${state.revision}.`:result.errors?.join(' ')||result.code);
       else say(handle.status==='healthy'?`Cloud data loaded. Revision ${state.revision}.`:
         `Cloud state is ${handle.status}. This is not an empty valid backup. Download raw diagnostic material before separately confirmed emergency restore.`);
     }

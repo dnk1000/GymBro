@@ -5,6 +5,7 @@ const {read,preview,guard}=require('./issue41-preview.cjs');
 const {sdk,validate}=require('./issue41-staging-fixtures.cjs');
 const {setup}=require('../tests/lifecycle-fixture.cjs');
 const {storage}=require('../tests/protocol-fixture.cjs');
+const {queryClient}=require('./workout-concurrency-races.cjs');
 const root=path.resolve(__dirname,'..');
 async function textOf(download){const chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);return Buffer.concat(chunks).toString();}
 async function main(){if(process.argv.length!==2)throw Error('No arbitrary flags.');const sha=guard();
@@ -19,8 +20,10 @@ async function main(){if(process.argv.length!==2)throw Error('No arbitrary flags
   const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']}),contexts=[];
   const upload=(p,selector,name,text)=>p.locator(selector).setInputFiles({name,mimeType:'application/json',buffer:Buffer.from(text)});
   const wait=(p,text)=>p.waitForFunction(text=>document.querySelector('[data-status]')?.textContent.includes(text),text);
+  const pages=[];
   try{for(const width of [1280,390,320]){
     const context=await browser.newContext({viewport:{width,height:844}});contexts.push(context);const page=await context.newPage();
+    pages.push(page);
     page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(['error','warning'].includes(m.type()))errors.push(m.text());});
     await context.route('**/*',async route=>{const req=route.request(),url=new URL(req.url());
       if(url.origin===config.url)return route.continue();if(url.origin==='https://vercel.live'&&req.method()==='GET')return route.continue();
@@ -46,13 +49,24 @@ async function main(){if(process.argv.length!==2)throw Error('No arbitrary flags
     const bfile=f.lifecycle.backup(after),controller=f.lifecycle.createController({initial:after,repository:repos[0],recoveryStorage:storage()});
     const recovered=await controller.execute('restoreCompleteBackup',{text:safety,safety:f.lifecycle.verifySafety(JSON.stringify(bfile),after),confirmed:true});assert.equal(recovered.code,'OK');
     assert(f.lifecycle.equalRows((await repos[0].load()).rows,original.rows));
+    if(width===390){
+      await page.locator('[data-refresh]').click();await wait(page,'Cloud request NO_CHANGE');
+      const mergeBase=await repos[0].load(),mergeFile=f.lifecycle.backup(mergeBase);
+      mergeFile.payload.document.data.sets.push({...mergeFile.payload.document.data.sets.find(s=>s.sessionId==null),id:'issue41-signed-merge'});
+      await page.locator('[data-mode]').selectOption('merge');await upload(page,'[data-incoming]','history.json',JSON.stringify(mergeFile));
+      await page.locator('[data-review]').click();await wait(page,'File validated.');page.once('dialog',d=>d.accept());await page.locator('[data-commit]').click();await wait(page,'Cloud request OK');
+      const merged=await repos[0].load();assert.equal(merged.document.data.sets.filter(s=>s.id==='issue41-signed-merge').length,1);
+      assert(f.get('sameSessionData')(merged.document.data.program,mergeBase.document.data.program));assert(f.get('sameSessionData')(merged.document.data.preferences,mergeBase.document.data.preferences));
+      await page.locator('[data-review]').click();await wait(page,'File validated.');page.once('dialog',d=>d.accept());await page.locator('[data-commit]').click();await wait(page,'Cloud request NO_CHANGE');
+      assert.equal((await repos[0].load()).revision,merged.revision);checks.push({signedMerge:true,repeatNoChange:true,settingsPreserved:true});
+    }
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await page.locator('[data-local-delete]').isDisabled(),true);
     // Pure local cleanup uses disposable browser storage only and sends no cloud RPC.
     let rpc=0;const count=()=>rpc++;page.on('request',count);
     assert.equal(await page.evaluate(()=>{const s=localStorage;s.setItem('daveGymTrackerV1','{raw synthetic recovery');s.setItem('unrelated','keep');
       const local=WorkoutLifecycle.localRecovery({storage:s,cutoverAccepted:true});const raw=local.capture();local.verify(raw);local.remove({confirmed:true,oldTabsClosed:true});local.dispose();
       return s.getItem('daveGymTrackerV1')===null&&s.getItem('unrelated')==='keep';}),true);
-    page.off('request',count);assert.equal(rpc,0);assert(f.lifecycle.equalRows((await repos[0].load()).rows,original.rows));
+    page.off('request',count);assert.equal(rpc,0);
     if(width===320){fs.mkdirSync(path.join(root,'test-results'),{recursive:true});await page.screenshot({path:path.join(root,'test-results/lifecycle-signed-320.png'),fullPage:true});}
     checks.push({width,exportReopen:true,confirmationCancel:true,lostAckRetry:true,recoveryA:true,localCleanupNoCloud:true});
   }
@@ -63,10 +77,28 @@ async function main(){if(process.argv.length!==2)throw Error('No arbitrary flags
     {action:'restoreCompleteBackup',operation:['restoreCompleteBackup','foreign-cloud'],result:{}});
   assert.equal((await repos[1].submit(forged)).code,'AUTHORIZATION_ERROR');assert(f.lifecycle.equalRows((await repos[1].load()).rows,otherBefore.rows));
   // Cross-owner diagnostics/receipt reads remain empty and DML remains forbidden.
-  const foreign=await clients[1].from('gymbro_mutation_receipts').select('*').eq('owner_id',state.accounts[0].id);assert(!foreign.error);assert.deepEqual(foreign.data,[]);
+  const foreign=await clients[1].from('gymbro_mutation_receipts').select('*').eq('owner_id',state.accounts[0].id);assert(!foreign.error);assert.equal(foreign.data.length,0);
   const direct=await clients[0].from('gymbro_sets').delete().eq('owner_id',state.accounts[0].id);assert(direct.error);
+  const query=queryClient(['--linked','--project-ref',config.projectRef]),page=pages.at(-1);
+  for(const [index,status] of [[0,'unreadable'],[1,'uninitialized']]){
+    const owner=state.accounts[index].id,before=await repos[index].load(),recovery=JSON.stringify(f.lifecycle.backup(before));
+    const mutate=status==='unreadable'?`update public.gymbro_workout_state set extra=jsonb_set(extra,'{preferences}','{"invalid":7}') where owner_id='${owner}';`:
+      [...f.repository.tables,'exercises','aliases'].reverse().map(t=>`delete from public.${t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t} where owner_id='${owner}';`).join('');
+    await query(`begin;set constraints all deferred;do $guard$ begin if not exists(select 1 from public.gymbro_workout_state where owner_id='${owner}' and extra#>>'{extension,lifecycleFixture}'='${state.tag}') then raise exception 'Unexpected fixture';end if;end $guard$;${mutate}select jsonb_build_object('syntheticState','${status}') as evidence;commit;`);
+    if(index===1){await page.locator('#signOut').click();await page.locator('#email').fill(state.accounts[1].email);await page.locator('#password').fill(state.accounts[1].password);await page.locator('#signIn').click();await page.locator('[data-review]').waitFor();}
+    else await page.locator('[data-refresh]').click();
+    await wait(page,`Cloud state is ${status}`);assert.equal(await page.locator('[data-export]').isDisabled(),true);
+    await page.locator('[data-mode]').selectOption('restore');await upload(page,'[data-incoming]','emergency-recovery.json',recovery);
+    await page.locator('[data-review]').click();await wait(page,'File validated.');
+    const rawDownload=page.waitForEvent('download');await page.locator('[data-raw]').click();const raw=JSON.parse(await textOf(await rawDownload));
+    assert.equal(raw.format,'gymbro-raw-diagnostics');assert.equal(raw.status,status);assert(raw.fingerprint);assert.equal(raw.ownerId,owner);
+    await page.locator('[data-emergency]').check();page.once('dialog',async d=>{assert.match(d.message(),/EMERGENCY RESTORE/);await d.accept();});
+    await page.locator('[data-commit]').click();await wait(page,'Cloud request OK');
+    const after=await repos[index].load();assert.equal(after.status,'healthy');assert.equal(BigInt(after.revision),BigInt(before.revision)+1n);assert(f.lifecycle.equalRows(after.rows,before.rows));
+    checks.push({signedEmergency:status,rawPreserved:true,confirmation:true,contentEquality:true});
+  }
   assert.deepEqual(errors,[]);fs.writeFileSync(path.join(root,'test-results/lifecycle-signed-preview.json'),JSON.stringify({sha,preview,build:f.get('APP_VERSION.version'),checks,accountMismatch:true,sqlDenial:true,consoleErrors:errors},null,2));
-  console.log('Signed exact Preview: desktop/390/320 export/reopen/cancel/lost-ack/recovery/local-cleanup plus same-account/RLS/bypass checks PASS; console clean.');
+  console.log('Signed exact Preview: desktop/390/320 export/reopen/cancel/lost-ack/recovery/local-cleanup, history merge/repeat, unreadable/uninitialized emergency recovery and same-account/RLS/bypass checks PASS; console clean.');
   }finally{for(const c of contexts)await c.close();await browser.close();for(const client of clients)await client.auth.signOut({scope:'local'});}
 }
-if(require.main===module)main().catch(e=>{console.error(e.message);process.exitCode=1;});
+if(require.main===module)main().catch(e=>{console.error(e.message);console.error(e.stack?.split('\n').find(l=>l.includes('verify-issue41-signed-preview'))??'');process.exitCode=1;});
