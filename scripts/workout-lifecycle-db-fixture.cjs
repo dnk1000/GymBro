@@ -18,6 +18,11 @@ select set_config('request.jwt.claim.sub','${owner}',true);select set_config('re
 select is(public.gymbro_lifecycle_snapshot()->>'status','uninitialized','empty owner is positively uninitialized, never healthy backup');
 select is(public.gymbro_workout_mutate(${literal(init)})->>'code','OK','initialize actual complete fixture');
 select is(public.gymbro_lifecycle_snapshot()->>'status','healthy','representative full aggregate is reconstructable');
+select ok(not public.gymbro_lifecycle_readable(jsonb_set(${literal(rows)},'{sessions,0,created_at}','"invalid"')),'invalid timestamp is server-qualified unreadable');
+select ok(not public.gymbro_lifecycle_readable(jsonb_set(${literal(rows)},'{sets,0,extra,notes}','"shadow"')),'shadowed reconstruction metadata is unreadable');
+select ok(not public.gymbro_lifecycle_readable(jsonb_set(${literal(rows)},'{sets,0,position}','999')),'noncontiguous source order is unreadable');
+select ok(not public.gymbro_lifecycle_readable(jsonb_set(${literal(rows)},'{templates,0,present}','[]')),'missing required source keys cannot be called healthy');
+select ok(public.gymbro_lifecycle_timestamp('0000-02-29T00:00:00.000Z'),'valid year-zero ISO timestamp retains accepted compatibility');
 update lifecycle_packets set packet=packet||jsonb_build_object('fingerprint',public.gymbro_lifecycle_snapshot()->'fingerprint',
   'safety',jsonb_build_object('ownerId','${owner}','revision','1','fingerprint',public.gymbro_lifecycle_snapshot()->'fingerprint'));
 select is(public.gymbro_lifecycle_mutate((select packet from lifecycle_packets where name='restore'))->>'code','OK','confirmed complete replacement commits');

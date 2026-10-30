@@ -32,6 +32,19 @@ revoke update on public.gymbro_snapshot_slots,public.gymbro_guided_requests,publ
 -- Reconstruction metadata not covered by typed relational columns. This is a
 -- server-owned qualification check, never a caller-supplied emergency flag.
 -- The existing typed/FK/uniqueness/intent guards remain the graph authority.
+create function public.gymbro_lifecycle_timestamp(v text) returns boolean
+language plpgsql immutable set search_path='' as $$
+declare p text[]; y integer; tail text;
+begin
+  p:=regexp_match(v,'^([0-9]{4}|[+-][0-9]{6})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})[.]([0-9]{3})Z$');
+  if p is null then return false; end if;
+  y:=p[1]::integer;
+  if y < -271821 or y > 275760 or (left(p[1],1)='+' and y<10000) or (left(p[1],1)='-' and y=0) or
+    p[4]::integer>23 or p[5]::integer>59 or p[6]::integer>59 or
+    not public.gymbro_valid_date(lpad((((y%400)+400)%400)::text,4,'0')||'-'||p[2]||'-'||p[3]) then return false; end if;
+  tail:=p[2]||'-'||p[3]||'T'||p[4]||':'||p[5]||':'||p[6]||'.'||p[7];
+  return not ((y=275760 and tail>'09-13T00:00:00.000') or (y=-271821 and tail<'04-20T00:00:00.000'));
+end $$;
 create function public.gymbro_lifecycle_readable(rows jsonb) returns boolean
 language plpgsql immutable set search_path='' as $$
 declare root jsonb:=rows->'workout_state'->0; doc jsonb; r jsonb; t text; key text; col text;
@@ -46,8 +59,10 @@ begin
     root->'notes_extra' ?| array['session','exerciseSession','exercise'] or
     jsonb_typeof(root#>'{extra,preferences}') is distinct from 'object' then return false; end if;
   if exists(select 1 from jsonb_each(root#>'{extra,preferences}') x where jsonb_typeof(value)<>'string') then return false; end if;
+  if exists(select 1 from jsonb_array_elements(rows->'exercises') e where e->>'display_name' ~ '^[[:space:]]*$' or
+    not exists(select 1 from jsonb_array_elements(rows->'aliases') a where a->'label'=e->'display_name' and a->'exercise_id'=e->'exercise_id')) then return false; end if;
   for key,meta in select * from jsonb_each(doc->'legacyExerciseLibrary') loop
-    if btrim(key)='' or key=any(array['__proto__','constructor','prototype']) or jsonb_typeof(meta)<>'object' or
+    if key ~ '^[[:space:]]*$' or key=any(array['__proto__','constructor','prototype']) or jsonb_typeof(meta)<>'object' or
       not exists(select 1 from jsonb_array_elements(rows->'aliases') a where a->>'label'=key) then return false; end if;
     foreach col in array array['primary','pattern','type','status'] loop
       if jsonb_typeof(meta->col) is distinct from 'string' then return false; end if;
@@ -93,10 +108,14 @@ begin
         if not key=any(present) and r->col<>'null'::jsonb then return false; end if;
       end loop;
       if t in ('template_slots','snapshot_slots','sets','guided_slots','exercise_session_notes','exercise_setup_notes') and
-        (btrim(r->>'original_label')='' or r->>'original_label'=any(array['__proto__','constructor','prototype'])) then return false; end if;
+        (r->>'original_label' ~ '^[[:space:]]*$' or r->>'original_label'=any(array['__proto__','constructor','prototype'])) then return false; end if;
+      if t in ('guided_slots','exercise_session_notes','exercise_setup_notes') and not (doc->'legacyExerciseLibrary' ? (r->>'original_label')) then return false; end if;
+      if t='snapshot_slots' and exists(select 1 from jsonb_array_elements(rows->'guidance') g where g->'session_id'=r->'session_id') and
+        not (doc->'legacyExerciseLibrary' ? (r->>'original_label')) then return false; end if;
       if t='sets' and (r->'session_id'='null'::jsonb and 'planSlotId'=any(present) or
         r->'plan_slot_id'='null'::jsonb and 'planSlotId'=any(present)) then return false; end if;
       if t='sessions' then
+        if not public.gymbro_lifecycle_timestamp(r->>'created_at') or (r->>'status'='completed' and not public.gymbro_lifecycle_timestamp(r->>'completed_at')) then return false; end if;
         if ('guided'=any(present)) is distinct from exists(select 1 from jsonb_array_elements(rows->'guidance') g where g->'session_id'=r->'session_id') then return false; end if;
         if r->'snapshot_extra'<>'null'::jsonb and r->'snapshot_extra' ?| array['name','slots'] then return false; end if;
         if r->>'status'='completed' and r->>'completed_at'<r->>'created_at' then return false; end if;
@@ -230,10 +249,10 @@ begin
   else answer:=jsonb_build_object('code','REPLAY','operationRevision',receipt.committed_revision::text,'result',receipt.result); end if;
   return answer||jsonb_build_object('operation',operation,'snapshot',public.gymbro_lifecycle_snapshot());
 end $$;
-revoke all on function public.gymbro_lifecycle_readable(jsonb),public.gymbro_lifecycle_snapshot(),public.gymbro_lifecycle_mutate(jsonb),
+revoke all on function public.gymbro_lifecycle_timestamp(text),public.gymbro_lifecycle_readable(jsonb),public.gymbro_lifecycle_snapshot(),public.gymbro_lifecycle_mutate(jsonb),
   public.gymbro_lifecycle_resolve(jsonb),public.gymbro_operation_valid(jsonb) from public,anon,authenticated;
 grant execute on function public.gymbro_domain_operation_valid(jsonb),public.gymbro_operation_valid(jsonb) to gymbro_workout_writer,gymbro_lifecycle_writer;
-grant execute on function public.gymbro_lifecycle_readable(jsonb),public.gymbro_lifecycle_snapshot() to authenticated,gymbro_lifecycle_writer;
+grant execute on function public.gymbro_lifecycle_timestamp(text),public.gymbro_lifecycle_readable(jsonb),public.gymbro_lifecycle_snapshot() to authenticated,gymbro_lifecycle_writer;
 grant execute on function public.gymbro_lifecycle_mutate(jsonb),public.gymbro_lifecycle_resolve(jsonb) to authenticated;
 grant gymbro_lifecycle_writer to postgres with inherit false;
 grant create on schema public to gymbro_lifecycle_writer;
