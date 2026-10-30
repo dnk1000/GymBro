@@ -8,7 +8,7 @@ Approved mapping: **3.7.0 for #20 alone**, approved by the user on October 30, 2
 
 Cards start collapsed, retain concise summaries, open independently and offer Expand all / Collapse all for the current filter. Existing detail order, scoped notes, guidance, correction and deletion actions remain within expanded cards. State is transient for a History visit and survives rerenders/source filtering. See [contract and acceptance evidence](HISTORY_DISCLOSURE.md).
 
-Local full regression passed 225/225 with no failures/skips; syntax/release/diff and focused History checks passed. Exact Preview/console and CI verification remain pending. Physical iPhone Safari acceptance is UNVERIFIED. No Production data, personal backup, migration, acceptance or merge is claimed. The earlier candidate evidence below remains historical.
+Local full regression passed 225/225 with no failures/skips; syntax/release/diff and focused History checks passed. Runtime revision `d0f10bd` passed both jobs of [CI 41068557901](https://github.com/dnk1000/GymBro/actions/runs/41068557901). Signed-in exact Preview checks at approximately 320/390/1280 px and warning/error console checks passed; see the linked report for methods and tool limitations. [Draft PR #66](https://github.com/dnk1000/GymBro/pull/66) remains unmerged. Physical iPhone Safari acceptance is UNVERIFIED. No Production data, personal backup, migration, acceptance or merge is claimed. The earlier candidate evidence below remains historical.
 
 # V3 concurrency candidate — issue #40
 
