@@ -32,58 +32,90 @@ The intentional #39 synthetic write-interface transition requires checked packet
 
 ## Verification and completion report
 
-Scope is #40 only, Change Level 3: owner-wide concurrency, durable request identity and browser write permissions affect data integrity and security. The approved design and 3.6.0 release mapping cover this implementation; PATCH corrections stay within #40. No material design deviation was required. Explicit Level 3 acceptance remains separate.
+**Claimed state: implementation complete / Ready for Level 3 human acceptance.** All seven ACs have passing technical evidence. Explicit human acceptance, issue closure, merge and Production remain pending. No unqualified issue-complete claim is made.
 
-### Delivery and data boundary
+### Scope, authority and delivery
 
-- Accepted starting main: `7f4408aee7d51ff21aad421bf924c529baaae90e` (#39 merged via PR #59).
-- Branch: `codex/issue-40-implementation`; [draft PR #65](https://github.com/dnk1000/GymBro/pull/65), open and unmerged. The design-only [PR #64](https://github.com/dnk1000/GymBro/pull/64) also remains unmerged.
-- Last behavior-changing code commit: `10bccce0c706acba97c6ad20a34da71bc30ae2ff`. Passing protocol/test revision: `f6b394fa730d7f4c620fb07438334a07c390427e`. Final documentation delivery SHA is recorded in the PR and chat report (a commit cannot embed its own hash).
-- Candidate `3.6.6-20261030T055653Z`; workout schema **8**, identity document **1**, relational model **1**, concurrency protocol **1**; migration **20261030043000**. Existing applied migrations and local JSON/interchange formats remain unchanged.
-- New objects: two metadata tables, `gymbro_operation_valid`, definition-bound invoker claim helpers `gymbro_request_owner`/`gymbro_request_permanent`, snapshot/mutate/resolve RPCs and the narrow writer role. Existing read/commit helpers use the bound claims; commit finalizes an existing active session after its final guidance changes in the same transaction. All original guards/constraints remain.
-- Browser DML on all 16 aggregate tables and metadata is revoked; old unchecked commit EXECUTE is revoked. Authenticated users retain owner-scoped reads and checked mutate/resolve access. Writer receipts remain append-only; no Auth-schema privilege is broadened, no browser role membership or schema CREATE is granted.
-- No dependency changes, normal workout-cloud activation, personal migration, Production schema/data/configuration operation, backup claim or other issue is included. Original unrelated changes in `C:\Source\GymBro` and the proposal worktree are preserved.
+Change Level **3** applies to owner-wide concurrency, durable request identity, retry/recovery and write permissions. The owner approved the exact proposal at `bee6650f0dcac4cd6c0b537c224de401e5049e9a` and **3.6.0 for #40 alone**; PATCH fixes stay within that candidate. On October 30, 2026 the owner explicitly answered **“Approve staging fixture setup and cleanup”**, authorizing the existing staging admin key in operator-process memory, two synthetic accounts, ignored temporary passwords and exact cleanup. This resolved the prior automatic-review block. No material design deviation was required.
 
-### Technical evidence
+- Accepted starting main: `7f4408aee7d51ff21aad421bf924c529baaae90e`; #39 was merged via PR #59.
+- Branch: `codex/issue-40-implementation`; [PR #65](https://github.com/dnk1000/GymBro/pull/65), unmerged. Design-only PR #64 remains unmerged historical preparation.
+- Last behavior-changing runtime commit: `10bccce0c706acba97c6ad20a34da71bc30ae2ff`; exact signed Preview, hosted SQL/race and current technical CI source: `c241e30c563c6bcd822941bd8fa927a019b9ce61`. Final evidence-only delivery SHA is recorded in the PR/chat report; a commit cannot embed its own hash.
+- Candidate: **3.6.6-20261030T055653Z**; workout schema **8**, identity document **1**, relational model **1**, protocol **1**; migration **20261030043000**. Development-only harnesses/documentation retain BUILD.
+- Added DB objects: `gymbro_workout_versions`, `gymbro_mutation_receipts`, operation validator, bound invoker owner/permanent-claim helpers, snapshot/mutate/resolve RPCs and the narrow non-login writer role. Existing read/commit helpers use bound claims; commit applies final guidance before completing an existing active parent in the same transaction. Original immutable-intent and relationship guards remain.
+- Browser DML on all **16** aggregate tables and both metadata tables is revoked; old unchecked commit EXECUTE is revoked. Authenticated owner reads and checked mutation/resolution remain. Writer receipts are append-only, writer has no schema CREATE or browser membership, and no Auth-schema privilege is broadened. No admin key enters browser assets, runtime variables, logs or files.
+- Normal workouts retain their local adapter and current JSON/interchange behavior. No dependency change, other issue, personal migration, Production schema/data/configuration operation or personal-backup claim is included. Original unrelated changes in `C:\Source\GymBro` and the proposal worktree are preserved.
 
-Validation uses the approved matrix: complete content/relationship comparisons, actual independent PostgreSQL connections, real-commit acknowledgement loss, rollback, receipt/cancellation races, fresh/replayed/populated upgrades, bypass/security assertions, affected full regressions, exact staging promotion and signed Preview contexts. Test-transport and injected-claim evidence are identified below; neither proves a signed browser session.
+### Validation approach and regression evidence
 
-[CI 41012263919](https://github.com/dnk1000/GymBro/actions/runs/41012263919), exact reviewed staging source `63ae2b16126c9d65918e177e8b7a50300aa2fdf4`, passed **218/218 application tests**, syntax/release/full-range diff checks and **335/335 SQL assertions on each of fresh and reset/populated-upgrade databases (670 total)**: 71 existing infrastructure/ownership assertions + 9 identity + 110 relational + 145 protocol per pass. The preceding [protocol run 41011858148](https://github.com/dnk1000/GymBro/actions/runs/41011858148) also passed. Node 24.19.0 and the lockfile-pinned Chromium ran in Ubuntu CI; local focused checks used Node 24.22.1/Windows Chrome. There are no skipped application tests.
+Validation follows the approved matrix: complete content/relationship comparisons, actual independent PostgreSQL connections, post-commit acknowledgement loss, rollback, resolver/original races, fresh/replayed/populated upgrades, bypass/security audits, affected full regressions, guarded staging promotion and real signed Preview contexts. Injected-claim SQL evidence is distinguished from signed SDK evidence.
 
-All **13 independent transaction races PASS**, with full post-race content/relationships and at most one active session:
-- start/start, edit/delete, delete/edit, log/finish, finish/log, Done/log, Skip/log, navigation/substitution, guided/guided and duplicate import: **OK / CONFLICT**, one meaningful revision increment.
-- same-key duplicate submit and original-before-resolver: **OK / REPLAY**, one terminal receipt for the original operation.
-- resolver-before-original: **CANCELLED / CANCELLED**, no workout revision increment.
+[CI 41052582568](https://github.com/dnk1000/GymBro/actions/runs/41052582568), exact source `c241e30c563c6bcd822941bd8fa927a019b9ce61`, passed **221/221 application tests**, syntax/release/full-range diff checks and **335/335 SQL assertions on each fresh and reset/populated-upgrade database (670 total)**: 71 existing infrastructure/ownership + 9 identity + 110 relational + 145 protocol per pass. No skipped application tests. Node **24.19.0** and lockfile-pinned Chromium ran in Ubuntu CI; local operator checks used Node **24.22.1**, Windows and Chrome **156.0.8078.48**. Earlier [CI 41012263919](https://github.com/dnk1000/GymBro/actions/runs/41012263919) passed the previous 218-test candidate before three fixture-guard tests were added.
 
-The **real committed acknowledgement-loss fault PASS** uses the actual repository/controller over separate PostgreSQL transactions, deliberately throws only after the successful commit process exits, observes `OUTCOME_UNKNOWN`, then retries identical packet bytes and observes `REPLAY` with original ID, one fact, one receipt and one revision increment. pgTAP's deliberate late FK fault also proves full multirow rollback with no receipt/revision change. Old guided/import/init receipts replay after subsequent completion/correction/deletion without reapplying old facts.
+All **13 real independent transaction races pass in disposable CI and hosted staging**. Ten distinct-key races return OK/CONFLICT; duplicate submit and original-before-resolver return OK/REPLAY; resolver-before-original returns CANCELLED/CANCELLED without a workout increment. Each compares complete canonical row content/relationships, confirms at most one active session and one terminal receipt for the raced operation. Distinct backend PIDs/transaction IDs and observed lock overlap prove actual concurrency; sequential pgTAP calls are not offered as race evidence.
 
-The populated upgrade commits synthetic #39 data before applying #40, verifies all content and relationships unchanged, starts protocol revision zero, then confirms a checked mutation reaches revision one. Fresh migration, reset/replay, no-op migration apply, large decimal revisions above JavaScript precision, browser direct-DML denial on all 16 aggregate tables, old RPC denial, writer capabilities/search paths, anonymous and cross-owner RLS assertions PASS. These SQL tests set authenticated-role claims directly; they are not real signed-user evidence.
+The real committed-acknowledgement fault passes in both environments using the actual repository/controller: after the PostgreSQL commit process returns, the transport deliberately throws; client returns OUTCOME_UNKNOWN, exact frozen retry returns REPLAY with original ID, one fact/receipt and one revision increment. A deliberate later FK failure proves full multirow rollback with no receipt/revision change. Receipt replays after later correction/deletion/completion never reapply old facts. Populated #39 upgrade preserves every field/relationship, starts protocol revision zero and advances to one on the first checked mutation. Fresh/reset replay, no-op apply, huge exact decimal revisions, guided semantics and affected backup/import/identity/note/local UI checks pass.
 
-The local SQL driver opens a separate `psql` process/connection inside the exact disposable Supabase container. Races prove distinct backend PIDs/transaction IDs and observed lock overlap; sequential pgTAP calls are not presented as concurrency. Artifacts retain the machine-readable race results and generated synthetic SQL. Cleanup deletes only freshly generated test-owner UUIDs across the complete aggregate and metadata, then verifies zero Auth rows independently.
+### Hosted staging and signed Preview
 
-**Hosted GymBro-Staging promotion PASS for DDL/metadata only:** project `obebuvpsqapgevwivwho`, PostgreSQL **17.11**, reviewed clean revision `63ae2b16126c9d65918e177e8b7a50300aa2fdf4`. Inspection and dry-run identified only `20261030043000_workout_concurrency.sql`; guarded apply succeeded, the ledger lists all five expected migrations, metadata assertions confirmed old RPC revoked, browser writer-membership denied, narrow non-login/non-superuser/non-BYPASSRLS writer and RLS on all 16 aggregate + 2 metadata tables. Repeat plan/apply reported up to date with **zero pending migrations**.
+**GymBro-Staging only**, project `obebuvpsqapgevwivwho`, PostgreSQL **17.11**. Migration applied through #38's clean exact-reviewed-SHA guard at `63ae2b16126c9d65918e177e8b7a50300aa2fdf4`. Ledger/schema/role/grant/RLS checks pass; final guarded no-op reapply at c241e30 reports no pending migrations. All five expected ledger entries remain. Before/after full-table counts and content fingerprints match; staging was empty of aggregate rows before testing, so populated preservation evidence comes from the disposable upgrade.
 
-Before/after counts and deterministic full-row-content fingerprints match for every aggregate table. **Staging had zero aggregate rows**, so this is an empty hosted-state preservation check; populated preservation is proven by the disposable upgrade above. No fixture owner/account was introduced by this promotion. Ignored local evidence: `test-results/staging-concurrency-promotion.json`, `staging-facts-before.json`, `staging-before-metadata.log`, `staging-after-metadata.log`. Hosted synthetic mutation/pgTAP and signed-session behavioral checks remain **UNVERIFIED**, pending account-fixture authorization.
+At reviewed c241e30, hosted **110 relational + 145 protocol pgTAP assertions (255 total) PASS**, each transaction rolled back. Hosted Management API queries also pass all 13 independent races and real committed-loss retry, with full relationships and exact cleanup checked. Durable hosted race identity evidence:
 
-Exact branch [Preview](https://gymbro-git-codex-issue-40-implementation-dnk-9999.vercel.app): the read-only smoke compared deployed runtime assets to local sources, then passed desktop **1280 px**, **390 px** and **320 px** on Windows headless Chrome with build `3.6.6-20261030T055653Z`, zero console warnings/errors, no horizontal overflow, zero normal-workout-key reads and correctly disabled submissions. Screenshots/JSON are in ignored `test-results/preview-concurrency-*.png` and `preview-concurrency-readonly.json`; the 320 px screenshot was visually inspected. Reads use the native Vercel CLI's authenticated protection-bypass support; it generated an operator bypass token without printing it, and deployment protection remains enabled. Vercel's injected feedback toolbar loads normally. This proves the disabled/unconfigured Preview page only.
+| Hosted case | Backend PIDs | Transaction IDs | Outcomes | Workout revision |
+| --- | --- | --- | --- | --- |
+| start-start | 512488 / 512493 | 1534 / 1533 | OK / CONFLICT | 2 |
+| edit-delete | 512506 / 512511 | 1542 / 1541 | OK / CONFLICT | 2 |
+| delete-edit | 512523 / 512529 | 1551 / 1550 | OK / CONFLICT | 2 |
+| log-finish | 512543 / 512549 | 1567 / 1566 | OK / CONFLICT | 2 |
+| finish-log | 512560 / 512565 | 1575 / 1574 | OK / CONFLICT | 2 |
+| done-log | 512577 / 512583 | 1584 / 1583 | OK / CONFLICT | 2 |
+| skip-log | 512597 / 512604 | 1593 / 1592 | OK / CONFLICT | 2 |
+| navigate-substitute | 512616 / 512623 | 1602 / 1601 | OK / CONFLICT | 2 |
+| guided-guided | 512635 / 512641 | 1611 / 1610 | OK / CONFLICT | 2 |
+| duplicate-import | 512671 / 512675 | 1625 / 1624 | OK / CONFLICT | 2 |
+| duplicate-submit | 512685 / 512691 | 1633 / 1632 | OK / REPLAY | 2 |
+| cancel-original | 512702 / 512706 | 1641 / 1640 | CANCELLED / CANCELLED | 1 |
+| original-cancel | 512719 / 512726 | 1651 / 1650 | OK / REPLAY | 2 |
 
-Local browser tests use an explicit mock Auth/SQL transport and verify pending, conflict, unknown outcome, exact retry, reload resolution, delayed responses, account change during initial load, exact set/import draft retention (including 0/false/text/targets), normal local-store isolation and desktop/390/320 layouts. Controller tests additionally cover marker write/clear/read failures, unsupported markers, stale refresh phase guards, large decimal revisions, disposed generations and no automatic re-preparation. These do not replace the required configured, signed Preview checks.
+Every row above has observed overlap, distinct PIDs/transaction IDs, one terminal operation receipt and full post-race fact/relationship equality. Machine-readable details are retained locally in ignored `test-results/concurrency-races.json` and CI database artifacts retain the disposable equivalent.
 
-**Required technical evidence still pending:** two permanent synthetic staging accounts with actual signed sessions; configured exact-branch Preview pending/conflict/unknown/resolution/cancellation and delayed/out-of-order responses; same-owner independent contexts, cross-owner facts/receipt isolation and account-switch publication prevention through the real SDK. No Supabase account-fixture admin key was retrieved or fixture account created. Automatic review rejected the operator helper; the explicit approval question remains pending in this chat. Its patch did not run. No alternative privileged route was used.
+The configured [exact Preview](https://gymbro-aiv4195kq-dnk-9999.vercel.app), deployment `dpl_FKGA5VR2tAu7PjW381c9cmndovPK`, used actual source **c241e30c563c6bcd822941bd8fa927a019b9ce61**, branch `codex/issue-40-implementation`, existing Vercel project `prj_UAp7aba6hCNO1nGBKRcowQH1dhjH` and build **3.6.6-20261030T055653Z**. Native provider metadata verifies the Git SHA; the CLI identifies Preview (the raw API's target is null). Deployed runtime files were compared to exact sources. Protection stayed enabled; native Vercel curl used its operator protection-bypass token without printing it. Vercel's injected feedback toolbar loaded normally.
 
-Physical iPhone/Safari: **not tested**. The execution contract does not require it solely for this synthetic page; no normal cloud-workout flow is activated. Responsive Chromium is not claimed as Safari evidence.
+**12 signed Preview checks PASS**, using two permanent synthetic owners, independent same-owner browser contexts, the pinned actual SDK and real Auth/PostgREST/RPC responses. No Auth/SQL mocks:
 
-### Acceptance mapping
+1. Same-owner stale conflict and explicit refresh preserve exact zero/false/notes/session target.
+2. Barrier-released simultaneous real browser starts yield one OK, one CONFLICT and one active session.
+3. Real successful commit with lost acknowledgement, identical retry, original ID, one fact/receipt/revision at **1280 px**.
+4. The same real lost-ack/retry and draft checks at **390 px**.
+5. The same checks at **320 px**, including no horizontal overflow.
+6. Hard reload resolves the durable committed receipt without another mutation.
+7. An intercepted not-yet-transmitted original becomes uncertain; explicit resolver cancels it, and a later exact real RPC returns CANCELLED with no workout write.
+8. A delayed real acknowledgement cannot regress a newer separately committed/refreshed revision.
+9. A held older real refresh cannot clear a newer conflict or its exact retained draft.
+10. A stale reviewed import retains included/excluded choices, zero/false and literal text.
+11. Real signed cross-owner facts/receipt/revision reads see zero foreign rows; direct inserts across all 18 aggregate/metadata tables, set update/delete, old RPC, anonymous and malformed-owner/operation calls are denied; altered original key returns REQUEST_CONFLICT without a revision change.
+12. Actual sign-out/sign-in to the second owner during a held first-owner initial load cannot publish the old owner's response.
+
+There are **zero unexpected console warnings/errors**, **one expected deliberately injected network error**, and **zero normal-workout-key reads**. The expected error is matched only to its recorded aborted transport, not broadly suppressed. Screenshots of pending/conflict/unknown states and JSON results are retained under ignored `test-results/signed-preview-*.png` and `signed-preview-concurrency.json`; the actual signed 320 px unknown-state screenshot was visually inspected. Local mock-transport browser/controller regressions separately cover marker failures, future metadata, generation/revision guards and packet preparation without replacing real signed evidence.
+
+### Cleanup and acceptance mapping
+
+Both approved permanent fixture accounts were created with `email_confirm: true`; no invite/email-sending API was invoked. The existing admin key stayed only in operator-process memory. Their workouts were initialized through real signed clients. The helper validates exact planned email/tag/owner identity and refuses unexpected existing data. Cleanup deleted only these fixtures and the race suite's separately generated owners. Independent final SQL confirms **zero test Auth rows, zero receipts, zero versions**, and all **16 aggregate-table fingerprints/counts match the pre-test baseline (zero rows)**. Temporary passwords were removed from the ignored operator record. No admin key was saved, printed, passed as a command argument or sent to a browser.
+
+Only seven temporary **Preview + issue-40 branch** variables were added and then removed; no Production variables changed. The [branch Preview](https://gymbro-git-codex-issue-40-implementation-dnk-9999.vercel.app) was redeployed with fixture mutation functionality disabled. Post-cleanup desktop/390/320 checks again pass with zero console errors, zero workout-store reads and disabled submission. Existing migrations/security remain installed; cleanup is not a destructive rollback or a product account/reset workflow.
 
 | Criterion | Method/evidence | Result |
 | --- | --- | --- |
-| AC-1 — reviewed concurrency matrix | Exact approved proposal at `bee6650f0dcac4cd6c0b537c224de401e5049e9a`, owner execution approval recorded on issue #40. | **PASS** |
-| AC-2 — representative checked mutation paths | Actual SQL packets prepared by the real action/repository boundary: initialization, set log/edit/delete, note, template, bodyweight, reviewed import, guided log/finish; full acknowledgements compared. Hosted behavioral variant remains pending separately. | **PASS** |
-| AC-3 — replay never duplicates sets/sessions/imports | Every SQL fixture packet replayed after later changes; original result revisions/IDs retained; no resurrection; independent duplicate-submit/import/start races and real-commit retry. | **PASS** |
-| AC-4 — stale changes never silently overwrite | Revision plus full-base mismatch assertions, ten independent stale races, relationship comparison, guided/domain tests and explicit-refresh draft tests. | **PASS** |
-| AC-5 — lost commit acknowledgement safely retried | Actual committed PostgreSQL mutation, deliberate transport loss, controller unknown state, exact packet retry, original ID and one fact/receipt/revision increment; rollback and both resolver/original race orders. | **PASS** |
-| AC-6 — deterministic two-device active session | Independent start/start and finish/log/guided SQL races pass; required two actual authenticated Preview contexts remain unperformed. | **UNVERIFIED** |
-| AC-7 — accurate conflict/error UI with retained input | Local mock-transport browser states/drafts pass; exact disabled Preview desktop/390/320/console passes. Configured signed Preview pending/conflict/unknown/cancellation/out-of-order tests remain unperformed. | **UNVERIFIED** |
+| AC-1 — reviewed concurrency matrix | Exact approved proposal and recorded owner implementation/fixture approvals. | **PASS** |
+| AC-2 — representative checked mutation paths | Actual domain/repository packets through disposable and hosted SQL; real signed initialization/log/finish/start and complete acknowledgement comparisons. | **PASS** |
+| AC-3 — replay never duplicates sets/sessions/imports | All SQL fixture packets replayed after later changes; original IDs/revisions retained; concurrent duplicate/import/start cases and actual signed exact retries. | **PASS** |
+| AC-4 — stale changes never silently overwrite | Revision/full-base checks, ten independent stale race cases in both environments, signed same-owner conflicts and explicit-refresh exact-draft checks. | **PASS** |
+| AC-5 — lost commit acknowledgement safely retried | Real commits and actual controller faults in CI/staging; signed browser faults at three widths; identical packet, original ID, one fact/receipt/revision; rollback and resolver races. | **PASS** |
+| AC-6 — deterministic two-device active session | Independent SQL races plus simultaneous real authenticated Preview contexts: one start succeeds, one conflicts, at most one active session; cross-owner and account-switch checks. | **PASS** |
+| AC-7 — accurate conflict/error UI with retained input | Actual signed Preview pending/conflict/unknown/reload/cancellation/delayed/out-of-order states, exact set/import drafts, desktop/390/320 and console checks. | **PASS** |
+
+Physical iPhone/Safari: **not tested**. The execution contract does not require it solely for this synthetic page; no normal cloud-workout flow is activated. Responsive Chrome is not claimed as Safari evidence. No required technical verification remains unperformed for this bounded scope; explicit Level 3 human acceptance remains required.
 
 ### Negative evidence and resolutions
 
@@ -100,11 +132,14 @@ Physical iPhone/Safari: **not tested**. The execution contract does not require 
 | Preview smoke | Initially rejected Vercel's injected feedback-toolbar GET. Identified its exact provider origin, allowed its normal GET loading, and reran with zero console errors; arbitrary hosts/methods still fail. |
 | Staging pre-migration metadata | The first audit failed because its writer role did not exist yet. A read-only operator-query correction uses the role OID subquery and now inspects both absent and installed protocol state. No application/BUILD change. |
 | Infrastructure/tooling | Sandbox fetch/write/localhost restrictions required authorized reruns. Vercel CLI added duplicate ignore rules; existing protections were proved and duplicates restored to HEAD. Docker registry rate-limit messages occurred during successful CI bootstrap; database tests still ran and passed. |
-| Automatic approval review | Rejected a combined version/commit/push command as a new release mapping; the explicit PATCH authorization in the execution request was then verified and narrower corrections approved. Separately rejected privileged staging key lookup/account creation; that operation remains unperformed and awaits explicit permission. |
+| Automatic approval review | Rejected a combined version/commit/push command as a new release mapping; the explicit PATCH authorization in the execution request was then verified and narrower corrections approved. Separately rejected privileged staging key lookup/account creation. The owner explicitly approved the bounded setup and cleanup on October 30; the approved operation then ran with its key confined to process memory. |
+| Prior blocked handoff | Delivery 285ec36 correctly left AC-6/AC-7 UNVERIFIED. The later explicit fixture approval enabled the hosted/signed evidence recorded above; this does not rewrite the earlier unverified state as a pass. |
+| Fixture helper checks | A hard-coded tag-prefix offset rejected valid synthetic identities in a new unit test; corrected using the actual prefix length, preserving all assertions. An empty local public-key setting stopped setup before any privileged key lookup; the existing public staging key was then loaded into ignored operator configuration. |
+| Deployment metadata check | The raw provider API represents Preview target as null, while native CLI reports preview. The initial over-strict metadata assertion failed; the exact source SHA and CLI environment were then checked together. No deployment/source mismatch occurred. |
 
 ### Exact changed files and handoff
 
-Scope review: `git diff --name-only 7f4408aee7d51ff21aad421bf924c529baaae90e HEAD`, staged/unstaged checks and full-range whitespace checks. Only these 36 intended files differ:
+Scope review uses `git diff --name-only 7f4408aee7d51ff21aad421bf924c529baaae90e HEAD`, staged/unstaged/full-range whitespace checks and an exact report-inventory comparison. Only these **39** intended files differ:
 
 ```text
 .github/workflows/ci.yml
@@ -124,7 +159,9 @@ docs/V3_RELEASE.md
 docs/VERSION_POLICY.md
 scripts/check-release.cjs
 scripts/exercise-identity-db-fixture.cjs
+scripts/issue40-staging-fixtures.cjs
 scripts/serve-probe.cjs
+scripts/verify-issue40-signed-preview.cjs
 scripts/verify-preview-concurrency-ui.cjs
 scripts/verify-preview-relational.cjs
 scripts/workout-concurrency-db-fixture.cjs
@@ -136,6 +173,7 @@ supabase/tests/exercise_identity.test.sql
 supabase/verify-infrastructure.sql
 tests/app-version.test.cjs
 tests/concurrency-ui.test.cjs
+tests/issue40-staging-fixtures.test.cjs
 tests/protocol-fixture.cjs
 tests/relational-fixture.cjs
 tests/release-tools.test.cjs
@@ -145,6 +183,6 @@ workout-concurrency.js
 workout-repository.js
 ```
 
-Owning docs describe implemented protocol/recovery/security/migration behavior and its verification limits; the approved proposal and prior release evidence remain historical records. Candidate versions are not accepted shipped releases. Documentation/tool-only commits retain BUILD. Documentation fence balance and all 158 local link paths across the ten changed Markdown files pass, as do release consistency and staged/unstaged/full-range whitespace checks.
+Owning documentation covers implemented protocol/recovery/security/migration behavior, actual results and historical failures. The approved proposal and prior release/partial-handoff evidence remain historical. Candidate release records distinguish technical verification from acceptance/shipping. Documentation-only/operator-only commits retain BUILD. Final link/fence, release and whitespace checks are recorded in the PR/chat report.
 
-**Claimed state: partial implementation / blocked technical verification. Not ready for Level 3 human acceptance.** Required signed/interactive Preview evidence remains technical work, not optional human acceptance. Next: resolve the pending fixture-account authorization, execute the remaining staging/signed Preview checks and record each result, then request explicit Level 3 acceptance. Issue #40 remains open. Neither PR is merged; no other issue is started. Final delivery tree/commit state is recorded in the PR and chat report.
+**Ready for explicit Level 3 human acceptance.** Issue #40 remains open; neither PR is merged. No other issue, personal migration or Production operation was started. Final delivery SHA and clean-tree verification are in the PR/chat report. The next actor is the owner reviewing the concrete PR and acceptance evidence; acceptance does not implicitly authorize merge or Production cutover.

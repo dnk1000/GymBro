@@ -1,6 +1,6 @@
 # V3 concurrency candidate — issue #40
 
-Issue #40 candidate: protocol 1, owner revisions, durable receipts and cancellation fencing. Implementation verification pending; current workouts remain local. See [concurrency contract](V3_CONCURRENCY.md).
+Issue #40 candidate: protocol 1, owner revisions, durable receipts and cancellation fencing. All seven technical ACs pass; ready for explicit Level 3 human acceptance. Current workouts remain local. See [concurrency contract](V3_CONCURRENCY.md).
 
 Application version: `3.6.6-20261030T055653Z`
 Data schema: `8`
