@@ -34,7 +34,7 @@ async function main() {
       await context.addInitScript(()=>{window.normalWorkoutReads=0;const original=Storage.prototype.getItem;Storage.prototype.getItem=function(key){if(key==='daveGymTrackerV1')window.normalWorkoutReads++;return original.call(this,key);};});
       await context.route('**/*',async route=> {
         const request=route.request(),url=new URL(request.url());
-        if(url.origin!==preview||request.method()!=='GET') {errors.push('Unexpected network operation');return route.abort();}
+        if(url.origin!==preview||request.method()!=='GET') {errors.push('Unexpected network operation: '+request.method()+' '+url.origin+url.pathname);return route.abort();}
         const resource=url.pathname+url.search;
         try {
           let body=cache.get(resource);if(!body){body=await read(resource);cache.set(resource,body);}

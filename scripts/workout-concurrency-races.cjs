@@ -120,7 +120,9 @@ async function run(mode) {
       assert.equal(two.reply.snapshot.revision,resolveA?'1':'2');
       const current=two.reply.snapshot.rows;
       f.repository.assemble(current,f.owner);
-      assert.deepEqual(normalize(current),normalize(resolveA?init.next:a.next),'complete post-race facts/relationships');
+      // Prepared arrays originate in the isolated domain VM. Compare their
+      // canonical full JSON content rather than JavaScript realm prototypes.
+      assert.equal(JSON.stringify(normalize(current)),JSON.stringify(normalize(resolveA?init.next:a.next)),'complete post-race facts/relationships');
       const checks=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('active',(select count(*) from public.gymbro_sessions where status='active'),'receipts',(select count(*) from public.gymbro_mutation_receipts where operation=${literal(a.operation)}),'revision',public.gymbro_workout_snapshot()->>'revision') as evidence;commit;`);
       assert(checks.active<=1);assert.equal(checks.receipts,1);
       evidence.push({case:name,pids:[one.pid,two.pid],transactions:[one.transaction,two.transaction],overlap:true,codes:expected,...checks});
