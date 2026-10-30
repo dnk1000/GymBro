@@ -1,6 +1,17 @@
 -- #40 protocol 1. Additive metadata; existing workout/model/schema facts unchanged.
 begin;
-create role gymbro_workout_writer nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
+-- Local database reset can retain cluster roles. Reuse only the exact narrow
+-- role; unexpected capabilities/memberships fail closed instead of adopting it.
+do $$ begin
+  if not exists(select 1 from pg_roles where rolname='gymbro_workout_writer') then
+    create role gymbro_workout_writer nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
+  elsif exists(select 1 from pg_roles where rolname='gymbro_workout_writer' and
+    (rolcanlogin or rolinherit or rolsuper or rolcreatedb or rolcreaterole or rolreplication or rolbypassrls)) or
+    exists(select 1 from pg_auth_members where member='gymbro_workout_writer'::regrole or
+      (roleid='gymbro_workout_writer'::regrole and member<>'postgres'::regrole)) then
+    raise exception 'Unexpected writer role capabilities or membership';
+  end if;
+end $$;
 grant usage on schema public,auth to gymbro_workout_writer;
 grant execute on function auth.uid(),auth.jwt() to gymbro_workout_writer;
 
@@ -140,11 +151,12 @@ revoke all on function public.gymbro_operation_valid(jsonb),public.gymbro_workou
 grant execute on function public.gymbro_operation_valid(jsonb),public.gymbro_workout_snapshot() to gymbro_workout_writer;
 grant execute on function public.gymbro_workout_snapshot(),public.gymbro_workout_mutate(jsonb),public.gymbro_workout_resolve(jsonb) to authenticated;
 -- Ownership transfer needs CREATE temporarily. No browser membership is granted.
-grant gymbro_workout_writer to postgres;
+grant gymbro_workout_writer to postgres with inherit false;
 grant create on schema public to gymbro_workout_writer;
 alter function public.gymbro_workout_mutate(jsonb) owner to gymbro_workout_writer;
 alter function public.gymbro_workout_resolve(jsonb) owner to gymbro_workout_writer;
 revoke create on schema public from gymbro_workout_writer;
-revoke gymbro_workout_writer from postgres;
+-- Keep the existing privileged operator able to manage these functions and run
+-- constraint audits. Only explicit SET ROLE, never inherited/browser access.
 comment on table public.gymbro_mutation_receipts is 'Protocol 1 terminal request history. No expiry/pruning/reset. Not workout-performance data.';
 commit;

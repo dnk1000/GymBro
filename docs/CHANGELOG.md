@@ -1,5 +1,9 @@
 # Changes
 
+## 3.6.1 — checked-writer verification and synthetic UI
+
+`3.6.1-20261030T044400Z`, schema 8/model 1/protocol 1, #40 only. Fixes operator SET ROLE verification while browser write/role denial remains enforced. Adds the approved synthetic UI and actual-connection/upgrade verification. Initial CI 41003113730 passed 208 application tests but SQL stopped on operator SET ROLE denial. Verification remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
 ## 3.6.0 — concurrency/retry protocol candidate
 
 `3.6.0-20261030T042352Z`, workout schema 8/model 1/protocol 1, migration 20261030043000; #40 alone. User approved the design and mapping on October 30, 2026. Verification pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md). No personal migration, Production operation, acceptance or merge is claimed.

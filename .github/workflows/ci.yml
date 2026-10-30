@@ -40,14 +40,27 @@ jobs:
           npx --no-install supabase test db --local test-results/workout-repository.test.sql
           node scripts/workout-concurrency-db-fixture.cjs
           npx --no-install supabase test db --local test-results/workout-concurrency.test.sql
+          node scripts/workout-concurrency-races.cjs --local
       - name: Replay from empty local database and verify retry
         run: |
-          npx --no-install supabase db reset --local --no-seed
+          npx --no-install supabase db reset --local --version 20261028042000 --no-seed
+          node scripts/workout-concurrency-upgrade.cjs before
+          npm run db:local:apply
+          node scripts/workout-concurrency-upgrade.cjs after
           npm run db:local:test
           npx --no-install supabase test db --local test-results/exercise-identity-migration.test.sql
           npx --no-install supabase test db --local test-results/workout-repository.test.sql
           npm run db:local:apply
+          npx --no-install supabase test db --local test-results/workout-concurrency.test.sql
           npx --no-install supabase db query --local --file supabase/verify-infrastructure.sql
+      - name: Retain database evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: database-${{ github.sha }}
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Stop only this job's disposable stack
         if: always()
         run: npx --no-install supabase stop --no-backup
