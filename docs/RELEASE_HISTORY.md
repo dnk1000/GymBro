@@ -1,5 +1,9 @@
 # GymBro release history
 
+## Compact History copy candidate — not yet accepted
+
+`3.9.1-20261030T163206Z`, #36; schema 8 unchanged. User-approved removal of guidance paragraphs and redundant exercise list; sessionless explanation moved to heading tooltip. Verification belongs in the existing PR; physical Safari pending.
+
 ## Mobile History candidate — not yet accepted
 
 `3.9.0-20261030T155016Z`, #36 alone; schema 8 unchanged. Phone set cards retain full labels/facts and existing correction actions; desktop tables remain. PR owns verification; physical Safari pending. No Production acceptance.

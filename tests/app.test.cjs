@@ -1630,7 +1630,8 @@ test("History disclosure preserves independent session/date state through filter
   assert.equal(await first.evaluate(el => el.open), false);
   assert.equal(await second.evaluate(el => el.open), true);
   await legacy.locator(':scope > summary').click();
-  assert.match(await legacy.locator('.history-details').innerText(), /no saved session identity/);
+  assert.match(await legacy.locator('h3').getAttribute('title'), /no saved session identity/);
+  assert.doesNotMatch(await legacy.locator('.history-details').innerText(), /Grouped by date|Open an exercise|Import IDs remain|Exercises shown:/);
   await legacy.locator('.history-exercise > summary').first().click();
   await legacy.locator('.set-record summary').first().click();
   assert.equal(await legacy.evaluate(el => el.open), true, 'nested metadata does not toggle its card');
@@ -1695,8 +1696,10 @@ for (const width of [320, 390, 1280]) {
     assert.equal(await short.locator('.history-badges').count(), 0);
     assert.equal(await summary.evaluate(el => getComputedStyle(el).paddingTop), '10px');
     await compact.locator(':scope > details > summary').click();
-    assert.match(await compact.locator('.history-exercises').innerText(), /Rope Triceps Pushdown/);
-    assert.match(await compact.locator('.history-details').innerText(), /no saved session identity/);
+    assert.match(await compact.locator('.history-exercise > summary').allTextContents().then(text => text.join(' ')), /Rope Triceps Pushdown/);
+    assert.equal(await compact.locator('.history-exercises').count(), 0);
+    assert.match(await compact.locator('h3').getAttribute('title'), /no saved session identity/);
+    assert.doesNotMatch(await compact.locator('.history-details').innerText(), /Grouped by date|Open an exercise|Import IDs remain|Exercises shown:/);
     await compact.locator(':scope > details > summary').click();
     const box = await summary.boundingBox();
     assert.ok(box.height >= 44 && box.width >= 150);

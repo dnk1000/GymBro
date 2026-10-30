@@ -22,6 +22,8 @@ This milestone starts from accepted main `14b12a88166d8c9cb7dfb3d70bccb0f68d0c8d
 
 `getHistoryGroups(data, source)` in `history-view.js` creates detached, DOM-free display data. It never writes or adds fields to persisted records. It assumes validated application data, like the existing UI.
 
+Current compact-copy refinement (user approved October 30, 2026): History omits guidance paragraphs, the repeated full exercise list and the filter-status explanation. Exercise headings retain all names; notes/status/actions and matching counts remain. The visible Legacy / sessionless heading retains its truthful label and exposes the date-group explanation through its title tooltip. This supersedes earlier presentation wording requiring those paragraphs/lists; historical records remain unchanged.
+
 ## Backup and recovery
 
 1. **Complete backup:** Export JSON or header Backup exports the entire supported database. It includes sessions/active pointer, sets, bodyweights, program/templates, library, preferences, import metadata, unknown preserved fields, schema `version` and the canonical exporting `appVersion`. CSV is explicitly sets-only and cannot restore the database.

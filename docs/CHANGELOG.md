@@ -1,3 +1,7 @@
+## 3.9.1 — Compact History copy candidate
+
+Remove repeated exercise lists and instructional paragraphs from History. Keep sessionless context as a heading tooltip.
+
 ## 3.9.0 — Mobile History candidate
 
 Phone History set details stack without sideways review/action scrolling. Desktop tables remain; no historical data changes.

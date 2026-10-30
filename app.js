@@ -674,7 +674,7 @@ function renderHistory() {
         const session = group.session;
         const name = session?.planSnapshot?.name || "Unplanned workout";
         const exercises = unique(group.sets.map((set) => set.exercise));
-        const heading = `<h3>${esc(group.date)} · ${esc(session ? name : "Legacy / sessionless")}</h3>`;
+        const heading = `<h3${session ? "" : ' title="Grouped by date for display only. These records have no saved session identity."'}>${esc(group.date)} · ${esc(session ? name : "Legacy / sessionless")}</h3>`;
         const count = (n) => `${n} ${n === 1 ? "set" : "sets"}`;
         const countText =
           session && filter !== "all"
@@ -689,11 +689,10 @@ function renderHistory() {
         <span class="history-exercise-preview"><span>${exercises.length ? exercises.slice(0, 2).map(esc).join(" · ") : "No sets logged in this session."}</span>${exercises.length > 2 ? `<span class="history-more">· +${exercises.length - 2}</span>` : ""}</span>
       </summary>
       <div class="history-details">
-      ${session ? `<div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>` : `<p class="sub">Grouped by date for display only. These records have no saved session identity.</p>`}
-      <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
-      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul><p class="sub">Set records below show the actual exercise performed, including earlier substitutions.</p></details>` : ""}
+      ${session ? `<div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>` : ""}
+      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul></details>` : ""}
       ${session ? historyScopedNotes(session) : ""}
-      ${group.sets.length ? `<p class="sub">Open an exercise to review, edit or delete its sets. Import IDs remain recorded to prevent accidental reimport. Record details includes notes and all saved metadata.</p>${historyExerciseDisclosures(group, key)}` : ""}
+      ${group.sets.length ? `${historyExerciseDisclosures(group, key)}` : ""}
       </div></details>
     </article>`;
       })
