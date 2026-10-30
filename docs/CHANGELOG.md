@@ -1,3 +1,7 @@
+## 3.11.1 — Heritage Utility shared system candidate
+
+#71: charcoal/ivory/oxblood tokens, shared components, heading/data hierarchy and chart palette. Behavior/data unchanged.
+
 ## 3.11.0 — Mobile History integrated with accepted filters
 
 Retain phone-friendly set details and compact History copy alongside #22 filters on accepted main. No stored-data changes.

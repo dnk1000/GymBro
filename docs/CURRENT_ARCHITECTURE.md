@@ -114,3 +114,7 @@ Approved milestone/decision records remain approval evidence, subsystem designs 
 Apply the [material conflict and decision-resolution procedure](DEVELOPMENT_WORKFLOW.md#material-conflicts-and-decision-resolution) when authorities conflict or a material decision is ambiguous or missing. Pause affected work until resolved; independent work may continue only when clearly safe and unable to prejudice or complicate the decision. Routine choices within approved constraints need no escalation.
 
 Issue #40 adds an opt-in checked [concurrency/retry boundary](V3_CONCURRENCY.md) and synthetic staging verification. Current normal workouts retain their local adapter; this does not activate cloud workout migration or cutover. Verification status is recorded in that document.
+
+## Shared presentation
+
+[Heritage Utility](DESIGN_SYSTEM.md) owns shared visual tokens/components from #71. It changes presentation only; existing domain, storage and workflow contracts remain in force.

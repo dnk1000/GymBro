@@ -1,3 +1,11 @@
+# Heritage Utility shared-system candidate — #71
+
+Application version: `3.11.1-20261030T165311Z`
+Data schema: `8`
+Release status: **preparation**
+
+Presentation-only patch under VERSION_POLICY.md. Based on accepted main 2255a91. Shared tokens/components and chart colors; no domain/schema/storage changes. Verification and pending review are tracked in [delivery evidence](HERITAGE_UTILITY_EVIDENCE.md). Not accepted, merged or deployed to Production.
+
 # Mobile History candidate — integrated main
 
 Application version: `3.11.0-20261030T164140Z`
