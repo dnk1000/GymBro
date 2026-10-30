@@ -2,6 +2,11 @@
 -- Returns metadata only: never diagnostic values, users or credentials.
 select jsonb_build_object(
   'postgres_version', current_setting('server_version'),
+  'concurrency_protocol', jsonb_build_object(
+    'writer_role', (select jsonb_build_object('login',rolcanlogin,'superuser',rolsuper,'bypassrls',rolbypassrls,'create_role',rolcreaterole) from pg_roles where rolname='gymbro_workout_writer'),
+    'browser_can_assume_writer', pg_has_role('authenticated'::regrole,(select oid from pg_roles where rolname='gymbro_workout_writer'),'MEMBER'),
+    'old_commit_executable', has_function_privilege('authenticated','public.gymbro_workout_commit(jsonb,jsonb)','EXECUTE'),
+    'tables', (select jsonb_agg(jsonb_build_object('name',relname,'rls',relrowsecurity)) from pg_class where oid in (to_regclass('public.gymbro_workout_versions'),to_regclass('public.gymbro_mutation_receipts')))),
   'migrations', (select coalesce(jsonb_agg(m order by version), '[]'::jsonb)
     from (select version, name from supabase_migrations.schema_migrations) m),
   'probe_rls_enabled', (select relrowsecurity from pg_class

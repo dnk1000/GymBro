@@ -1,5 +1,33 @@
 # Changes
 
+## 3.6.6 — apply final guidance before session completion
+
+`3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Technical verification now passes all seven ACs, including 221 application tests, 335 SQL assertions per replay pass, hosted assertions/races and actual signed Preview contexts. Explicit Level 3 acceptance remains pending; see [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.5 — fence stale refresh presentation and marker cleanup errors
+
+`3.6.5-20261030T054112Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Old refreshes cannot release newer conflict/pending states; unreadable recovery metadata stays blocked through failed/successful refreshes. Confirmed results with failed marker cleanup remain blocked with an accurate message and exact retry. Evidence remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.4 — preserve uncertainty for unreadable recovery metadata
+
+`3.6.4-20261030T052148Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Unreadable/future recovery markers remain blocked across refresh and no longer imply the prior request was never sent. SQL source is unchanged from the 329-assertion fresh pass; race/replay and hosted evidence remain pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.3 — SQL delimiter and stale no-op corrections
+
+`3.6.3-20261030T050807Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Preserve literal SQL dollar delimiters in copied invoker helpers. Local no-op/replay outcomes check fresh cloud state and cannot silently rebase a newly necessary mutation. SQL/hosted verification remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.2 — bound Auth claims and initial-load generation guard
+
+`3.6.2-20261030T050312Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Bind provider claim helpers as SECURITY INVOKER SQL bodies at definition time, requiring no broader Auth-schema grant. Account changes during initial load invalidate its response. Focused 24/24 tests pass. SQL/replay/race/staging evidence remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.1 — checked-writer verification and synthetic UI
+
+`3.6.1-20261030T044400Z`, schema 8/model 1/protocol 1, #40 only. Fixes operator SET ROLE verification while browser write/role denial remains enforced. Adds the approved synthetic UI and actual-connection/upgrade verification. Initial CI 41003113730 passed 208 application tests but SQL stopped on operator SET ROLE denial. Verification remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.0 — concurrency/retry protocol candidate
+
+`3.6.0-20261030T042352Z`, workout schema 8/model 1/protocol 1, migration 20261030043000; #40 alone. User approved the design and mapping on October 30, 2026. Verification pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md). No personal migration, Production operation, acceptance or merge is claimed.
+
 ## 3.5.5 — preserve opaque request-signature meaning
 
 `3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; schema migration/SQL fixture are unchanged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).
