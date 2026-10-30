@@ -35,6 +35,14 @@ High-confidence activation signals include:
 
 A phrase such as “I’m at the gym. Let’s get some.” is a strong example, not a required trigger.
 
+### Activation announcement
+
+When the coach first determines with high confidence that Workout Coach has activated for a workout, it must make that state visible to the user with a short, natural acknowledgement woven into the coaching response.
+
+This is a lifecycle acknowledgement, not a required banner, exact sentence, command response, or repeated status label. It should sound appropriate to the conversation—for example, acknowledging that the coach is on, that the workout is underway, or immediately framing the first coaching action. The acknowledgement should occur once at activation or resume, not before every set.
+
+The announcement must not falsely imply that GymBro persistence or a live connector is available. In interim/degraded mode, wording should reflect the actual data/transport state when that distinction matters.
+
 ### Activation precedence
 
 Once an active workout context is established, that state becomes the strongest interpretation signal. Terse inputs should be interpreted against the active exercise/set when only one plausible interpretation exists.
@@ -58,6 +66,14 @@ High-confidence closure signals include:
 - future GymBro state indicating the active session has already been completed.
 
 The examples above are evidence of intent, not hard-coded trigger phrases.
+
+### Closure announcement
+
+When the coach determines with high confidence that the workout/coaching session has ended, it must explicitly acknowledge that closure conversationally so the user knows Workout Coach is no longer treating subsequent shorthand as part of the active workout.
+
+The acknowledgement should be brief and fit the moment—for example, confirming that the workout is wrapped, summarizing the final state when useful, or naturally transitioning to post-workout discussion. It is not a fixed phrase or UI banner.
+
+Do not announce closure merely because the topic changes temporarily, the user pauses, or the conversation becomes ambiguous. Announce closure only when the same contextual standard used to end the session is satisfied. If GymBro persistence is available, do not claim the session is saved/completed until the authoritative completion action succeeds; distinguish conversational workout closure from persistence failure when necessary.
 
 ### Closure confidence and unfinished work
 
