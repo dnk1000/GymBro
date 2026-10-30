@@ -330,6 +330,14 @@
               <option value="chatgpt">ChatGPT imports</option>
             </select>
           </div>
+          <div class="history-filters" aria-label="History filters">
+            <label>Exercise<select id="historyExercise" onchange="renderHistory()"><option value="">All exercises</option></select></label>
+            <label>Workout / session<select id="historyWorkout" onchange="renderHistory()"><option value="">All workouts / sessions</option></select></label>
+            <label>From date<input id="historyFrom" type="date" onchange="renderHistory()"></label>
+            <label>Through date<input id="historyTo" type="date" onchange="renderHistory()"></label>
+            <button class="btn secondary" onclick="resetHistoryFilters()">Reset filters</button>
+          </div>
+          <p class="sub" id="historyFilterStatus" role="status"></p>
           <div id="historyTable" style="overflow: auto; margin-top: 10px"></div>
         </div>
       </section>

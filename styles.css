@@ -713,3 +713,9 @@ button:disabled {
 .note-editor output { margin-left: 8px; }
 .note-text { margin: 10px 0; }
 .note-text > div { white-space: pre-wrap; }
+
+.history-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; align-items: end; }
+.history-filters label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.history-filters input, .history-filters select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; }
+.history-filters button { min-height: 44px; }
+@media (max-width: 600px) { .history-filters { grid-template-columns: minmax(0, 1fr); } }
