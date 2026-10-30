@@ -199,7 +199,7 @@ begin
       elsif t='imports' then
         if exists(select 1 from jsonb_array_elements(snapshot->'rows'->t) r where not exists(select 1 from jsonb_array_elements(packet->'next'->t) n where
           n-'set_count'=r-'set_count' and (n->'set_count'=r->'set_count' or (r#>'{extra,batch}' is not null and r#>'{extra,batch}'<>'null'::jsonb and
-            (n->>'set_count')::numeric=(select count(*) from jsonb_array_elements(packet#>'{next,sets}') s where s#>'{extra,importBatch}'=r#>'{extra,batch})))) then
+            (n->>'set_count')::numeric=(select count(*) from jsonb_array_elements(packet#>'{next,sets}') s where s#>'{extra,importBatch}'=r#>'{extra,batch}'))))) then
           raise exception 'Merge changed import metadata' using errcode='23514'; end if;
       elsif exists(select 1 from jsonb_array_elements(snapshot->'rows'->t) r where not exists(select 1 from jsonb_array_elements(packet->'next'->t) n where n=r)) then
         raise exception 'Merge rewrote existing content' using errcode='23514';

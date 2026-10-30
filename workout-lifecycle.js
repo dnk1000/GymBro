@@ -22,7 +22,8 @@ const WorkoutLifecycle = (() => {
   async function parse(text, owner, {catalog,createBodyweightId=()=>crypto.randomUUID()} = {}) {
     check(uuid.test(owner),'Authenticated destination owner required.');
     const file=JSON.parse(text);
-    if (isObject(file) && (Object.hasOwn(file,'format') || Object.hasOwn(file,'formatVersion'))) {
+    if (isObject(file) && (file.format==='gymbro-cloud-backup' ||
+      (!Array.isArray(file.sets) && (Object.hasOwn(file,'format') || Object.hasOwn(file,'formatVersion'))))) {
       check(file.format==='gymbro-cloud-backup' && file.formatVersion===1,'Unsupported cloud backup format. Keep the original file.');
       check(file.source?.ownerId===owner,'This cloud backup belongs to a different account. Cross-account restore is not supported.');
       check(file.source.modelVersion===1 && file.source.identityVersion===1 && file.source.workoutVersion===8 &&
@@ -82,10 +83,13 @@ const WorkoutLifecycle = (() => {
     const next=mergeHistoryData(current,other);
     references(next,(r,k,key)=>{check(refs.has(key),'Missing canonical provenance.');r[k]=clone(refs.get(key));});
     delete next.version;delete next.exerciseLibrary;
+    const used=new Set(base.document.catalog.exercises.map(e=>e.id)),labels=new Set(Object.keys(base.document.legacyExerciseLibrary));
+    references(next,(r,k)=>{used.add(r[k].exerciseId);labels.add(r[k].originalLabel);});
+    catalog.exercises=catalog.exercises.filter(e=>used.has(e.id));catalog.aliases=catalog.aliases.filter(a=>used.has(a.exerciseId));
     const document=clone(base.document);document.catalog=catalog;document.data=next;
     // Preserve current definitions; bring missing label definitions without rewriting settings.
     for(const [label,meta] of Object.entries(incoming.document.legacyExerciseLibrary))
-      if(!Object.hasOwn(document.legacyExerciseLibrary,label)) document.legacyExerciseLibrary[label]=clone(meta);
+      if(labels.has(label) && !Object.hasOwn(document.legacyExerciseLibrary,label)) document.legacyExerciseLibrary[label]=clone(meta);
     const keys=base.bodyweightIds.slice();
     for(let i=base.document.data.bodyweights.length;i<next.bodyweights.length;i++) {
       const index=incoming.document.data.bodyweights.findIndex(r=>sameSessionData(r,next.bodyweights[i]));

@@ -43,6 +43,7 @@ jobs:
           node scripts/workout-concurrency-races.cjs --local
           node scripts/workout-lifecycle-db-fixture.cjs
           npx --no-install supabase test db --local test-results/workout-lifecycle.test.sql
+          node scripts/workout-lifecycle-races.cjs --local
       - name: Replay from empty local database and verify retry
         run: |
           npx --no-install supabase db reset --local --version 20261028042000 --no-seed

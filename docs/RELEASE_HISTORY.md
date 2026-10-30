@@ -2,7 +2,7 @@
 
 ## Cloud lifecycle candidate — not accepted
 
-`3.12.0-20261030T180353Z`, #41/PR #79; workout schema 8, relational model 1/protocol 1; migration `20261030180000`. Approved design, synthetic Preview delivery; [canonical completion and acceptance evidence](https://github.com/dnk1000/GymBro/pull/79). No Production release, personal migration or cutover is claimed.
+`3.12.1-20261030T181450Z`, #41/PR #79; workout schema 8, relational model 1/protocol 1; migration `20261030180000`. Approved design, synthetic Preview delivery; [canonical completion and acceptance evidence](https://github.com/dnk1000/GymBro/pull/79). No Production release, personal migration or cutover is claimed.
 
 ## Earlier #71-only Preview — historical, not accepted
 

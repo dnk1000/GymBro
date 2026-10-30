@@ -35,7 +35,7 @@ function replace(dir, file, change) {
 
 test("current release metadata validates independently from historical version references", () => {
   const result = checkRelease(root);
-  assert.match(result.version, /^3\.12\.0-\d{8}T\d{6}Z$/);
+  assert.match(result.version, /^3\.12\.1-\d{8}T\d{6}Z$/);
   assert.equal(result.schema, 8);
 });
 
@@ -46,7 +46,7 @@ test("stale current release documentation fails validation", (t) => {
     "docs/CHANGELOG.md",
   ]) {
     const dir = releaseCopy(t);
-    replace(dir, file, (source) => source.replaceAll("3.12.0", "3.0.0"));
+    replace(dir, file, (source) => source.replaceAll("3.12.1", "3.0.0"));
     assert.throws(() => checkRelease(dir), undefined, file);
   }
 });
