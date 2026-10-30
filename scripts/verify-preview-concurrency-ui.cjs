@@ -34,6 +34,10 @@ async function main() {
       await context.addInitScript(()=>{window.normalWorkoutReads=0;const original=Storage.prototype.getItem;Storage.prototype.getItem=function(key){if(key==='daveGymTrackerV1')window.normalWorkoutReads++;return original.call(this,key);};});
       await context.route('**/*',async route=> {
         const request=route.request(),url=new URL(request.url());
+        // The protected Preview injects Vercel's feedback toolbar. Let that
+        // provider-owned GET load normally; all application GETs remain exact
+        // native-CLI reads, and unexpected hosts/methods still fail this smoke.
+        if(url.origin==='https://vercel.live'&&request.method()==='GET') return route.continue();
         if(url.origin!==preview||request.method()!=='GET') {errors.push('Unexpected network operation: '+request.method()+' '+url.origin+url.pathname);return route.abort();}
         const resource=url.pathname+url.search;
         try {

@@ -94,7 +94,7 @@ begin
 end; $$;
 create or replace function public.gymbro_workout_commit(previous_rows jsonb,next_rows jsonb) returns jsonb
 language plpgsql security invoker set search_path='' as $$
-declare current_rows jsonb; t text; tbl text; item jsonb; prior jsonb; keys text[]; key_match text; columns text; updates text; who uuid := public.gymbro_request_owner();
+declare current_rows jsonb; t text; tbl text; item jsonb; prior jsonb; keys text[]; key_match text; columns text; updates text; pass integer; who uuid := public.gymbro_request_owner();
 begin
   if who is null or public.gymbro_request_permanent() is not true then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
   -- Foundation equality precondition only; no automatic retry/rebase or #40
@@ -129,7 +129,12 @@ begin
       end if;
     end loop;
   end loop;
+  -- Apply guidance while its existing parent is still active. Finalize an
+  -- active-to-completed session only after its child changes; all original
+  -- immutable-intent/completed-guidance triggers still run unchanged.
+  for pass in 1..2 loop
   foreach t in array public.gymbro_workout_tables() loop
+    if pass=2 and t<>'sessions' then continue; end if;
     tbl:=public.gymbro_workout_table(t); keys:=public.gymbro_workout_keys(t);
     select string_agg(quote_ident(a.attname),',' order by a.attnum),
       string_agg(format('%I=excluded.%I',a.attname,a.attname),',' order by a.attnum) filter(where not a.attname=any(keys))
@@ -138,6 +143,9 @@ begin
       select value into prior from jsonb_array_elements(previous_rows->t) n where
         (select bool_and(n.value->key is not distinct from item->key) from unnest(keys) key);
       if prior is not distinct from item then continue; end if;
+      if (t='sessions' and prior->>'status'='active' and item->>'status'='completed') is true then
+        if pass=1 then continue; end if;
+      elsif pass=2 then continue; end if;
       if t in ('snapshot_slots','guided_requests','aliases') and prior is not null then raise exception 'Append-only fact changed' using errcode='23514'; end if;
       if t='snapshot_slots' and exists(select 1 from jsonb_array_elements(previous_rows->'sessions') s where s->>'session_id'=item->>'session_id') then
         raise exception 'Existing session snapshot cannot be extended' using errcode='23514';
@@ -146,6 +154,7 @@ begin
         tbl,columns,columns,tbl,(select string_agg(quote_ident(key),',') from unnest(keys) key),
         case when updates is null or t in ('snapshot_slots','guided_requests','aliases') then 'do nothing' else 'do update set '||updates end) using item;
     end loop;
+  end loop;
   end loop;
   set constraints all immediate;
   current_rows:=public.gymbro_workout_read();

@@ -1,5 +1,9 @@
 # GymBro release history
 
+## V3 concurrency completion-order correction candidate — not yet accepted
+
+`3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Verification remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
 ## V3 concurrency response-guard correction candidate — not yet accepted
 
 `3.6.5-20261030T054112Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Old refreshes cannot release newer conflict/pending states; unreadable recovery metadata stays blocked through failed/successful refreshes. Confirmed results with failed marker cleanup remain blocked with an accurate message and exact retry. Evidence remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
