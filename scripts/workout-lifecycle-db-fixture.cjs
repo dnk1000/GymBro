@@ -8,6 +8,9 @@ async function buildSql(){
   const repo=f.lifecycle.createRepository({ownerId:owner,client:{}});
   const packet=repo.prepare({...f.handle,revision:'1'},f,{action:'restoreCompleteBackup',operation:['restoreCompleteBackup','replace'],result:{}});
   const init=f.repository.create({ownerId:owner,client:{}}).prepare(null,f,{action:'initialize',args:[],operation:['initialize','lifecycle'],result:{}});
+  const incoming=structuredClone(f.handle);incoming.document.data.sets.push({...incoming.document.data.sets.find(s=>s.sessionId==null),id:'lifecycle-merged-set'});
+  const merged=f.lifecycle.merge(f.handle,incoming,owner),mergeRows=f.repository.project(merged.document,owner,merged.bodyweightIds,merged.signatureSchemes);
+  const mergePacket=repo.prepare({...f.handle,revision:'4'},merged,{action:'mergeHistoryBackup',operation:['mergeHistoryBackup','merge'],result:{}});
   // Fingerprints are always obtained from real PostgreSQL snapshots, not a JS approximation.
   const sql=[`begin;create extension if not exists pgtap with schema extensions;set local search_path=public,extensions;select no_plan();
 insert into auth.users(id) values('${owner}'),('${other}');
@@ -62,6 +65,15 @@ select is(public.gymbro_lifecycle_mutate((select packet from lifecycle_packets w
 select is(public.gymbro_lifecycle_snapshot()->>'status','healthy','recovery reestablishes valid state');
 select is(public.gymbro_lifecycle_snapshot()->>'revision','4','emergency revision continues monotonically');
 select is((select count(*)::int from public.gymbro_mutation_receipts where operation='["restoreCompleteBackup","cancelled"]' and status='cancelled'),1,'emergency retains cancellation fence');
+insert into lifecycle_packets values('merge',${literal(mergePacket)});
+update lifecycle_packets set packet=jsonb_set(packet,'{fingerprint}',public.gymbro_lifecycle_snapshot()->'fingerprint') where name='merge';
+select throws_ok($q$select public.gymbro_lifecycle_mutate(jsonb_set((select packet from lifecycle_packets where name='merge'),'{next,workout_state,0,extra,preferences}','{"changed":"settings"}'))$q$,'23514',null,'merge cannot overwrite preferences');
+select is(public.gymbro_lifecycle_mutate((select packet from lifecycle_packets where name='merge'))->>'code','OK','actual canonical history merge adds compatible records');
+select is(public.gymbro_workout_normalize(public.gymbro_lifecycle_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(mergeRows)}),'merge preserves all existing settings/facts while adding selected history');
+select is(public.gymbro_lifecycle_mutate((select packet from lifecycle_packets where name='merge'))->>'code','REPLAY','same merged packet cannot duplicate');
+select is(public.gymbro_lifecycle_mutate((select packet||jsonb_build_object('operation','["mergeHistoryBackup","repeat-file"]'::jsonb,'expectedRevision','5',
+  'base',public.gymbro_lifecycle_snapshot()->'rows','fingerprint',public.gymbro_lifecycle_snapshot()->'fingerprint') from lifecycle_packets where name='merge'))->>'code','NO_CHANGE','repeat file under a new reviewed request is duplicate-safe');
+select is(public.gymbro_lifecycle_snapshot()->>'revision','5','empty repeat merge does not increment revision');
 select throws_ok($q$delete from public.gymbro_sets$q$,'42501',null,'direct browser deletion remains denied');
 select throws_ok($q$select public.gymbro_workout_commit(null,null)$q$,'42501',null,'unchecked helper remains private');
 select ok(not pg_has_role('authenticated','gymbro_lifecycle_writer','MEMBER'),'browser cannot assume lifecycle role');

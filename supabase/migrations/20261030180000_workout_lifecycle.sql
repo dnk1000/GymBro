@@ -224,6 +224,8 @@ begin
         raise exception 'Merge rewrote existing content' using errcode='23514';
       end if;
     end loop;
+    if public.gymbro_workout_normalize(snapshot->'rows') is not distinct from public.gymbro_workout_normalize(packet->'next') then
+      return jsonb_build_object('code','NO_CHANGE','operation',op,'snapshot',snapshot); end if;
     saved:=public.gymbro_workout_commit(snapshot->'rows',packet->'next');
   end if;
   if public.gymbro_lifecycle_readable(saved) is not true then raise exception 'Unreconstructable replacement' using errcode='23514'; end if;

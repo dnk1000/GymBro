@@ -2,7 +2,7 @@
 const WorkoutLifecyclePanel = (() => {
   function mount(host,{controller,environment,ownerId,storage=globalThis.localStorage,cutoverAccepted=false,
     confirm=message=>globalThis.confirm(message),download=(name,text)=>{
-      const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));const a=document.createElement('a');
+      const url=URL.createObjectURL(new Blob([text],{type:name.endsWith('.csv')?'text/csv':'application/json'}));const a=document.createElement('a');
       a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }}) {
     let live=true,sequence=0,safety=null,review=null,rawOffered=false;
