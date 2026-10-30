@@ -21,6 +21,8 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
+- [V3_DATA_LIFECYCLE_PROPOSAL.md](V3_DATA_LIFECYCLE_PROPOSAL.md) — proposed #41 cloud backup/restore, local recovery cleanup and account/reset boundaries; awaiting design/release approval, not implemented.
+
 - [V3_CONCURRENCY_PROPOSAL.md](V3_CONCURRENCY_PROPOSAL.md) — approved #40 protocol/security/Preview design.
 - [V3_CONCURRENCY.md](V3_CONCURRENCY.md) — implemented protocol boundary and actual verification status.
 
