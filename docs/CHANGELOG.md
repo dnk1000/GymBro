@@ -219,6 +219,6 @@ Issue #27: Preview email-link sign-in, sign-out and recovery; database-enforced 
 - Encode dynamic handler arguments and imported text safely; protect spreadsheet exports from formula interpretation.
 - Extract JavaScript and CSS from the HTML and reuse the existing logo asset. Keep the no-build, local-first workflow.
 - Add browser regression tests and document migration/recovery behavior.
-## 3.12.5 — cloud lifecycle candidate (#41)
+## 3.12.6 — cloud lifecycle candidate (#41)
 
 Adds an opt-in staging cloud backup/restore/merge boundary and recovery controls. Same-account complete JSON preserves canonical and relational recovery metadata; confirmed replacement retains transport receipts/revisions. Separate local recovery cleanup cannot reset cloud data. Cloud reset/account deletion remain deferred. Normal workouts remain local until approved migration/cutover. Actual evidence: PR #79.
