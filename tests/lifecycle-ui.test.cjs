@@ -18,9 +18,11 @@ let server,browser,origin;
 before(async()=>{server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${server.address().port}`;
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});});
 after(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));});
-async function open(t,width=390,enabled=true){
+async function open(t,width=390,enabled=true,stateStatus='healthy'){
   const f=await setup();f.document.data.extension.lifecycleFixture=env.GYMBRO_LIFECYCLE_FIXTURE_TAG;
   let saved=plain({...f.handle,document:f.document,rows:f.repository.project(f.document,f.owner,f.bodyweightIds)});
+  if(stateStatus!=='healthy')saved={protocolVersion:1,ownerId:f.owner,revision:'0',status:stateStatus,fingerprint:'c'.repeat(64),
+    rows:stateStatus==='uninitialized'?Object.fromEntries(Object.keys(saved.rows).map(k=>[k,[]])):saved.rows};
   const receipts=new Map(),calls=[];
   const context=await browser.newContext({viewport:{width,height:844}});t.after(()=>context.close());const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(['warning','error'].includes(m.type()))errors.push(m.text());});t.after(()=>assert.deepEqual(errors,[]));
@@ -32,7 +34,7 @@ async function open(t,width=390,enabled=true){
     const packet=args.packet,key=JSON.stringify(packet?.operation??args.operation),receipt=receipts.get(key);
     let answer;
     if(receipt)answer=receipt;else if(packet.expectedRevision!==saved.revision)answer={code:'CONFLICT'};
-    else {saved={...saved,...plain(f.repository.assemble(packet.next,f.owner)),rows:packet.next,revision:String(BigInt(saved.revision)+1n),fingerprint:'b'.repeat(64)};
+    else {saved={...saved,...plain(f.repository.assemble(packet.next,f.owner)),status:'healthy',rows:packet.next,revision:String(BigInt(saved.revision)+1n),fingerprint:'b'.repeat(64)};
       answer={code:'REPLAY',operationRevision:saved.revision,result:packet.result};receipts.set(key,answer);answer={...answer,code:'OK'};}
     return route.fulfill({json:{data:{...answer,operation:packet?.operation??args.operation,snapshot:saved}}});
   });
@@ -78,4 +80,18 @@ test('account mismatch and malformed files never send, account switch disables t
   await p.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('JSON'));
   assert.equal(f.calls.filter(c=>c.name==='gymbro_lifecycle_mutate').length,0);
   await p.evaluate(()=>window.syntheticAuth('SIGNED_OUT',null));assert.equal(await p.locator('[data-review]').count(),0);
+});
+test('uninitialized and unreadable recovery expose raw diagnostics and stronger explicit emergency confirmation',async t=>{
+  for(const status of ['uninitialized','unreadable']){
+    const f=await open(t,320,true,status),p=f.page,text=JSON.stringify(f.lifecycle.backup(f.handle));
+    assert.equal(await p.locator('[data-export]').isDisabled(),true);
+    await upload(p,'[data-incoming]','recovery.json',text);await p.locator('[data-review]').click();await p.waitForFunction(()=>document.querySelector('[data-summary]').textContent.includes('COMPLETE RESTORE'));
+    await p.locator('[data-commit]').click();await p.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('Download raw diagnostic'));
+    assert.equal(f.calls.filter(c=>c.name==='gymbro_lifecycle_mutate').length,0);
+    const download=p.waitForEvent('download');await p.locator('[data-raw]').click();const raw=JSON.parse(await content(await download));
+    assert.equal(raw.format,'gymbro-raw-diagnostics');assert.equal(raw.status,status);
+    await p.locator('[data-emergency]').check();p.once('dialog',async d=>{assert.match(d.message(),/EMERGENCY RESTORE/);await d.accept();});
+    await p.locator('[data-commit]').click();await p.waitForFunction(()=>document.querySelector('[data-status]').textContent.includes('Cloud request OK'));
+    assert.equal(f.saved().status,'healthy');assert.equal(f.saved().revision,'1');
+  }
 });

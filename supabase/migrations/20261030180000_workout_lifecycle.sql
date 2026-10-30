@@ -75,11 +75,11 @@ begin
     select array_agg(value) into required from jsonb_array_elements_text(spec->'required');
     select coalesce(array_agg(value),'{}') into omitted from jsonb_array_elements_text(spec->'omitted');
     if exists(select 1 from (
-      select (r->>'position')::numeric p,row_number() over(partition by case
-        when t='template_slots' then r->'template_id'
-        when t in ('snapshot_slots','guidance','guided_slots','guided_requests') then r->'session_id' else 'null'::jsonb end
-        order by (r->>'position')::numeric)-1 expected from jsonb_array_elements(rows->t) r
-      ) positions where p<>expected) then return false; end if;
+      select (entry.value->>'position')::numeric p,row_number() over(partition by case
+        when t='template_slots' then entry.value->'template_id'
+        when t in ('snapshot_slots','guidance','guided_slots','guided_requests') then entry.value->'session_id' else 'null'::jsonb end
+        order by (entry.value->>'position')::numeric)-1 ordinal from jsonb_array_elements(rows->t) entry(value)
+      ) positions where positions.p<>positions.ordinal) then return false; end if;
     for r in select * from jsonb_array_elements(rows->t) loop
       select coalesce(array_agg(value order by value),'{}') into present from jsonb_array_elements_text(r->'present');
       if not present @> required or cardinality(present)<>(select count(distinct value) from jsonb_array_elements_text(r->'present')) or
@@ -114,9 +114,9 @@ begin
     end loop;
   end loop;
   if exists(select 1 from (
-    select (r->>'session_position')::numeric p,row_number() over(partition by r->'session_id' order by (r->>'session_position')::numeric)-1 expected
-    from jsonb_array_elements(rows->'sets') r where r->'session_id'<>'null'::jsonb
-    ) positions where p<>expected) then return false; end if;
+    select (entry.value->>'session_position')::numeric p,row_number() over(partition by entry.value->'session_id' order by (entry.value->>'session_position')::numeric)-1 ordinal
+    from jsonb_array_elements(rows->'sets') entry(value) where entry.value->'session_id'<>'null'::jsonb
+    ) positions where positions.p<>positions.ordinal) then return false; end if;
   return true;
 exception when invalid_text_representation or invalid_parameter_value or numeric_value_out_of_range then return false;
 end $$;

@@ -1,6 +1,6 @@
 # Cloud data lifecycle candidate — #41
 
-Application version: `3.12.1-20261030T181450Z`
+Application version: `3.12.2-20261030T182145Z`
 Data schema: `8`
 Release status: **preparation**
 
