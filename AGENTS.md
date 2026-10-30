@@ -35,6 +35,19 @@ These apply to every implementation task. Any exception must follow an explicitl
 10. **Respect repository state.** Check branch/worktree, intended base, and working-tree changes before implementation. Preserve unexplained user changes, isolate unrelated work, and follow repository branch, commit, PR, and approval conventions.
 11. **Resolve material ambiguity explicitly.** Apply Step 1's conflict procedure to material product, architecture, data, security, or compatibility uncertainty. Continue independent work only when clearly safe; routine choices within approved constraints remain implementation decisions.
 
+## Efficient execution
+
+Do only the work needed to deliver and verify the approved scope. These rules reduce overhead; they do not waive required acceptance criteria, data protections, verification or approval gates.
+
+- **Read once, then read changes.** Reuse governing documents and decisions already read in the session when still current. On a new baseline, inspect relevant changes instead of rereading entire unchanged documents. Follow linked references only when they govern the task; avoid recursive background research.
+- **Keep implementation and verification proportional.** Choose the smallest coherent change and checks that cover its acceptance criteria and affected contracts. Batch independent reads/checks. Start with focused local verification; use applicable CI for broader coverage rather than manually duplicating it. Repeat or broaden checks only for a new change, failure, explicit requirement or unresolved risk.
+- **Keep one completion record.** Normally put the canonical completion report and AC mapping in the PR body; link to it from the issue and final response. Update owning documentation only when its contract changes or a governing rule requires a record. Do not create an issue-specific evidence document or repeat the report across several files by default. Keep required version/release updates concise and link evidence.
+- **Avoid unnecessary data operations.** Presentation-only checks with disposable data do not by themselves require a Production backup, restore exercise or migration test. Existing persistence/migration backup gates still apply when those paths are actually being tested. Never use a user's saved data merely to verify a visual change.
+- **Bound tool recovery.** Retry a failed route only when there is a concrete correction; do not repeat an unchanged failing request. If that correction fails, use at most one viable supported fallback, then report the limitation. Stop chasing optional screenshots, downloads or other artifacts once sufficient evidence exists. Required verification that remains unavailable stays UNVERIFIED and blocks the corresponding completion claim.
+- **Stop when the authorized work is handled.** Avoid extra polishing, artifacts, checks, polling or documentation commits without a concrete task need. Batch evidence updates into one final record where practical. Identify genuine pending device/acceptance/approval gates and hand them off clearly; do not invent additional gates or request approval already recorded.
+
+See [efficient execution in the workflow](docs/DEVELOPMENT_WORKFLOW.md#efficient-execution) for how this applies to preparation and reporting.
+
 ## Issue-driven implementation contract
 
 New product work follows:
