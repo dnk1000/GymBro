@@ -63,7 +63,8 @@ function normalize(rows) {
   return Object.fromEntries(Object.keys(rows).sort().map(k=>[k,rows[k].map(x=>JSON.stringify(sort(x))).sort()]));
 }
 async function run(mode) {
-  const query=queryClient(mode),owners=[],evidence=[];
+  const query=queryClient(mode),owners=[],evidence=[],workers=[];
+  let originalFailure;
   try {
     for(const name of ['start-start','edit-delete','delete-edit','log-finish','finish-log','done-log','skip-log','navigate-substitute','guided-guided','duplicate-submit','cancel-original','original-cancel']) {
       const f=await fixture();f.owner=randomUUID();owners.push(f.owner);
@@ -103,13 +104,15 @@ async function run(mode) {
       const call=(p,resolving)=>resolving?`public.gymbro_workout_resolve(${literal(p.operation)})`:`public.gymbro_workout_mutate(${literal(p)})`;
       const transaction=(p,resolving,hold)=>`begin;set local application_name='${hold?tag:tag+'-second'}';${hold?`select pg_advisory_xact_lock(hashtextextended('${f.owner}',39));select pg_sleep(4);`:''}set local role authenticated;${claims(f.owner)}select jsonb_build_object('pid',pg_backend_pid(),'transaction',pg_current_xact_id()::text,'started',transaction_timestamp(),'finished',clock_timestamp(),'reply',${call(p,resolving)}) as evidence;commit;`;
       const first=query(transaction(a,resolveA,true));
+      workers.push(first);first.catch(()=>{}); // observed below; retain failures through cleanup
       let held=false;
       for(let i=0;i<20&&!held;i++) {
         const status=await query(`select jsonb_build_object('held',exists(select 1 from pg_locks l join pg_stat_activity s on s.pid=l.pid where s.application_name='${tag}' and l.locktype='advisory' and l.granted)) as evidence;`);
         held=status.held;
       }
       if(!held) {await first;throw Error('Could not observe first independent transaction holding the owner lock.');}
-      const [one,two]=await Promise.all([first,query(transaction(b,resolveB,false))]);
+      const second=query(transaction(b,resolveB,false));workers.push(second);
+      const [one,two]=await Promise.all([first,second]);
       assert.notEqual(one.pid,two.pid);assert.notEqual(one.transaction,two.transaction);
       assert(new Date(two.started)<new Date(one.finished),'second transaction overlapped first');
       const expected=resolveA?['CANCELLED','CANCELLED']:resolveB||name==='duplicate-submit'?['OK','REPLAY']:['OK','CONFLICT'];
@@ -125,13 +128,17 @@ async function run(mode) {
     }
     fs.writeFileSync(path.join(dir,'concurrency-races.json'),JSON.stringify(evidence,null,2));
     return evidence;
-  } finally {
+  } catch(error) {originalFailure=error;throw error;} finally {
+    await Promise.allSettled(workers);
     if(owners.length) {
       const ids=owners.map(o=>`'${o}'`).join(',');
       // Only this run's fresh UUIDs. Never reset a hosted database or touch
       // another fixture/user. Remove child rows before Auth identities.
-      const deletes=[...(await fixture()).repository.tables].reverse().map(t=>`delete from public.${t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t} where owner_id in (${ids});`).join('');
-      await query(`begin;set constraints all deferred;delete from public.gymbro_mutation_receipts where owner_id in (${ids});delete from public.gymbro_workout_versions where owner_id in (${ids});${deletes}delete from auth.users where id in (${ids});select jsonb_build_object('cleaned',true) as evidence;commit;`);
+      // The mapper's `tables` export covers workout tables; the complete
+      // aggregate also includes the two pre-existing canonical catalog tables.
+      const deletes=[...(await fixture()).repository.tables,'exercises','aliases'].reverse().map(t=>`delete from public.${t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t} where owner_id in (${ids});`).join('');
+      try {await query(`begin;set constraints all deferred;delete from public.gymbro_mutation_receipts where owner_id in (${ids});delete from public.gymbro_workout_versions where owner_id in (${ids});${deletes}delete from auth.users where id in (${ids});select jsonb_build_object('cleaned',true) as evidence;commit;`);}
+      catch(error) {throw Error((originalFailure?'Original race failure: '+originalFailure.message+'; ':'')+'Cleanup failure: '+error.message);}
       const remaining=await query(`select jsonb_build_object('remaining',(select count(*) from auth.users where id in (${ids}))) as evidence;`);assert.equal(remaining.remaining,0);console.log('Independent race fixtures cleaned; separate query confirms zero Auth rows.');
     }
   }

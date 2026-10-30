@@ -19,7 +19,7 @@ async function main() {
     const packet=await prepare(f,initial,'logBodyweight',[{date:'2026-10-30',value:201}],'after-populated-upgrade');
     const changed=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('reply',public.gymbro_workout_mutate(${literal(packet)})) as evidence;commit;`);
     assert.equal(changed.reply.code,'OK');assert.equal(changed.reply.snapshot.revision,'1');
-    const deletes=[...f.repository.tables].reverse().map(t=>`delete from public.${t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t} where owner_id='${f.owner}';`).join('');
+    const deletes=[...f.repository.tables,'exercises','aliases'].reverse().map(t=>`delete from public.${t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t} where owner_id='${f.owner}';`).join('');
     await query(`begin;set constraints all deferred;delete from public.gymbro_mutation_receipts where owner_id='${f.owner}';delete from public.gymbro_workout_versions where owner_id='${f.owner}';${deletes}delete from auth.users where id='${f.owner}';drop table public.gymbro_issue40_upgrade_expected;select jsonb_build_object('cleaned',true) as evidence;commit;`);
     console.log('Populated upgrade preserves every field/relationship, starts revision zero, then checked write reaches revision one. Synthetic fixture removed.');
   }

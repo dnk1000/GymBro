@@ -47,7 +47,7 @@ select ok(not has_table_privilege('gymbro_workout_writer','public.gymbro_mutatio
 select ok((select bool_and(not prosecdef and prosqlbody is not null) from pg_proc where oid in ('public.gymbro_request_owner()'::regprocedure,'public.gymbro_request_permanent()'::regprocedure)),'provider claim helpers are bound invokers, not privilege elevation');
 select ok(not has_schema_privilege('authenticated','public','CREATE'),'browser cannot replace qualified public helpers');
 select ok((select bool_and(prosecdef and proowner='gymbro_workout_writer'::regrole and proconfig @> array['search_path=""']) from pg_proc where oid in ('public.gymbro_workout_mutate(jsonb)'::regprocedure,'public.gymbro_workout_resolve(jsonb)'::regprocedure)),'only scoped role owns fixed-search-path entry points');`);
-  for(const t of f.repository.tables) {
+  for(const t of Object.keys(bundles[0])) {
     const full=t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t;
     for(const verb of ['INSERT','UPDATE','DELETE']) sql.push(`select ok(not has_table_privilege('authenticated','public.${full}','${verb}'),'browser ${t} ${verb} bypass denied');`);
   }
