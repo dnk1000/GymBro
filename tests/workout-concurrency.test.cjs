@@ -78,10 +78,11 @@ test('definitive rollback keeps state and request reuse with altered packet cann
 });
 test('a stale local no-op checks fresh state and conflicts without automatically preparing a new write',async()=>{
   const f=await serverFixture(),a=f.create();
-  assert.equal((await a.execute('clearPlan')).ok,true);
-  const b=f.create();assert.equal((await a.execute('selectPlan',{templateId:'push',duration:60})).code,'OK');
+  const b=f.create();
+  assert.equal((await a.execute('selectGuidedSlot',{sessionId:f.sessionId,planSlotId:'slot-2',expectedRevision:3})).code,'OK');
   const writes=f.calls.filter(c=>c.name==='gymbro_workout_mutate').length;
-  assert.equal((await b.execute('clearPlan')).code,'CONFLICT');
+  assert.equal((await b.execute('selectGuidedSlot',{sessionId:f.sessionId,planSlotId:'slot-1',expectedRevision:3})).code,'CONFLICT');
   assert.equal(f.calls.filter(c=>c.name==='gymbro_workout_mutate').length,writes,'no automatic rebase/write');
-  await b.refresh();assert.equal((await b.execute('clearPlan')).code,'OK');
+  await b.refresh();
+  assert.equal((await b.execute('selectGuidedSlot',{sessionId:f.sessionId,planSlotId:'slot-1',expectedRevision:4})).code,'OK');
 });
