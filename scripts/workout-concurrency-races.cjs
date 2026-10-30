@@ -10,15 +10,35 @@ const {commandsFor}=require('./preview-db.cjs');
 const root=path.resolve(__dirname,'..'),dir=path.join(root,'test-results');
 function queryClient(mode) {
   let count=0;
+  const local=mode.includes('--local');
+  let container;
+  if(local) {
+    const config=fs.readFileSync(path.join(root,'supabase','config.toml'),'utf8');
+    const project=config.match(/^project_id\s*=\s*"([A-Za-z0-9_-]+)"/m)?.[1];
+    if(!project) throw Error('Disposable local project identity is missing.');
+    const names=execFileSync('docker',['ps','--filter',`name=^/supabase_db_${project}$`,'--format','{{.Names}}'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+    if(names.length!==1) throw Error('Exactly one matching disposable database container is required.');
+    container=names[0];
+  }
   return async sql=> {
     fs.mkdirSync(dir,{recursive:true});const file=path.join(dir,`race-${process.pid}-${++count}.sql`);fs.writeFileSync(file,sql);
-    const args=[require.resolve('supabase/dist/supabase.js'),'db','query',...mode,'--file',file];
+    const executable=local?'docker':process.execPath;
+    const args=local?['exec','-i',container,'psql','--username','postgres','--dbname','postgres','--no-psqlrc','--tuples-only','--no-align','--set','ON_ERROR_STOP=1']:
+      [require.resolve('supabase/dist/supabase.js'),'db','query',...mode,'--file',file];
     const output=await new Promise((resolve,reject)=> {
-      const child=spawn(process.execPath,args,{cwd:root,env:process.env,stdio:['ignore','pipe','pipe'],windowsHide:true});let out='',error='';
+      const child=spawn(executable,args,{cwd:root,env:process.env,stdio:[local?'pipe':'ignore','pipe','pipe'],windowsHide:true});let out='',error='';
+      if(local) child.stdin.end(sql);
       child.stdout.on('data',d=>{out+=d;});child.stderr.on('data',d=>{error+=d;});
       child.on('error',()=>reject(Error('Independent database connection could not start.')));
       child.on('close',code=>code===0?resolve(out):reject(Error('Independent SQL transaction failed; inspect synthetic test SQL privately. '+(mode.includes('--local')?error.slice(-1200):''))));
     });
+    if(local) {
+      // psql emits command tags and set_config values too. The final SELECT is
+      // the explicit JSON evidence row; malformed/absent evidence still fails.
+      const lines=output.trim().split(/\r?\n/).filter(line=>line.startsWith('{'));
+      if(!lines.length) throw Error('Independent psql connection returned no evidence.');
+      try {return JSON.parse(lines.at(-1));} catch {throw Error('Independent psql evidence was not JSON.');}
+    }
     let parsed;try {parsed=JSON.parse(output);} catch {throw Error('Database output was not JSON.');}
     const rows=parsed.rows??parsed;
     const found=Array.isArray(rows)?rows.find(row=>row.evidence):null;
