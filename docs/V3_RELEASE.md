@@ -1,10 +1,102 @@
-# V3 relational foundation candidate — issue #39
+# Heritage Utility shared shell candidate — #71 then #72
 
-Application version: `3.5.5-20261028T205308Z`
+Application version: `3.11.2-20261030T170057Z`
 Data schema: `8`
 Release status: **preparation**
 
-Approved mapping: 3.5.0 for #39 alone. Based on main `bec9d865cb41d9d56c204ba48468f2259f9664ab`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and additive migration `20261028042000`. The workout UI remains local; there is no personal migration or cutover. See [implementation and AC evidence](V3_RELATIONAL_PERSISTENCE.md).
+Presentation-only patch under VERSION_POLICY.md. User requested one sequential branch/PR. #71 was technically verified at 1f4ae48 before #72 started; see [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). #72 applies the same tokens to the header, navigation and version footer without changing domain/data behavior. Not accepted, merged or deployed to Production.
+
+## #78 documentation integration
+
+[PR #78](https://github.com/dnk1000/GymBro/pull/78) resolves against accepted main 4278e34 after PR #76 merged. All runtime/configuration/schema/test files remain identical to main; the remaining scope is [BRAND_AND_UI.md](BRAND_AND_UI.md), its unchanged approved reference and documentation. Canonical application metadata remains main's `3.11.2-20261030T170057Z`; documentation-only integration creates no new build. Original #78 Preview `3.11.3-20261030T171451Z` at 0e4824f is historical evidence for that earlier source, not the current runtime. No new Production or device acceptance is claimed.
+
+# Heritage Utility shared-system candidate — #71
+
+Application version: `3.11.1-20261030T165311Z`
+Data schema: `8`
+Release status: **preparation**
+
+Presentation-only patch under VERSION_POLICY.md. Based on accepted main 2255a91. Shared tokens/components and chart colors; no domain/schema/storage changes. Verification and pending review are tracked in [delivery evidence](https://github.com/dnk1000/GymBro/pull/76). Not accepted, merged or deployed to Production.
+
+# Mobile History candidate — integrated main
+
+Application version: `3.11.0-20261030T164140Z`
+Data schema: `8`
+Release status: **preparation**
+
+On October 30, 2026 the user approved remapping #36/PR #69 to 3.11.0 after #22/PR #70 merged as main 24fa0a3. This supersedes the original 3.9.x mapping for future builds; earlier evidence below remains historical. Conflict resolution preserves accepted #22 filters, #36 phone set layout, desktop tables, compact copy and both test groups. No data/schema/persistence change or merge approval. Current verification and physical Safari status belong in PR #69.
+
+# Compact History copy refinement — issue #36
+
+Application version: `3.9.1-20261030T163206Z`
+Data schema: `8`
+Release status: **preparation**
+
+User requested removal of redundant History guidance and repeated exercise lists on October 30, 2026. Expanded cards retain exercise headings, recorded facts/notes and actions. Legacy / sessionless remains visible; its date-group explanation is available as a heading tooltip. No stored data/action/filter changes. Change Level 1 refinement within the existing issue PR. Current verification and physical Safari status belong in that PR completion report; not accepted or merged.
+
+# Mobile History candidate — issue #36
+
+Application version: `3.9.0-20261030T155016Z`
+Data schema: `8`
+Release status: **preparation**
+
+User approved 3.9.0 for #36 alone on October 30, 2026. Base 77bd5ab. Change Level 2. Narrow History set rows stack with full labels, key facts and reachable actions; desktop tables and existing selectors/actions remain. No data/schema change. Verification and pending physical Safari acceptance belong in the PR completion report. Not accepted or merged.
+
+# Compact History copy refinement — issue #22
+
+Application version: `3.10.1-20261030T163206Z`
+Data schema: `8`
+Release status: **preparation**
+
+User requested removal of redundant History guidance and repeated exercise lists on October 30, 2026. Expanded cards retain exercise headings, recorded facts/notes and actions. Legacy / sessionless remains visible; its date-group explanation is available as a heading tooltip. No stored data/action/filter changes. Change Level 1 refinement within the existing issue PR. Current verification and physical Safari status belong in that PR completion report; not accepted or merged.
+
+# History filters candidate — issue #22
+
+Application version: `3.10.0-20261030T161206Z`
+Data schema: `8`
+Release status: **preparation**
+
+User approved 3.10.0 for #22 alone on October 30, 2026, with a separate unmerged PR based on accepted main 77bd5ab. Change Level 2. Exact exercise labels, saved workout names, inclusive date ranges and existing source filters compose without stored-data changes. Reset clears every filter. #36 remains in its separate PR. PR completion report owns verification and pending acceptance; no Production acceptance or merge.
+
+# History exercise disclosure candidate — issue #21
+
+Application version: `3.8.0-20261030T150933Z`
+Data schema: `8`
+Release status: **preparation**
+
+User-approved mapping: **3.8.0 for #21 alone**, October 30, 2026. Based on accepted main `b3ca7ae`; branch `codex/issue-21-exercise-disclosure`. Change Level 2. Consecutive exercise occurrences have independent collapsed summaries inside session/date cards. Summaries show recorded load/unit/reps; expanding reveals the existing ordered set table and correction actions. No data/schema/persistence change. Physical iPhone Safari remains unverified; this is not an accepted Production release. Current verification and acceptance evidence belong in the issue #21 PR completion report.
+
+# Issue #20 compact-layout refinement
+
+Application version: `3.7.1-20261030T144204Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED. Current evidence will be recorded in [PR #66](https://github.com/dnk1000/GymBro/pull/66).
+
+# V3 History disclosure candidate — issue #20
+
+Application version: `3.7.0-20261030T135802Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved mapping: **3.7.0 for #20 alone**, approved by the user on October 30, 2026. Based on accepted main `2da1ef92bd7fa491b499c5f5a1d674bb7eeef546`; branch `codex/issue-20-history-collapse`. Change Level 2: History presentation interactions within the existing data boundary. No migration, identity, persistence or cloud-workout activation change.
+
+Cards start collapsed, retain concise summaries, open independently and offer Expand all / Collapse all for the current filter. Existing detail order, scoped notes, guidance, correction and deletion actions remain within expanded cards. State is transient for a History visit and survives rerenders/source filtering. See [contract and acceptance evidence](HISTORY_DISCLOSURE.md).
+
+Local full regression passed 225/225 with no failures/skips; syntax/release/diff and focused History checks passed. Runtime revision `d0f10bd` passed both jobs of [CI 41068557901](https://github.com/dnk1000/GymBro/actions/runs/41068557901). Signed-in exact Preview checks at approximately 320/390/1280 px and warning/error console checks passed; see the linked report for methods and tool limitations. [Draft PR #66](https://github.com/dnk1000/GymBro/pull/66) remains unmerged. Physical iPhone Safari acceptance is UNVERIFIED. No Production data, personal backup, migration, acceptance or merge is claimed. The earlier candidate evidence below remains historical.
+
+# V3 concurrency candidate — issue #40
+
+Issue #40 candidate: protocol 1, owner revisions, durable receipts and cancellation fencing. All seven technical ACs pass; ready for explicit Level 3 human acceptance. Current workouts remain local. See [concurrency contract](V3_CONCURRENCY.md).
+
+Application version: `3.6.6-20261030T055653Z`
+Data schema: `8`
+Release status: **preparation**
+
+Approved current mapping: 3.6.0 for #40 alone; PATCH corrections remain within this candidate. The following #39 mapping/evidence is historical.
+
+Historical mapping: 3.5.0 for #39 alone. Based on main `bec9d865cb41d9d56c204ba48468f2259f9664ab`; branch `codex/issue-39-relational-implementation`. Independent relational model 1 and additive migration `20261028042000`. The workout UI remains local; there is no personal migration or cutover. See [implementation and AC evidence](V3_RELATIONAL_PERSISTENCE.md).
 
 The initial code CI passed 196/196 regressions but its database tests exposed an invalid xmin/subtransaction assumption in the lifecycle guard (initial bundle rejected, dependent cases then failed). The correction uses an immutable database-managed creation transaction, protects upserts/tombstones, and retains template provenance after canonical rename. Initial build was `3.5.0-20261028T195515Z`; the fix is `3.5.1-20261028T200955Z`. The final SQL/Preview evidence is recorded below; no accepted Production release or device verification is claimed. The sections below retain prior candidate evidence.
 

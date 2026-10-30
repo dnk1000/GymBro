@@ -1,5 +1,11 @@
 # Milestone 3: History and backup presentation
 
+Issue #20 adds collapsed-by-default session/date cards over this existing grouping/detail contract; see [History disclosure](HISTORY_DISCLOSURE.md) for current interaction behavior and acceptance evidence. The milestone record below retains its original release context.
+
+Issue #21 adds collapsed exercise occurrences inside expanded session/date cards. A consecutive run of the exact recorded exercise name is one display occurrence; A → B → A stays three occurrences, including when a source filter hides B. Each summary shows its matching set count and up to three recorded load/unit/reps tuples, retaining zero values, missing values and explicit incompleteness without rankings or unit conversion. Open an exercise to see its unchanged set rows/actions. Expand all / Collapse all continue to affect session/date cards, preserving independent exercise choices. Exercise choices share the existing transient History-visit lifecycle; no presentation state is saved. Notes/guided status remain at their existing scopes. No schema, identity or historical fact changes; the mobile set-layout work in #36 remains separate. Current #21 verification/acceptance belongs in its PR completion report.
+
+Issue #36 stacks the same ordered set rows at widths up to 600 px: full exercise labels, date/order, load/reps, effort, pain, source/completeness and 44 px edit/delete controls. Notes and raw metadata remain under Record details / notes; desktop notes and tables remain visible. This is responsive presentation only; no selector, action, schema or stored value changes. Current evidence and pending physical Safari acceptance belong in the #36 PR.
+
 Historical milestone documentation: Milestone 4 adds schema 7 and guided actions; see [GUIDED_WORKOUTS.md](GUIDED_WORKOUTS.md) for current guidance contracts. Existing unguided behavior remains supported.
 
 This milestone starts from accepted main `14b12a88166d8c9cb7dfb3d70bccb0f68d0c8d34`. Application version is the independent canonical 2.3.0 build in `app-version.js`. Data schema stays **6**, storage key stays `daveGymTrackerV1`, and no migration or workout-action changes are introduced.
@@ -15,6 +21,12 @@ This milestone starts from accepted main `14b12a88166d8c9cb7dfb3d70bccb0f68d0c8d
 - Existing validated actions still handle corrections/deletions. Deleting the last set retains the session, its status and snapshot. Completed sessions remain protected against new membership; date/link constraints remain. There are no reopen, session-edit, guided-workout or lifecycle buttons in this milestone.
 
 `getHistoryGroups(data, source)` in `history-view.js` creates detached, DOM-free display data. It never writes or adds fields to persisted records. It assumes validated application data, like the existing UI.
+
+## History search and filters — issue #22 candidate
+
+Exercise selection matches exact recorded labels in the current name-key local runtime; the separate canonical conversion is not activated. Workout / session matches immutable saved snapshot names (or Unplanned workout); Legacy / sessionless selects date display groups without assigning identity. Date bounds are inclusive local calendar dates, using each explicit session's date or legacy set date. Source and exercise filters intersect and reveal matching sets, retaining full-session counts and original order/occurrence boundaries. Empty explicit sessions remain under unrestricted exercise/source selection. A reversed range shows an explanation and no results; no matches show an explicit empty state. Reset clears exercise, workout, both dates and source. Controls and expansion choices are transient UI state with no writes; selected options survive corrections removing their last record until reset. Notes, actions and historical context remain at existing scopes. PR completion report owns current verification and acceptance.
+
+Current compact-copy refinement (user approved October 30, 2026): History omits guidance paragraphs, the repeated full exercise list and the filter-status explanation. Exercise headings retain all names; notes/status/actions and matching counts remain. The visible Legacy / sessionless heading retains its truthful label and exposes the date-group explanation through its title tooltip. This supersedes earlier presentation wording requiring those paragraphs/lists; historical records remain unchanged.
 
 ## Backup and recovery
 

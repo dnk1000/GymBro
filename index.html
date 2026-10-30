@@ -18,7 +18,7 @@
           />
           <div class="brand-copy">
             <h1>GymBro</h1>
-            <p>Your training log + program + ChatGPT inbox</p>
+            <p>Your training ledger</p>
           </div>
         </div>
         <div class="header-tools">
@@ -35,15 +35,15 @@
           </button>
         </div>
       </div>
-      <div class="tabs">
-        <button class="tab active" data-view="dashboard">Dashboard</button>
+      <nav class="tabs" aria-label="Main navigation">
+        <button class="tab active" data-view="dashboard" aria-current="page">Dashboard</button>
         <button class="tab" data-view="program">Program</button>
         <button class="tab" data-view="workout">Workout</button>
         <button class="tab" data-view="history">History</button>
         <button class="tab" data-view="inbox">ChatGPT Inbox</button>
         <button class="tab" data-view="exercises">Exercises</button>
         <button class="tab" data-view="data">Data</button>
-      </div>
+      </nav>
     </header>
     <main>
       <div id="storageNotice" class="notice status-bad" role="alert" hidden>
@@ -313,20 +313,16 @@
 
       <section id="history" class="view">
         <div class="card">
-          <div class="split">
-            <div>
+          <div class="history-heading">
               <h2>Workout history</h2>
-              <div class="sub">
-                Explicit sessions preserve their recorded workout and set order.
-                Legacy/sessionless records remain available below. Source
-                filters apply to sets; session counts show the full session.
+              <div class="history-controls">
+                <button class="btn secondary" onclick="setHistoryExpanded(true)">Expand all</button>
+                <button class="btn secondary" onclick="setHistoryExpanded(false)">Collapse all</button>
               </div>
-            </div>
             <select
               aria-label="History source"
               id="historyFilter"
               onchange="renderHistory()"
-              style="max-width: 220px"
             >
               <option value="all">All history</option>
               <option value="imported">Imported only</option>
@@ -334,11 +330,15 @@
               <option value="chatgpt">ChatGPT imports</option>
             </select>
           </div>
-          <div id="historyTable" style="overflow: auto; margin-top: 10px"></div>
-          <div class="sub">
-            Edit or delete sets from any source. Import IDs remain recorded to
-            prevent accidental reimport.
+          <div class="history-filters" aria-label="History filters">
+            <label>Exercise<select id="historyExercise" onchange="renderHistory()"><option value="">All exercises</option></select></label>
+            <label>Workout / session<select id="historyWorkout" onchange="renderHistory()"><option value="">All workouts / sessions</option></select></label>
+            <label>From date<input id="historyFrom" type="date" onchange="renderHistory()"></label>
+            <label>Through date<input id="historyTo" type="date" onchange="renderHistory()"></label>
+            <button class="btn secondary" onclick="resetHistoryFilters()">Reset filters</button>
           </div>
+          <p class="sub" id="historyFilterStatus" role="status"></p>
+          <div id="historyTable" style="overflow: auto; margin-top: 10px"></div>
         </div>
       </section>
 
@@ -619,7 +619,18 @@
       <h3>History</h3>
       <p>
         Review explicit sessions with their saved plan name, mode, status and
-        ordered sets. Multiple workouts on one date remain separate.
+        ordered sets. Cards start collapsed; tap anywhere in a card header to
+        show or hide its details. Expand all and Collapse all affect the cards
+        in the current source filter. Cards keep their state while you remain
+        in History; returning to History starts collapsed again.
+        Multiple workouts on one date remain separate.
+        Collapsed rows preview two exercise names and a count of the remaining
+        exercises. Expand a row for the full list, mode/status and record details.
+        Within a workout, tap an exercise summary to show or hide its sets.
+        Exercise groups open independently and preserve consecutive recorded
+        order; an exercise repeated later remains a separate group. Exercise
+        choices last for this History visit. Expand all and Collapse all control
+        workout cards and retain those exercise choices.
         Legacy/sessionless records are grouped by date for display only, without
         creating sessions. Source filters show matching sets and keep session
         order; sessions without matching sets are omitted while a filter is

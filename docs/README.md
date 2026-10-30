@@ -25,6 +25,9 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
+- [V3_CONCURRENCY_PROPOSAL.md](V3_CONCURRENCY_PROPOSAL.md) — approved #40 protocol/security/Preview design.
+- [V3_CONCURRENCY.md](V3_CONCURRENCY.md) — implemented protocol boundary and actual verification status.
+
 - [V3_RELATIONAL_SCHEMA_PROPOSAL.md](V3_RELATIONAL_SCHEMA_PROPOSAL.md) — approved #39 relational model, persistence boundary and verification plan.
 - [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md) — #39 implementation boundary, relational migration and actual verification evidence.
 
@@ -74,3 +77,7 @@ The Workout Coach skill is approved and implemented in the repository through is
 ## Issue #27 account candidate
 
 [V3_ACCOUNT_ACCESS.md](V3_ACCOUNT_ACCESS.md) defines Preview email-link recovery, private ownership requirements for #39, setup and pending acceptance evidence. Local workout schema remains 7.
+
+## Current visual design authority
+
+[BRAND_AND_UI.md](BRAND_AND_UI.md) is the canonical Heritage Utility design authority for shared presentation and future UI issues. It implements product intent without changing domain, storage or workflow contracts. Its committed design board is directional, not pixel-perfect.

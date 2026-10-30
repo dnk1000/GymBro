@@ -3,23 +3,25 @@
 const {execFileSync,spawnSync}=require("node:child_process");
 const fs=require("node:fs"),path=require("node:path");
 const {commandsFor}=require("./preview-db.cjs");
-const {buildSql}=require("./workout-repository-db-fixture.cjs");
 const root=path.resolve(__dirname,"..");
 async function main() {
-  if(process.argv.length!==2) throw Error("This check takes no arguments.");
+  const concurrency=process.argv[2]==="--concurrency";
+  if(process.argv.length!==2 && !(process.argv.length===3&&concurrency)) throw Error("Use no argument or exactly --concurrency.");
+  const {buildSql}=require(concurrency?"./workout-concurrency-db-fixture.cjs":"./workout-repository-db-fixture.cjs");
   const git=args=>execFileSync("git",args,{cwd:root,encoding:"utf8"}).trim();
   const revision=git(["rev-parse","HEAD"]);
   // Reuse the exact staging/reviewed-revision/environment guard without applying DDL.
   const plan=commandsFor("apply",process.env,revision)[0];
   if(git(["status","--porcelain","--untracked-files=normal"])) throw Error("Commit the reviewed revision before hosted verification.");
-  const file=path.join(root,"test-results","workout-repository.test.sql");
+  const file=path.join(root,"test-results",concurrency?"workout-concurrency-hosted.test.sql":"workout-repository.test.sql");
   const source=await buildSql();
   const assertions=(source.match(/^select (?:lives_ok|throws_ok|is|ok|is_empty)\(/gm)||[]).length;
   // The Management API query path needs no local Docker/pg_prove process.
   // Collect actual pgTAP results and raise on any failure before rollback;
   // a command's zero exit status alone is never treated as assertion evidence.
-  const sql=source.replace('create temporary table relational_expected',
-    'create temporary table repo_tap_report(output text);\ngrant insert,select on repo_tap_report to authenticated;\ncreate temporary table relational_expected')
+  const anchor=concurrency?'create temporary table protocol_packets':'create temporary table relational_expected';
+  const sql=source.replace(anchor,
+    'create temporary table repo_tap_report(output text);\ngrant insert,select on repo_tap_report to authenticated,gymbro_workout_writer;\n'+anchor)
     .replace(/^select (lives_ok|throws_ok|is|ok|is_empty)\(/gm,'insert into repo_tap_report select $1(')
     .replace('select * from finish();',`insert into repo_tap_report select * from finish();
 do $assert$ begin

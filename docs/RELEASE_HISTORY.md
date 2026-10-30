@@ -1,5 +1,85 @@
 # GymBro release history
 
+## Earlier #71-only Preview — historical, not accepted
+
+`3.11.3-20261030T171451Z`, schema 8 unchanged, was the original [PR #78](https://github.com/dnk1000/GymBro/pull/78) Preview from main 2255a91. After PR #76 merged as main 4278e34, the conflict resolution preserves that accepted runtime unchanged. Remaining #78 changes are the canonical design authority/reference and documentation; they produce no new application build. Its earlier Preview evidence remains historical, not current runtime or Production acceptance.
+
+
+## Heritage Utility #71/#72 candidate — not accepted
+
+`3.11.2-20261030T170057Z`, schema 8 unchanged. Shared-system foundation followed by global-shell styling in PR #76. [Delivery evidence](https://github.com/dnk1000/GymBro/pull/76) owns checks and pending acceptance. No merge/Production acceptance.
+
+
+## Heritage Utility #71 candidate — not accepted
+
+`3.11.1-20261030T165311Z`, schema 8 unchanged. Non-functional shared styling patch. Evidence: [delivery report](https://github.com/dnk1000/GymBro/pull/76). No Production acceptance or merge.
+
+
+## Mobile History 3.11.0 candidate — not yet accepted
+
+`3.11.0-20261030T164140Z`, #36/PR #69; schema 8 unchanged. User-approved remapping after #22 merged. Main integration retains both filters and responsive set details. PR owns evidence; physical Safari remains pending.
+
+
+
+## Compact History copy candidate — not yet accepted
+
+`3.9.1-20261030T163206Z`, #36; schema 8 unchanged. User-approved removal of guidance paragraphs and redundant exercise list; sessionless explanation moved to heading tooltip. Verification belongs in the existing PR; physical Safari pending.
+
+## Mobile History candidate — not yet accepted
+
+`3.9.0-20261030T155016Z`, #36 alone; schema 8 unchanged. Phone set cards retain full labels/facts and existing correction actions; desktop tables remain. PR owns verification; physical Safari pending. No Production acceptance.
+
+
+
+## Compact History copy candidate — not yet accepted
+
+`3.10.1-20261030T163206Z`, #22; schema 8 unchanged. User-approved removal of guidance paragraphs and redundant exercise list; sessionless explanation moved to heading tooltip. Verification belongs in the existing PR; physical Safari pending.
+
+## History filters candidate — not yet accepted
+
+`3.10.0-20261030T161206Z`, #22 alone; schema 8 unchanged. Exercise/workout/date/source filters and reset preserve historical facts/order. Separate from unmerged #36. Verification belongs in the PR; no Production acceptance.
+
+## History exercise disclosure candidate — not yet accepted
+
+`3.8.0-20261030T150933Z`, #21 alone; schema 8 unchanged. Consecutive exercise occurrences have independent collapsed summaries inside session/date cards. Recorded load/unit/reps summaries reveal existing ordered sets/actions. No data/schema/persistence change. Candidate verification belongs in the #21 PR; physical iPhone Safari remains unverified. No accepted Production release is claimed.
+
+## History compact-layout candidate — not yet accepted
+
+`3.7.1-20261030T144204Z`, #20 alone; schema 8 unchanged. Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED.
+
+
+## V3 History disclosure candidate — not yet accepted
+
+`3.7.0-20261030T135802Z`, #20 alone; workout schema 8 unchanged. Collapsed session/date summaries with independent native disclosure and bulk controls. Presentation state does not write workout data. Verification and required physical Safari evidence: [History disclosure](HISTORY_DISCLOSURE.md). This is a candidate, not an accepted Production release.
+
+## V3 concurrency completion-order correction candidate — not yet accepted
+
+`3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Technical verification now passes all seven ACs, including 221 application tests, 335 SQL assertions per replay pass, hosted assertions/races and actual signed Preview contexts. Explicit Level 3 acceptance remains pending; see [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## V3 concurrency response-guard correction candidate — not yet accepted
+
+`3.6.5-20261030T054112Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Old refreshes cannot release newer conflict/pending states; unreadable recovery metadata stays blocked through failed/successful refreshes. Confirmed results with failed marker cleanup remain blocked with an accurate message and exact retry. Evidence remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## V3 concurrency recovery-message correction candidate — not yet accepted
+
+`3.6.4-20261030T052148Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Unreadable/future recovery markers remain blocked across refresh and no longer imply the prior request was never sent. SQL source is unchanged from the 329-assertion fresh pass; race/replay and hosted evidence remain pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## V3 concurrency no-op correction candidate — not yet accepted
+
+`3.6.3-20261030T050807Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Preserve literal SQL dollar delimiters in copied invoker helpers. Local no-op/replay outcomes check fresh cloud state and cannot silently rebase a newly necessary mutation. SQL/hosted verification remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## V3 concurrency Auth-boundary correction candidate — not yet accepted
+
+`3.6.2-20261030T050312Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Bind provider claim helpers as SECURITY INVOKER SQL bodies at definition time, requiring no broader Auth-schema grant. Account changes during initial load invalidate its response. Focused 24/24 tests pass. SQL/replay/race/staging evidence remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## V3 concurrency verification candidate — not yet accepted
+
+`3.6.1-20261030T044400Z`, schema 8/model 1/protocol 1, #40 only. Fixes operator SET ROLE verification while browser write/role denial remains enforced. Adds the approved synthetic UI and actual-connection/upgrade verification. Initial CI 41003113730 passed 208 application tests but SQL stopped on operator SET ROLE denial. Verification remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## V3 concurrency candidate — not yet accepted
+
+`3.6.0-20261030T042352Z`, workout schema 8/model 1/protocol 1, migration 20261030043000; #40 alone. User approved the design and mapping on October 30, 2026. Verification pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md). No personal migration, Production operation, acceptance or merge is claimed.
+
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 ## V3 opaque request-signature fix candidate — not yet accepted

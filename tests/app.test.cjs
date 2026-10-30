@@ -52,6 +52,12 @@ async function app(t, options = {}) {
   t.after(() => assert.deepEqual(errors, [], "Uncaught browser errors"));
   return page;
 }
+// Existing detail regressions explicitly reveal the newly collapsed cards.
+async function showHistoryDetails(page) {
+  await page.locator('[data-view="history"]').click();
+  await page.getByRole('button', { name: 'Expand all', exact: true }).click();
+  await page.locator('.history-exercise').evaluateAll(els => els.forEach(el => { el.open = true; }));
+}
 async function stored(page) {
   return page.evaluate((key) => localStorage.getItem(key), KEY);
 }
@@ -398,7 +404,7 @@ test("quotes and markup in exercise names, IDs and metadata are rendered safely"
   await p.locator('[data-view="exercises"]').click();
   await p.locator("#exerciseTable tr").filter({ hasText: name }).click();
   assert.equal(await p.locator("#exerciseDetailTitle").innerText(), name);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p
     .locator("#historyTable tr")
     .filter({ hasText: name })
@@ -418,7 +424,7 @@ test("editing and deleting imported sets preserves import deduplication metadata
   const p = await app(t);
   await stage(p, workout([set({ complete: false })], { importId: "edit-me" }));
   await p.locator("#commitInboxBtn").click();
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p
     .locator("#historyTable tr")
     .filter({ hasText: "chatgpt" })
@@ -429,7 +435,7 @@ test("editing and deleting imported sets preserves import deduplication metadata
   await p.getByRole("button", { name: "Save changes", exact: true }).click();
   assert.equal((await backup(p)).sets.at(-1).reps, 12);
   assert.equal((await backup(p)).sets.at(-1).complete, false);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p
     .locator("#historyTable tr")
     .filter({ hasText: "chatgpt" })
@@ -1132,7 +1138,7 @@ test("history dates remain on one line at phone and desktop widths without page 
   const p = await app(t);
   for (const width of [320, 390, 778, 1280]) {
     await p.setViewportSize({ width, height: 844 });
-    await p.locator('[data-view="history"]').click();
+    await showHistoryDetails(p);
     const measurements = await p
       .locator("#historyTable tbody td:first-child")
       .evaluateAll((cells) =>
@@ -1219,7 +1225,7 @@ test("application Help opens, scrolls and closes without changing workout state"
 
 test("History icon actions stay together, preserve accessible names and confirm deletion", async (t) => {
   const p = await app(t);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   for (const width of [320, 390, 1280]) {
     await p.setViewportSize({ width, height: 844 });
     const row = p.locator("#historyTable tbody tr").first();
@@ -1230,9 +1236,9 @@ test("History icon actions stay together, preserve accessible names and confirm 
     const a = await edit.boundingBox(),
       b = await remove.boundingBox();
     assert.equal(a.y, b.y);
-    assert.ok(b.x + b.width - a.x <= 60, "Actions fit within 60px");
+    assert.ok(b.x + b.width - a.x <= (width < 600 ? 92 : 60), "Actions fit their responsive row");
     assert.ok(
-      a.width === 28 && a.height === 28 && b.width === 28 && b.height === 28,
+      [a.width, a.height, b.width, b.height].every(size => size === (width < 600 ? 44 : 28)),
     );
     assert.equal(
       await p.evaluate(
@@ -1287,7 +1293,7 @@ test("acronym hover explanations are limited to workout and import entry labels"
     await p.locator('label[for="fRir"] abbr').getAttribute("title"),
     /Repetitions in Reserve/,
   );
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   assert.equal(await p.locator("#historyTable abbr").count(), 0);
   await p.evaluate(() => renderHistory());
   assert.equal(await p.locator("#historyTable abbr").count(), 0);
@@ -1327,7 +1333,7 @@ test("corrected incomplete imports can be explicitly completed without losing me
   );
   await p.locator("#commitInboxBtn").click();
   const original = (await backup(p)).sets.at(-1);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p
     .locator("#historyTable tbody tr")
     .filter({ hasText: "uncertain reps" })
@@ -1351,7 +1357,7 @@ test("corrected incomplete imports can be explicitly completed without losing me
   assert.deepEqual(corrected, { ...original, reps: 12, complete: true });
   await p.reload();
   assert.deepEqual((await backup(p)).sets.at(-1), corrected);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   assert.doesNotMatch(
     await p
       .locator("#historyTable tbody tr")
@@ -1372,7 +1378,7 @@ test("marking an incomplete edit complete retains rollback on failed persistence
   await p.locator("#commitInboxBtn").click();
   const original = await backup(p),
     raw = await stored(p);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p
     .locator("#historyTable tbody tr")
     .filter({ hasText: "keep approximate" })
@@ -1479,12 +1485,254 @@ async function sessionHistoryFixture(p) {
   });
 }
 
+async function exerciseHistoryFixture(p) {
+  return p.evaluate(() => {
+    const ok = result => { if (!result.ok) throw Error(JSON.stringify(result)); return result; };
+    const date = "2026-10-24";
+    const sessionId = ok(workoutActions.createSession({ date, templateId: "push", duration: 60 })).sessionId;
+    const inputs = [
+      { exercise: "Seated Row", weight: 100, unit: "lb", reps: 8 },
+      { exercise: "Seated Row", weight: 0, unit: "bodyweight", reps: 10 },
+      { exercise: "Bench Press", weight: 45, unit: "lb/side", reps: 6 },
+      { exercise: "Seated Row", weight: 25, unit: "assist lb", reps: null, complete: false },
+    ];
+    const ids = inputs.map(input => ok(workoutActions.logSet({ date, ...input })).setId);
+    ok(workoutActions.completeSession(sessionId));
+    const legacyIds = inputs.map(input => ok(workoutActions.logSet({ date, sessionId: null, ...input })).setId);
+    // Deliberately hide the intervening B and the first A under the manual filter.
+    for (const id of [ids[0], ids[2], legacyIds[0], legacyIds[2]]) db.sets.find(set => set.id === id).source = "chatgpt";
+    // Explicit session order must come from setIds, not physical array order.
+    db.sets = [...db.sets.filter(set => !ids.includes(set.id)), ...ids.slice().reverse().map(id => db.sets.find(set => set.id === id))];
+    renderAll();
+    return { sessionId, ids, legacyIds };
+  });
+}
+
+test("exercise disclosure preserves consecutive occurrences, source/state boundaries and data without writes", async (t) => {
+  const p = await app(t);
+  const { sessionId, ids, legacyIds } = await exerciseHistoryFixture(p);
+  const original = await backup(p), raw = await stored(p);
+  await p.evaluate(() => {
+    window.disclosureWrites = 0;
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (...args) { window.disclosureWrites++; return write.apply(this, args); };
+  });
+  await p.locator('[data-view="history"]').click();
+  const session = p.locator(`[data-session-id="${sessionId}"]`);
+  await session.locator(':scope > details > summary').click();
+  const runs = session.locator('.history-exercise');
+  assert.equal(await runs.count(), 3);
+  assert.equal(await session.locator('tbody tr:visible').count(), 0);
+  assert.deepEqual(await runs.locator(':scope > summary > strong').allTextContents(), ['Seated Row', 'Bench Press', 'Seated Row']);
+  assert.match(await runs.nth(0).locator(':scope > summary').innerText(), /2 sets · 100 lb × 8 · 0 bodyweight × 10/);
+  assert.match(await runs.nth(2).locator(':scope > summary').innerText(), /25 assist lb × — \(incomplete\)/);
+  await runs.nth(0).locator(':scope > summary').click();
+  assert.deepEqual(await session.locator('tbody tr:visible').evaluateAll(rows => rows.map(row => row.dataset.setId)), ids.slice(0, 2));
+  await runs.nth(2).locator(':scope > summary').click();
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true);
+  await runs.nth(2).locator(':scope > summary').click();
+  assert.equal(await runs.nth(2).evaluate(el => el.open), false);
+  await p.locator('#historyFilter').selectOption('manual');
+  assert.equal(await runs.count(), 2, 'hidden intervening exercise never combines repeated A');
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true, 'key survives filtering out first set');
+  assert.deepEqual(await session.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), [ids[1], ids[3]]);
+  await p.locator('#historyFilter').selectOption('imported');
+  await p.locator('#historyFilter').selectOption('all');
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true);
+  await p.evaluate(() => { renderAll(); renderHistory(); });
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true);
+  await session.locator(':scope > details > summary').click();
+  await session.locator(':scope > details > summary').click();
+  assert.equal(await runs.nth(0).evaluate(el => el.open), true, 'outer disclosure retains inner choice');
+  const legacy = p.locator('[data-legacy-date="2026-10-24"]');
+  await legacy.locator(':scope > details > summary').click();
+  assert.equal(await legacy.locator('.history-exercise').count(), 3);
+  assert.deepEqual(await legacy.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), legacyIds);
+  assert.match(await legacy.locator('tbody tr').nth(2).textContent(), /3\. Bench Press/);
+  assert.deepEqual(await session.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), ids);
+  await p.getByRole('button', { name: 'Expand all', exact: true }).click();
+  assert.equal(await runs.nth(1).evaluate(el => el.open), false, 'session bulk control preserves exercise choices');
+  await p.getByRole('button', { name: 'Collapse all', exact: true }).click();
+  await p.locator('[data-view="dashboard"]').click();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-exercise[open]').count(), 0);
+  assert.equal(await p.evaluate(() => window.disclosureWrites), 0);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  await p.reload();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-exercise[open]').count(), 0);
+});
+
+for (const width of [320, 390, 1280]) {
+  test(`exercise disclosure supports full-summary touch, keyboard and escaped text at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 }, hasTouch: true });
+    const { sessionId, ids } = await exerciseHistoryFixture(p);
+    await p.evaluate(id => {
+      db.sets.find(set => set.id === id).exercise = '<img src=x onerror="window.exerciseXss=1">' + 'LongExerciseName'.repeat(8);
+      renderHistory();
+    }, ids[2]);
+    await p.locator('[data-view="history"]').click();
+    const session = p.locator(`[data-session-id="${sessionId}"] > details`);
+    await session.locator(':scope > summary').click();
+    const run = session.locator('.history-exercise').nth(1), summary = run.locator(':scope > summary');
+    assert.equal(await p.locator('#historyTable img').count(), 0);
+    assert.equal(await p.evaluate(() => window.exerciseXss), undefined);
+    assert.match(await summary.innerText(), /<img src=x/);
+    assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    const box = await summary.boundingBox();
+    assert.ok(box.height >= 44 && box.width >= 150);
+    await summary.tap({ position: { x: box.width - 8, y: box.height - 8 } });
+    assert.equal(await run.evaluate(el => el.open), true);
+    assert.equal(await session.evaluate(el => el.open), true);
+    assert.ok(await run.getByRole('button', { name: 'Edit', exact: true }).isVisible());
+    await run.locator('.set-record > summary').click();
+    assert.equal(await run.evaluate(el => el.open), true);
+    await summary.focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await run.evaluate(el => el.open), false);
+    await p.keyboard.press('Space');
+    assert.equal(await run.evaluate(el => el.open), true);
+    assert.match(await summary.evaluate(el => getComputedStyle(el, '::after').transform), /matrix\(0, 1, -1, 0/);
+    assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await p.locator('#history').screenshot({ path: `test-results/issue21-${width}.png` });
+  });
+}
+
+test("History disclosure preserves independent session/date state through filters and rerenders without writing", async (t) => {
+  const p = await app(t);
+  const ids = await sessionHistoryFixture(p);
+  const original = await backup(p), raw = await stored(p);
+  await p.evaluate(() => {
+    window.historyWrites = 0;
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (...args) {
+      window.historyWrites++;
+      return write.apply(this, args);
+    };
+  });
+  await p.locator('[data-view="history"]').click();
+  const first = p.locator(`[data-session-id="${ids.first}"] .history-disclosure`);
+  const second = p.locator(`[data-session-id="${ids.second}"] .history-disclosure`);
+  const legacy = p.locator('[data-legacy-date="2026-10-23"] .history-disclosure');
+  assert.equal(await p.locator('.history-disclosure[open]').count(), 0);
+  assert.equal(await p.locator('#historyTable tbody tr:visible').count(), 0);
+  assert.match(await first.locator(':scope > summary').innerText(), /2 sets · 2 exercises/);
+  assert.match(await first.locator(':scope > summary').innerText(), /Seated Row · Bench Press/);
+  assert.match(await legacy.locator(':scope > summary').innerText(), /Legacy \/ sessionless/);
+  assert.doesNotMatch(await legacy.locator(':scope > summary').innerText(), /no saved session identity/);
+  assert.equal(await first.getByRole('button', { name: 'Edit', exact: true }).count(), 0);
+  await first.locator(':scope > summary').click();
+  assert.equal(await first.evaluate(el => el.open), true);
+  assert.deepEqual(await first.locator('tbody tr').evaluateAll(rows => rows.map(row => row.dataset.setId)), [ids.a, ids.b]);
+  await second.locator(':scope > summary').click();
+  await first.locator(':scope > summary').click();
+  assert.equal(await first.evaluate(el => el.open), false);
+  assert.equal(await second.evaluate(el => el.open), true);
+  await legacy.locator(':scope > summary').click();
+  assert.match(await legacy.locator('h3').getAttribute('title'), /no saved session identity/);
+  assert.doesNotMatch(await legacy.locator('.history-details').innerText(), /Grouped by date|Open an exercise|Import IDs remain|Exercises shown:/);
+  await legacy.locator('.history-exercise > summary').first().click();
+  await legacy.locator('.set-record summary').first().click();
+  assert.equal(await legacy.evaluate(el => el.open), true, 'nested metadata does not toggle its card');
+  await p.evaluate(() => { renderAll(); renderHistory(); });
+  assert.equal(await first.evaluate(el => el.open), false);
+  assert.equal(await second.evaluate(el => el.open), true);
+  assert.equal(await legacy.evaluate(el => el.open), true);
+  await p.locator('#historyFilter').selectOption('imported');
+  assert.equal(await p.locator('[data-session-id]').count(), 0);
+  await p.locator('#historyFilter').selectOption('all');
+  assert.equal(await first.evaluate(el => el.open), false);
+  assert.equal(await second.evaluate(el => el.open), true);
+  assert.equal(await legacy.evaluate(el => el.open), true);
+  await p.getByRole('button', { name: 'Expand all', exact: true }).click();
+  assert.equal(await p.locator('.history-disclosure:not([open])').count(), 0);
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-disclosure:not([open])').count(), 0, 'same-view click keeps state');
+  await p.getByRole('button', { name: 'Collapse all', exact: true }).click();
+  assert.equal(await p.locator('.history-disclosure[open]').count(), 0);
+  await second.locator(':scope > summary').click();
+  await p.locator('[data-view="dashboard"]').click();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-disclosure[open]').count(), 0, 'new visit starts collapsed');
+  assert.equal(await p.evaluate(() => window.historyWrites), 0);
+  assert.deepEqual(await backup(p), original);
+  assert.equal(await stored(p), raw);
+  await first.locator(':scope > summary').click();
+  await p.reload();
+  await p.locator('[data-view="history"]').click();
+  assert.equal(await p.locator('.history-disclosure[open]').count(), 0, 'reload starts collapsed');
+  assert.equal(await stored(p), raw);
+});
+
+for (const width of [320, 390, 1280]) {
+  test(`History full-header touch and keyboard disclosure fits ${width}px with escaped summaries`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 }, hasTouch: true });
+    const ids = await sessionHistoryFixture(p);
+    await p.evaluate((id) => {
+      const session = db.sessions.find(row => row.id === id);
+      db.sessions.find(row => row.id !== id).planSnapshot.name = 'Push';
+      session.planSnapshot.name = '<img src=x onerror="window.historyXss=1"> ' + 'LongWorkoutName'.repeat(12);
+      db.noteScopes.session.push({ sessionId: id, text: 'Session context preserved' });
+      renderAll();
+    }, ids.first);
+    const original = await backup(p), raw = await stored(p);
+    await p.locator('[data-view="history"]').click();
+    const card = p.locator(`[data-session-id="${ids.first}"] .history-disclosure`);
+    const summary = card.locator(':scope > summary');
+    assert.equal(await p.locator('#historyTable img').count(), 0);
+    assert.equal(await p.evaluate(() => window.historyXss), undefined);
+    assert.match(await summary.innerText(), /<img src=x/);
+    const compact = p.locator('[data-legacy-date="2026-10-21"]');
+    const preview = compact.locator('.history-exercise-preview');
+    assert.match(await preview.innerText(), /Seated Row · Lat Pulldown.*\+5/s);
+    assert.doesNotMatch(await preview.innerText(), /Rope Triceps Pushdown/);
+    assert.equal(await preview.locator('span').first().evaluate(el => getComputedStyle(el).whiteSpace), 'nowrap');
+    assert.equal(await preview.locator('.history-more').isVisible(), true);
+    assert.equal(await compact.locator('.history-details').isVisible(), false);
+    const short = p.locator('[data-session-id="' + ids.second + '"] > details > summary');
+    const shortBox = await short.boundingBox();
+    assert.ok(shortBox.height >= 80 && shortBox.height <= 100, 'ordinary short-title row stays compact');
+    assert.equal(await short.locator('.history-badges').count(), 0);
+    assert.equal(await summary.evaluate(el => getComputedStyle(el).paddingTop), '10px');
+    await compact.locator(':scope > details > summary').click();
+    assert.match(await compact.locator('.history-exercise > summary').allTextContents().then(text => text.join(' ')), /Rope Triceps Pushdown/);
+    assert.equal(await compact.locator('.history-exercises').count(), 0);
+    assert.match(await compact.locator('h3').getAttribute('title'), /no saved session identity/);
+    assert.doesNotMatch(await compact.locator('.history-details').innerText(), /Grouped by date|Open an exercise|Import IDs remain|Exercises shown:/);
+    await compact.locator(':scope > details > summary').click();
+    const box = await summary.boundingBox();
+    assert.ok(box.height >= 44 && box.width >= 150);
+    assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await p.locator('#history').screenshot({ path: `test-results/issue20-collapsed-${width}.png` });
+    // The lower-right padding is part of the full header tap target.
+    await summary.tap({ position: { x: box.width - 10, y: box.height - 8 } });
+    assert.equal(await card.evaluate(el => el.open), true);
+    assert.match(await card.locator('.history-details').innerText(), /Session context preserved/);
+    await summary.focus();
+    await p.keyboard.press('Enter');
+    assert.equal(await card.evaluate(el => el.open), false);
+    await p.keyboard.press('Space');
+    assert.equal(await card.evaluate(el => el.open), true);
+    await card.locator('.history-exercise > summary').first().click();
+    assert.ok(await card.getByRole('button', { name: 'Edit', exact: true }).first().isVisible());
+    assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    for (const name of ['Expand all', 'Collapse all']) {
+      const control = p.getByRole('button', { name, exact: true });
+      assert.ok((await control.boundingBox()).height >= 44);
+    }
+    await p.locator('#history').screenshot({ path: `test-results/issue20-expanded-${width}.png` });
+    assert.deepEqual(await backup(p), original);
+    assert.equal(await stored(p), raw);
+  });
+}
+
 test("History shows same-day sessions, saved intent, ordered sets and separate legacy records without writing", async (t) => {
   const p = await app(t);
   const ids = await sessionHistoryFixture(p);
   const original = await backup(p),
     raw = await stored(p);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   const first = p.locator(`[data-session-id="${ids.first}"]`);
   const second = p.locator(`[data-session-id="${ids.second}"]`);
   assert.equal(await first.isVisible(), true);
@@ -1515,7 +1763,8 @@ test("History shows same-day sessions, saved intent, ordered sets and separate l
     /incomplete/,
   );
   const legacy = p.locator('[data-legacy-date="2026-10-23"]');
-  assert.match(await legacy.innerText(), /display only/);
+  assert.match(await legacy.locator("h3").getAttribute("title"), /display only/);
+  assert.doesNotMatch(await legacy.innerText(), /Grouped by date for display only/);
   assert.match(await legacy.innerText(), /manual-sessionless/);
   assert.match(await legacy.innerText(), /legacy-import-only/);
   const imported = legacy
@@ -1541,7 +1790,7 @@ test("History shows same-day sessions, saved intent, ordered sets and separate l
 test("session and legacy source filters retain all existing options and matching session order", async (t) => {
   const p = await app(t);
   const ids = await sessionHistoryFixture(p);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   const data = await backup(p);
   for (const source of ["imported", "manual", "chatgpt", "all"]) {
     await p.locator("#historyFilter").selectOption(source);
@@ -1577,7 +1826,7 @@ test("linked History edits/deletes preserve session identity, completion and aut
   const original = (await backup(p)).sessions.find(
     (session) => session.id === ids.first,
   );
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p
     .locator(`[data-set-id="${ids.a}"]`)
     .getByRole("button", { name: "Edit", exact: true })
@@ -1588,7 +1837,7 @@ test("linked History edits/deletes preserve session identity, completion and aut
     (await backup(p)).sessions.find((session) => session.id === ids.first),
     original,
   );
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   assert.match(
     await p.locator(`[data-set-id="${ids.a}"]`).innerText(),
     /session-first/,
@@ -1626,7 +1875,7 @@ test("linked History edits/deletes preserve session identity, completion and aut
     "completed",
   );
   await p.reload();
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   assert.equal(
     await p.locator(`[data-session-id="${ids.first}"]`).isVisible(),
     true,
@@ -1636,7 +1885,7 @@ test("linked History edits/deletes preserve session identity, completion and aut
 test("History session cards and expanded record metadata fit narrow phones and desktop", async (t) => {
   const p = await app(t);
   await sessionHistoryFixture(p);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p.locator(".set-record summary").first().click();
   for (const width of [320, 390, 1280]) {
     await p.setViewportSize({ width, height: 844 });
@@ -1656,7 +1905,7 @@ test("History session cards and expanded record metadata fit narrow phones and d
       );
     assert.ok(regions.length > 1);
     assert.ok(
-      regions.every((item) => item.width <= width && item.overflow === "auto"),
+      regions.every((item) => item.width <= width && item.overflow === (width < 600 ? "visible" : "auto")),
     );
   }
 });
@@ -1783,7 +2032,7 @@ test("history merge adds compatible records but preserves current program/librar
   assert.equal(saved.activeSessionId, current.activeSessionId);
   assert.equal(saved.sets.length, current.sets.length + 1);
   assert.equal(saved.bodyweights.length, current.bodyweights.length + 1);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   assert.match(
     await p.locator('[data-legacy-date="2026-10-24"]').innerText(),
     /compatible merged legacy record/,
@@ -1805,7 +2054,7 @@ test("filtering linked imports and deleting through History retains duplicate pr
     renderAll();
     return set.id;
   }, ids);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p.locator("#historyFilter").selectOption("chatgpt");
   const group = p.locator(`[data-session-id="${ids.second}"]`);
   assert.match(await group.innerText(), /1 matching set · 2 sets in session/);
@@ -1842,7 +2091,7 @@ test("published History fixture renders session order and legacy records on an i
   await importBackup(p, fixture);
   assert.deepEqual(await backup(p), { ...fixture, version: 8, noteScopes: { session: [], exerciseSession: [], exercise: [] } });
   const raw = await stored(p);
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   assert.equal(await p.locator("[data-session-id]").count(), 2);
   assert.equal(await p.locator("[data-legacy-date]").count(), 1);
   const first = p.locator('[data-session-id="ws_history_demo_first"]');
@@ -1973,7 +2222,7 @@ test("guide substitutions retain older sets and permanent plans, with factual un
       .count(),
     0,
   );
-  await p.locator('[data-view="history"]').click();
+  await showHistoryDetails(p);
   await p.getByText("Guided exercise status", { exact: true }).click();
   assert.match(
     await p.locator(".guided-history").innerText(),
@@ -2688,7 +2937,7 @@ for (const width of [320, 390, 1280]) {
     const recorded = await backup(p);
     assert.equal(recorded.noteScopes.session[0].text, sessionText);
     assert.deepEqual(recorded.sessions, original.sessions, 'notes preserve all workout facts');
-    await p.locator('[data-view="history"]').click();
+    await showHistoryDetails(p);
     const group = p.locator(`[data-session-id="${sessionId}"]`);
     assert.match(await group.innerText(), /Session note/);
     assert.match(await group.innerText(), /Seat position 6 today/);
@@ -2765,3 +3014,76 @@ test('schema-7 note upgrade never writes at startup and stale-tab note save pres
   assert.equal(await p.locator('#sessionNote').inputValue(), 'my draft');
   assert.equal((await backup(p)).noteScopes.session.length, 0);
 });
+
+for (const width of [320, 390, 1280]) {
+  test(`mobile History set layout preserves full fields, reachable controls and data at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 } });
+    const fixture = await sessionHistoryFixture(p);
+    const label = 'Very long canonical exercise label with unilateral seated cable shoulder external rotation';
+    await p.evaluate(([label, id]) => { db.sets.find(s => s.id === id).exercise = label; renderAll(); }, [label, fixture.a]);
+    const before = await backup(p), raw = await stored(p);
+    await showHistoryDetails(p);
+    const row = p.locator('[data-set-id="' + fixture.a + '"]');
+    assert.equal(await row.locator('td').nth(1).innerText(), '1. ' + label);
+    assert.match(await row.innerText(), /RPE 8.*2 RIR/);
+    assert.match(await row.innerText(), /3\/10 elbow/);
+    if (width < 600) {
+      assert.equal(await row.evaluate(el => getComputedStyle(el).display), 'grid');
+      assert.equal(await row.locator('.history-desktop-notes').isVisible(), false);
+      for (const name of ['Edit', 'Delete']) {
+        const b = await row.getByRole('button', { name, exact: true }).boundingBox();
+        assert(b.x >= 0 && b.x + b.width <= width && b.height >= 44);
+      }
+    } else assert.equal(await row.evaluate(el => getComputedStyle(el).display), 'table-row');
+    await row.locator('.set-record summary').click();
+    assert.match(await row.locator('.set-record pre').innerText(), /session-first/);
+    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(await backup(p), before);
+    assert.equal(await stored(p), raw);
+    await row.screenshot({ path: 'test-results/issue36-' + width + '.png' });
+  });
+}
+
+for (const width of [320, 390, 1280]) {
+  test(`History search controls intersect, reset, explain empty results and never save at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 } });
+    const fixture = await sessionHistoryFixture(p);
+    await p.evaluate(({first, second}) => {
+      db.sessions.find(s => s.id === first).planSnapshot.name = 'Saved Alpha <test>';
+      db.sessions.find(s => s.id === second).planSnapshot.name = 'Saved Beta';
+      renderAll();
+      window.filterWrites = 0;
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(...args) { window.filterWrites++; return original.apply(this, args); };
+    }, fixture);
+    const before = await backup(p), raw = await stored(p);
+    await p.locator('[data-view="history"]').click();
+    const allCount = await p.locator('.history-group').count();
+    await p.locator('#historyExercise').selectOption('Bench Press');
+    assert.equal(await p.locator('[data-session-id="' + fixture.first + '"]').count(), 1);
+    assert.equal(await p.locator('[data-session-id="' + fixture.second + '"]').count(), 1);
+    await p.locator('#historyFrom').fill('2026-10-23'); await p.locator('#historyFrom').dispatchEvent('change');
+    await p.locator('#historyTo').fill('2026-10-23'); await p.locator('#historyTo').dispatchEvent('change');
+    await p.locator('#historyWorkout').selectOption('session:Saved Alpha <test>');
+    assert.equal(await p.locator('.history-group').count(), 1);
+    await p.getByRole('button', {name:'Expand all', exact:true}).click();
+    await p.locator('.history-exercise > summary').first().click();
+    assert.deepEqual(await p.locator('#historyTable tr[data-set-id]').evaluateAll(els => els.map(el => el.dataset.setId)), [fixture.b]);
+    assert.match(await p.locator('.history-counts').first().innerText(), /1 matching set.*2 sets in session/);
+    await p.locator('#historyWorkout').selectOption('legacy');
+    assert.equal(await p.locator('[data-session-id]').count(), 0);
+    await p.locator('#historyFrom').fill('2099-01-01'); await p.locator('#historyFrom').dispatchEvent('change');
+    assert.match(await p.locator('#historyFilterStatus').innerText(), /From date must/);
+    await p.locator('#historyTo').fill('2099-12-31'); await p.locator('#historyTo').dispatchEvent('change');
+    assert.match(await p.locator('#historyTable').innerText(), /No history matches these filters/);
+    await p.locator('#historyFilter').selectOption('manual');
+    await p.getByRole('button', {name:'Reset filters', exact:true}).click();
+    assert.equal(await p.locator('.history-group').count(), allCount);
+    for (const id of ['historyExercise','historyWorkout','historyFrom','historyTo']) assert.equal(await p.locator('#'+id).inputValue(), '');
+    assert.equal(await p.locator('#historyFilter').inputValue(), 'all');
+    assert.deepEqual(await backup(p), before); assert.equal(await stored(p), raw);
+    assert.equal(await p.evaluate(() => window.filterWrites), 0);
+    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await p.locator('.history-filters').screenshot({path: 'test-results/issue22-filters-' + width + '.png'});
+  });
+}

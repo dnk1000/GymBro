@@ -1,0 +1,194 @@
+// Independent real PostgreSQL connections, never sequential calls offered as
+// race evidence. Local CI by default; staging needs #38's clean/reviewed guard.
+const {spawn,execFileSync}=require('node:child_process');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {randomUUID}=require('node:crypto');
+const {fixture}=require('../tests/relational-fixture.cjs');
+const {storage}=require('../tests/protocol-fixture.cjs');
+const {literal}=require('./workout-concurrency-db-fixture.cjs');
+const {commandsFor}=require('./preview-db.cjs');
+const root=path.resolve(__dirname,'..'),dir=path.join(root,'test-results');
+function queryClient(mode) {
+  let count=0;
+  const local=mode.includes('--local');
+  let container;
+  if(local) {
+    const config=fs.readFileSync(path.join(root,'supabase','config.toml'),'utf8');
+    const project=config.match(/^project_id\s*=\s*"([A-Za-z0-9_-]+)"/m)?.[1];
+    if(!project) throw Error('Disposable local project identity is missing.');
+    const names=execFileSync('docker',['ps','--filter',`name=^/supabase_db_${project}$`,'--format','{{.Names}}'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+    if(names.length!==1) throw Error('Exactly one matching disposable database container is required.');
+    container=names[0];
+  }
+  return async sql=> {
+    fs.mkdirSync(dir,{recursive:true});const file=path.join(dir,`race-${process.pid}-${++count}.sql`);fs.writeFileSync(file,sql);
+    const executable=local?'docker':process.execPath;
+    const args=local?['exec','-i',container,'psql','--username','postgres','--dbname','postgres','--no-psqlrc','--tuples-only','--no-align','--set','ON_ERROR_STOP=1']:
+      [require.resolve('supabase/dist/supabase.js'),'db','query',...mode,'--file',file];
+    const output=await new Promise((resolve,reject)=> {
+      const child=spawn(executable,args,{cwd:root,env:process.env,stdio:[local?'pipe':'ignore','pipe','pipe'],windowsHide:true});let out='',error='';
+      if(local) child.stdin.end(sql);
+      child.stdout.on('data',d=>{out+=d;});child.stderr.on('data',d=>{error+=d;});
+      child.on('error',()=>reject(Error('Independent database connection could not start.')));
+      child.on('close',code=>code===0?resolve(out):reject(Error('Independent SQL transaction failed; inspect synthetic test SQL privately. '+(mode.includes('--local')?error.slice(-1200):''))));
+    });
+    if(local) {
+      // psql emits command tags and set_config values too. The final SELECT is
+      // the explicit JSON evidence row; malformed/absent evidence still fails.
+      const lines=output.trim().split(/\r?\n/).filter(line=>line.startsWith('{'));
+      if(!lines.length) throw Error('Independent psql connection returned no evidence.');
+      try {return JSON.parse(lines.at(-1));} catch {throw Error('Independent psql evidence was not JSON.');}
+    }
+    let parsed;try {parsed=JSON.parse(output);} catch {throw Error('Database output was not JSON.');}
+    const rows=parsed.rows??parsed;
+    const found=Array.isArray(rows)?rows.find(row=>row.evidence):null;
+    if(!found) throw Error('Database returned no concurrency evidence.');
+    return typeof found.evidence==='string'?JSON.parse(found.evidence):found.evidence;
+  };
+}
+async function prepare(f,initial,action,args,id) {
+  let packet;
+  const repository=f.repository.create({ownerId:f.owner,client:{rpc:async(name,{packet:next})=> {
+    assert.equal(name,'gymbro_workout_mutate');packet=next;
+    return {data:{code:'OK',operation:packet.operation,result:packet.result,operationRevision:(BigInt(initial.revision)+1n).toString(),snapshot:{protocolVersion:1,ownerId:f.owner,revision:(BigInt(initial.revision)+1n).toString(),rows:packet.next}}};
+  }}});
+  const controller=f.repository.createActions({initial,repository,recoveryStorage:storage(),createId:()=>id,createRequestId:()=>id,now:()=> '2026-10-30T04:00:00.000Z'});
+  const result=await controller.execute(action,...args);
+  if(!result.ok || !packet) throw Error('Race fixture action did not prepare: '+action+' '+result.code);
+  return packet;
+}
+function claims(owner) {return `select set_config('request.jwt.claim.sub','${owner}',true);select set_config('request.jwt.claims','{"sub":"${owner}","is_anonymous":false}',true);`;}
+function normalize(rows) {
+  const sort=x=>Array.isArray(x)?x.map(sort):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,sort(x[k])])):x;
+  return Object.fromEntries(Object.keys(rows).sort().map(k=>[k,rows[k].map(x=>JSON.stringify(sort(x))).sort()]));
+}
+async function run(mode) {
+  const query=queryClient(mode),owners=[],evidence=[],workers=[];
+  let originalFailure;
+  try {
+    for(const name of ['start-start','edit-delete','delete-edit','log-finish','finish-log','done-log','skip-log','navigate-substitute','guided-guided','duplicate-import','duplicate-submit','cancel-original','original-cancel']) {
+      const f=await fixture();f.owner=randomUUID();owners.push(f.owner);
+      if(name==='start-start') {f.document.data.sessions=[];f.document.data.sets=[];f.document.data.activeSessionId=null;f.document.data.noteScopes.session=[];f.document.data.noteScopes.exerciseSession=[];}
+      const repo=f.repository.create({client:{},ownerId:f.owner});
+      const init=repo.prepare(null,f,{action:'initialize',args:[],operation:['initialize','race-fixture'],result:{}});
+      await query(`begin;insert into auth.users(id) values('${f.owner}');set local role authenticated;${claims(f.owner)}select jsonb_build_object('code',public.gymbro_workout_mutate(${literal(init)})->>'code') as evidence;commit;`);
+      const initial={document:f.document,bodyweightIds:f.bodyweightIds,initialized:true,protocolVersion:1,ownerId:f.owner,revision:'1'};
+      const exercise=f.identity.resolveLabel(f.document.catalog,'Bench Press');
+      const log={date:'2026-10-28',exercise,weight:0,reps:8,sessionId:f.sessionId,planSlotId:'slot-1'};
+      let a,b,resolveA=false,resolveB=false;
+      if(name==='start-start') {
+        a=await prepare(f,initial,'createSession',[{date:'2026-10-28',templateId:'push',duration:60}],'race-start-a');
+        b=await prepare(f,initial,'createSession',[{date:'2026-10-28',templateId:'push',duration:60}],'race-start-b');
+      } else if(name==='edit-delete'||name==='delete-edit') {
+        a=await prepare(f,initial,'editSet',[f.document.data.sets[0].id,{notes:'first connection correction'}],'race-edit');
+        b=await prepare(f,initial,'deleteSet',[f.document.data.sets[0].id],'race-delete');
+        if(name==='delete-edit') [a,b]=[b,a];
+      } else if(name==='log-finish'||name==='finish-log') {
+        a=await prepare(f,initial,'logSet',[log],'race-log');
+        b=await prepare(f,initial,'finishGuidedSession',[{sessionId:f.sessionId,expectedRevision:3,allowPending:true}],'race-finish');
+        if(name==='finish-log') [a,b]=[b,a];
+      } else if(name==='done-log'||name==='skip-log') {
+        a=await prepare(f,initial,'setGuidedSlotStatus',[{sessionId:f.sessionId,planSlotId:'slot-1',expectedRevision:3,status:name==='done-log'?'completed':'skipped'}],'race-status');
+        b=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided'}],'race-guided');
+      } else if(name==='navigate-substitute') {
+        a=await prepare(f,initial,'selectGuidedSlot',[{sessionId:f.sessionId,planSlotId:'slot-2',expectedRevision:3}],'race-navigation');
+        b=await prepare(f,initial,'substituteGuidedExercise',[{sessionId:f.sessionId,planSlotId:'slot-1',expectedRevision:3,exercise:f.identity.resolveLabel(f.document.catalog,'Smith Press')}],'race-substitute');
+      } else if(name==='guided-guided') {
+        a=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided-one'}],'race-guided-one');
+        b=await prepare(f,initial,'logGuidedSet',[{...log,expectedRevision:3,requestId:'race-guided-two'}],'race-guided-two');
+      } else if(name==='duplicate-import') {
+        const batch={importId:'race-reviewed-import',date:'2026-10-28',template:'synthetic',duration:30,sessionNotes:'  reviewed\n',bodyweight:null,
+          sets:[{include:true,exercise,weight:0,reps:8,unit:'lb',rpe:null,rir:0,pain:0,painArea:'',notes:'  exact\n',complete:false}]};
+        a=await prepare(f,initial,'commitImport',[batch],'race-import-a');
+        b=await prepare(f,initial,'commitImport',[batch],'race-import-b');
+      } else {
+        a=await prepare(f,initial,'logSet',[log],'race-identical');b=a;
+        resolveA=name==='cancel-original';resolveB=name==='original-cancel';
+      }
+      const tag='gymbro-issue40-'+randomUUID();
+      const call=(p,resolving)=>resolving?`public.gymbro_workout_resolve(${literal(p.operation)})`:`public.gymbro_workout_mutate(${literal(p)})`;
+      const transaction=(p,resolving,hold)=>`begin;set local application_name='${hold?tag:tag+'-second'}';${hold?`select pg_advisory_xact_lock(hashtextextended('${f.owner}',39));select pg_sleep(4);`:''}set local role authenticated;${claims(f.owner)}select jsonb_build_object('pid',pg_backend_pid(),'transaction',pg_current_xact_id()::text,'started',transaction_timestamp(),'finished',clock_timestamp(),'reply',${call(p,resolving)}) as evidence;commit;`;
+      const first=query(transaction(a,resolveA,true));
+      workers.push(first);first.catch(()=>{}); // observed below; retain failures through cleanup
+      let held=false;
+      for(let i=0;i<20&&!held;i++) {
+        const status=await query(`select jsonb_build_object('held',exists(select 1 from pg_locks l join pg_stat_activity s on s.pid=l.pid where s.application_name='${tag}' and l.locktype='advisory' and l.granted)) as evidence;`);
+        held=status.held;
+      }
+      if(!held) {await first;throw Error('Could not observe first independent transaction holding the owner lock.');}
+      const second=query(transaction(b,resolveB,false));workers.push(second);
+      const [one,two]=await Promise.all([first,second]);
+      assert.notEqual(one.pid,two.pid);assert.notEqual(one.transaction,two.transaction);
+      assert(new Date(two.started)<new Date(one.finished),'second transaction overlapped first');
+      const expected=resolveA?['CANCELLED','CANCELLED']:resolveB||name==='duplicate-submit'?['OK','REPLAY']:['OK','CONFLICT'];
+      assert.deepEqual([one.reply.code,two.reply.code],expected,name);
+      assert.equal(two.reply.snapshot.revision,resolveA?'1':'2');
+      const current=two.reply.snapshot.rows;
+      f.repository.assemble(current,f.owner);
+      if(name==='duplicate-import') assert.equal(current.imports.filter(row=>row.import_id==='race-reviewed-import').length,1);
+      // Prepared arrays originate in the isolated domain VM. Compare their
+      // canonical full JSON content rather than JavaScript realm prototypes.
+      assert.equal(JSON.stringify(normalize(current)),JSON.stringify(normalize(resolveA?init.next:a.next)),'complete post-race facts/relationships');
+      const checks=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('active',(select count(*) from public.gymbro_sessions where status='active'),'receipts',(select count(*) from public.gymbro_mutation_receipts where operation=${literal(a.operation)}),'revision',public.gymbro_workout_snapshot()->>'revision') as evidence;commit;`);
+      assert(checks.active<=1);assert.equal(checks.receipts,1);
+      evidence.push({case:name,pids:[one.pid,two.pid],transactions:[one.transaction,two.transaction],overlap:true,codes:expected,...checks});
+      console.log(`Independent ${name}: ${expected.join('/')} at revision ${checks.revision}; one terminal receipt; full relationships preserved.`);
+    }
+    // Real commit, then deliberately drop its acknowledgement at the transport
+    // boundary used by the actual repository/controller. Retrying must send the
+    // same frozen packet and recover the original result without another fact.
+    const f=await fixture();f.owner=randomUUID();owners.push(f.owner);
+    const init=f.repository.create({ownerId:f.owner,client:{}}).prepare(null,f,{action:'initialize',args:[],operation:['initialize','lost-ack-fixture'],result:{}});
+    const seeded=await query(`begin;insert into auth.users(id) values('${f.owner}');set local role authenticated;${claims(f.owner)}select jsonb_build_object('reply',public.gymbro_workout_mutate(${literal(init)})) as evidence;commit;`);
+    assert.equal(seeded.reply.code,'OK');
+    const initial={...f.repository.assemble(seeded.reply.snapshot.rows,f.owner),initialized:true,protocolVersion:1,ownerId:f.owner,revision:'1'};
+    let lose=true;const submitted=[];
+    const repository=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=> {
+      assert.equal(name,'gymbro_workout_mutate');submitted.push(JSON.stringify(args.packet));
+      const committed=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('reply',public.gymbro_workout_mutate(${literal(args.packet)})) as evidence;commit;`);
+      if(lose) {lose=false;assert.equal(committed.reply.code,'OK');throw Error('Deliberate acknowledgement loss after real commit');}
+      return {data:committed.reply};
+    }}});
+    const controller=f.repository.createActions({initial,repository,recoveryStorage:storage(),createId:()=> 'lost-ack-fact',createRequestId:()=> 'lost-ack-request'});
+    const unknown=await controller.execute('logSet',{date:'2026-10-28',exercise:f.identity.resolveLabel(f.document.catalog,'Bench Press'),weight:0,reps:8,complete:false,notes:'  real commit\n',sessionId:null});
+    assert.equal(unknown.code,'OUTCOME_UNKNOWN');assert.equal(controller.getStatus().revision,'1');
+    const replay=await controller.retry();assert.equal(replay.code,'REPLAY');assert.equal(replay.setId,JSON.parse(submitted[0]).result.setId);
+    assert.equal(submitted.length,2);assert.equal(submitted[0],submitted[1],'retry preserves every packet property');
+    const check=await query(`begin;set local role authenticated;${claims(f.owner)}select jsonb_build_object('revision',public.gymbro_workout_snapshot()->>'revision','receipts',(select count(*) from public.gymbro_mutation_receipts where operation='["logSet","lost-ack-request"]'),'rows',public.gymbro_workout_snapshot()->'rows') as evidence;commit;`);
+    // The canonical adapter prefixes its generated set identity; use the packet
+    // identity for the database fact count instead of assuming an ID format.
+    const packet=JSON.parse(submitted[0]);
+    assert.equal(check.rows.sets.filter(s=>s.set_id===packet.result.setId).length,1);
+    assert.equal(check.revision,'2');assert.equal(check.receipts,1);
+    assert.equal(JSON.stringify(normalize(check.rows)),JSON.stringify(normalize(packet.next)));
+    evidence.push({case:'lost-acknowledgement',codes:[unknown.code,replay.code],revision:check.revision,facts:1,receipts:check.receipts,identicalPackets:true});
+    console.log('Real committed mutation lost acknowledgement: OUTCOME_UNKNOWN/REPLAY; one fact/receipt/revision increment; identical packet and original ID.');
+    fs.writeFileSync(path.join(dir,'concurrency-races.json'),JSON.stringify(evidence,null,2));
+    return evidence;
+  } catch(error) {originalFailure=error;throw error;} finally {
+    await Promise.allSettled(workers);
+    if(owners.length) {
+      const ids=owners.map(o=>`'${o}'`).join(',');
+      // Only this run's fresh UUIDs. Never reset a hosted database or touch
+      // another fixture/user. Remove child rows before Auth identities.
+      // The mapper's `tables` export covers workout tables; the complete
+      // aggregate also includes the two pre-existing canonical catalog tables.
+      const deletes=[...(await fixture()).repository.tables,'exercises','aliases'].reverse().map(t=>`delete from public.${t==='aliases'?'gymbro_exercise_aliases':'gymbro_'+t} where owner_id in (${ids});`).join('');
+      try {await query(`begin;set constraints all deferred;delete from public.gymbro_mutation_receipts where owner_id in (${ids});delete from public.gymbro_workout_versions where owner_id in (${ids});${deletes}delete from auth.users where id in (${ids});select jsonb_build_object('cleaned',true) as evidence;commit;`);}
+      catch(error) {throw Error((originalFailure?'Original race failure: '+originalFailure.message+'; ':'')+'Cleanup failure: '+error.message);}
+      const remaining=await query(`select jsonb_build_object('remaining',(select count(*) from auth.users where id in (${ids}))) as evidence;`);assert.equal(remaining.remaining,0);console.log('Independent race fixtures cleaned; separate query confirms zero Auth rows.');
+    }
+  }
+}
+async function main() {
+  const mode=process.argv[2];if(!['--local','--staging'].includes(mode)||process.argv.length!==3) throw Error('Choose exactly --local or --staging.');
+  let target=['--local'];
+  if(mode==='--staging') {
+    const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();const sha=git(['rev-parse','HEAD']);
+    const plan=commandsFor('apply',process.env,sha)[0];if(git(['status','--porcelain','--untracked-files=normal'])) throw Error('Commit reviewed code before staging races.');
+    target=['--linked','--project-ref',plan[plan.indexOf('--project-ref')+1]];
+  }
+  await run(target);
+}
+if(require.main===module) main().catch(e=>{console.error(e.message);process.exitCode=1;});
+module.exports={run,prepare,claims,queryClient};

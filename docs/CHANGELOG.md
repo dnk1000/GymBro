@@ -1,4 +1,77 @@
+## Documentation integration — #71 / PR #78
+
+Add the canonical BRAND_AND_UI authority and approved directional reference while preserving accepted main's shared-system/app-shell runtime. No new app build. The earlier 3.11.3 candidate was Preview-only before PR #76 merged; current runtime metadata remains main's 3.11.2.
+
+## 3.11.2 — Heritage Utility app shell candidate
+
+#72 follows verified #71: compact branded header, simplified tagline, underlined current navigation, unchanged destinations and separated version footer. Data/workflows unchanged.
+
+## 3.11.1 — Heritage Utility shared system candidate
+
+#71: charcoal/ivory/oxblood tokens, shared components, heading/data hierarchy and chart palette. Behavior/data unchanged.
+
+## 3.11.0 — Mobile History integrated with accepted filters
+
+Retain phone-friendly set details and compact History copy alongside #22 filters on accepted main. No stored-data changes.
+
+## 3.9.1 — Compact History copy candidate
+
+Remove repeated exercise lists and instructional paragraphs from History. Keep sessionless context as a heading tooltip.
+
+## 3.9.0 — Mobile History candidate
+
+Phone History set details stack without sideways review/action scrolling. Desktop tables remain; no historical data changes.
+
+## 3.10.1 — Compact History copy candidate
+
+Remove repeated exercise lists and instructional paragraphs from History. Keep sessionless context as a heading tooltip.
+
+## 3.10.0 — History filters candidate
+
+Filter by exact recorded exercise, saved workout name, inclusive dates and source; reset all filters or see a clear no-match state. No stored-data change.
+
 # Changes
+
+## 3.8.0 — History exercise disclosure candidate
+
+`3.8.0-20261030T150933Z`, #21 alone; schema 8 unchanged. Consecutive exercise occurrences have independent collapsed summaries inside session/date cards. Recorded load/unit/reps summaries reveal existing ordered sets/actions. No data/schema/persistence change. Candidate verification belongs in the #21 PR; physical iPhone Safari remains unverified. No accepted Production release is claimed.
+
+## 3.7.1 — compact History summaries
+
+`3.7.1-20261030T144204Z`, #20 alone. Approved October 30, 2026 in the #20 conversation. Compact three-line summaries retain date/name/counts, show two exercise names plus +N, and move full names/badges/legacy explanation into expanded details. Card spacing and the page header are condensed. Existing disclosure and data/action rules remain unchanged. Focused History checks passed 22/22 and release tests passed 9/9; syntax/release/diff checks passed. Exact Preview and CI results are tracked in PR #66; earlier 3.7.0 results remain historical. Physical Safari AC-9 remains UNVERIFIED.
+
+
+## 3.7.0 — History collapsible workout sessions candidate
+
+`3.7.0-20261030T135802Z`, #20 alone; schema 8 unchanged. Session/date cards start collapsed with dates, saved names, counts and exercise summaries. Whole-header disclosure, Expand all / Collapse all and transient state preserve the existing ordered tables, notes, guidance and correction actions. [Acceptance evidence](HISTORY_DISCLOSURE.md); physical iPhone Safari remains unverified.
+
+## 3.6.6 — apply final guidance before session completion
+
+`3.6.6-20261030T055653Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Finalize an existing active session after its final guidance changes in the same checked transaction, retaining all original immutability triggers. The real finish/log race exposed the ordering failure. Technical verification now passes all seven ACs, including 221 application tests, 335 SQL assertions per replay pass, hosted assertions/races and actual signed Preview contexts. Explicit Level 3 acceptance remains pending; see [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.5 — fence stale refresh presentation and marker cleanup errors
+
+`3.6.5-20261030T054112Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Old refreshes cannot release newer conflict/pending states; unreadable recovery metadata stays blocked through failed/successful refreshes. Confirmed results with failed marker cleanup remain blocked with an accurate message and exact retry. Evidence remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.4 — preserve uncertainty for unreadable recovery metadata
+
+`3.6.4-20261030T052148Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Unreadable/future recovery markers remain blocked across refresh and no longer imply the prior request was never sent. SQL source is unchanged from the 329-assertion fresh pass; race/replay and hosted evidence remain pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.3 — SQL delimiter and stale no-op corrections
+
+`3.6.3-20261030T050807Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Preserve literal SQL dollar delimiters in copied invoker helpers. Local no-op/replay outcomes check fresh cloud state and cannot silently rebase a newly necessary mutation. SQL/hosted verification remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.2 — bound Auth claims and initial-load generation guard
+
+`3.6.2-20261030T050312Z`, #40 only; schema 8/model 1/protocol 1 unchanged. Bind provider claim helpers as SECURITY INVOKER SQL bodies at definition time, requiring no broader Auth-schema grant. Account changes during initial load invalidate its response. Focused 24/24 tests pass. SQL/replay/race/staging evidence remains pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.1 — checked-writer verification and synthetic UI
+
+`3.6.1-20261030T044400Z`, schema 8/model 1/protocol 1, #40 only. Fixes operator SET ROLE verification while browser write/role denial remains enforced. Adds the approved synthetic UI and actual-connection/upgrade verification. Initial CI 41003113730 passed 208 application tests but SQL stopped on operator SET ROLE denial. Verification remains in progress in [V3_CONCURRENCY.md](V3_CONCURRENCY.md).
+
+## 3.6.0 — concurrency/retry protocol candidate
+
+`3.6.0-20261030T042352Z`, workout schema 8/model 1/protocol 1, migration 20261030043000; #40 alone. User approved the design and mapping on October 30, 2026. Verification pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md). No personal migration, Production operation, acceptance or merge is claimed.
 
 ## 3.5.5 — preserve opaque request-signature meaning
 

@@ -1,5 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
+grant usage on schema extensions to gymbro_workout_writer;
 set local search_path = public, extensions;
 select plan(36);
 select has_table('public', 'gymbro_exercises', 'canonical exercises exist');
@@ -12,7 +13,7 @@ select ok(not has_table_privilege('authenticated', 'public.gymbro_exercises', 'D
 select ok(not has_table_privilege('authenticated', 'public.gymbro_exercise_aliases', 'UPDATE'), 'aliases cannot be silently reassigned');
 select ok(not has_table_privilege('authenticated', 'public.gymbro_exercise_aliases', 'DELETE'), 'original labels cannot be deleted');
 insert into auth.users(id) values ('55555555-5555-4555-8555-555555555555'), ('66666666-6666-4666-8666-666666666666');
-set local role authenticated;
+set local role gymbro_workout_writer;
 select set_config('request.jwt.claim.sub', '55555555-5555-4555-8555-555555555555', true);
 select set_config('request.jwt.claims', '{"sub":"55555555-5555-4555-8555-555555555555","is_anonymous":false}', true);
 select lives_ok($$insert into public.gymbro_exercises(owner_id, exercise_id, display_name, provenance, metadata)
@@ -49,7 +50,7 @@ select set_config('request.jwt.claims', '{"sub":"66666666-6666-4666-8666-6666666
 select is_empty('select * from public.gymbro_exercises', 'anonymous Auth identity cannot read exercises');
 select is_empty('select * from public.gymbro_exercise_aliases', 'anonymous Auth identity cannot read aliases');
 select throws_ok($$insert into public.gymbro_exercise_aliases values ('66666666-6666-4666-8666-666666666666', 'anonymous alias', '11111111-1111-8111-8111-111111111111', 'user-created')$$,
-  '42501', 'new row violates row-level security policy "exercise_aliases_permanent" for table "gymbro_exercise_aliases"', 'anonymous alias insert denied');
+  '42501', 'new row violates row-level security policy "protocol_permanent" for table "gymbro_exercise_aliases"', 'anonymous alias insert denied');
 select set_config('request.jwt.claims', '{}', true);
 select is_empty('select * from public.gymbro_exercises', 'missing permanent-user claim fails closed');
 select set_config('request.jwt.claim.sub', '55555555-5555-4555-8555-555555555555', true);

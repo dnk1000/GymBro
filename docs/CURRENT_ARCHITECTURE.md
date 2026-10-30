@@ -112,3 +112,9 @@ Follow the [development governance hierarchy](DEVELOPMENT_WORKFLOW.md#source-of-
 Approved milestone/decision records remain approval evidence, subsystem designs retain their technical authority, and explicitly delegated policies retain their scope. Document recency alone does not determine precedence. Historical future-roadmap text and unaccepted candidates do not authorize new implementation.
 
 Apply the [material conflict and decision-resolution procedure](DEVELOPMENT_WORKFLOW.md#material-conflicts-and-decision-resolution) when authorities conflict or a material decision is ambiguous or missing. Pause affected work until resolved; independent work may continue only when clearly safe and unable to prejudice or complicate the decision. Routine choices within approved constraints need no escalation.
+
+Issue #40 adds an opt-in checked [concurrency/retry boundary](V3_CONCURRENCY.md) and synthetic staging verification. Current normal workouts retain their local adapter; this does not activate cloud workout migration or cutover. Verification status is recorded in that document.
+
+## Current visual design authority
+
+[BRAND_AND_UI.md](BRAND_AND_UI.md) is the canonical Heritage Utility design authority for shared presentation and future UI issues. It implements product intent without changing domain, storage or workflow contracts. Its committed design board is directional, not pixel-perfect.

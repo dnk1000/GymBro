@@ -142,3 +142,5 @@ The first planned V3 release, `3.1.0-BUILD`, maps to #38 infrastructure foundati
 ## Primary UX target
 
 iPhone Safari remains the primary UX target. Responsive Chromium checks are useful regression evidence but do not substitute for physical iPhone acceptance. User-visible changes should remain touch-friendly, preserve manual fallback, and clearly distinguish saved facts from unsaved/transient input.
+
+Issue #40 adds an opt-in checked [concurrency/retry boundary](docs/V3_CONCURRENCY.md) and synthetic staging verification. Current normal workouts retain their local adapter; this does not activate cloud workout migration or cutover. Verification status is recorded in that document.

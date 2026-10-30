@@ -1,5 +1,7 @@
 # V3 relational foundation — issue #39
 
+The #39 delivery evidence below remains historical. The #40 candidate [concurrency contract](V3_CONCURRENCY.md) supersedes its unchecked synthetic write interface with `prepare`/`submit`/`resolve`, owner revisions and durable receipts; safe reads, row mapping and underlying domain constraints remain. This does not activate cloud workouts or claim #40 acceptance.
+
 Candidate implementation from accepted main `bec9d865cb41d9d56c204ba48468f2259f9664ab`, branch `codex/issue-39-relational-implementation`. The user approved the [design](V3_RELATIONAL_SCHEMA_PROPOSAL.md) and **3.5.0 for #39 alone** in this conversation; approval is recorded in [issue #39](https://github.com/dnk1000/GymBro/issues/39). This record distinguishes implemented code from verification and acceptance.
 
 ## Authority and activation

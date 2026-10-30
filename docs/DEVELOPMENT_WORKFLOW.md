@@ -173,11 +173,19 @@ Automatic CI is supporting evidence, not a command to manually repeat unrelated 
 
 The former numbered validation levels are retired for new work. Existing labels in historical issues, PRs, releases, subsystem evidence and acceptance records remain valid descriptions of the verification performed at that time. Do not rewrite or retroactively reclassify those records merely to adopt this terminology. New Change Level 1 intentionally includes contained runtime/UI work; it does not mean every earlier UI change should be relabeled.
 
+## Efficient execution
+
+Use the [efficient-execution rules in AGENTS.md](../AGENTS.md#efficient-execution) throughout the task. Required reading establishes the governing context once; it is not a command to repeatedly read every document in full. Reuse current session context, inspect relevant baseline/document changes, and read the sections needed to understand the actual requirements and risks. Do not traverse unrelated roadmap or historical links.
+
+Select verification against the acceptance criteria and affected contracts before running tools. Prefer one focused local pass plus applicable existing CI coverage. A full local suite is appropriate when required by the issue or affected risk, when CI cannot supply necessary evidence, or when diagnosing a failure; it is not automatic for every UI edit. Recheck only what later changes or failures invalidate. A documentation-only evidence follow-up does not require another application/browser/migration run merely because CI runs automatically. Screenshots and logs support specific claims; collecting more is not an independent deliverable. Apply the bounded recovery rule when a tool fails and keep required missing verification visible.
+
+The normal evidence home is the PR's canonical completion report. The issue and final response can summarize the outcome and link to that report, including pending criteria and negative evidence, without reproducing it. A separate durable document is needed only for an owning product/architecture/compatibility contract, an explicitly required record, or a user-requested artifact. Directly authorized documentation/process maintenance may use the user's bounded request as the approved work package; do not invent another implementation issue or proposal solely for that maintenance. Preserve focused branches/PRs and all applicable governance gates.
+
 ## Codex execution contract
 
 A Codex implementation request follows the hierarchy and conflict procedure above:
 
-> Start from current accepted `main`. Read `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, this workflow, the target issue, and its governing references and dependency issues/documents. Verify the assigned Change Level and rationale and satisfy required proposal/approval gates. Implement only the target issue within approved product and architectural constraints. Preserve existing behavior and historical data unless the issue explicitly changes them within those constraints. Apply the conflict procedure before dependent implementation when a material conflict, ambiguity or missing decision is discovered. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request. Link the PR to the issue. Define a scope-appropriate Validation approach, perform applicable checks and report evidence. Do not merge or change Production data without explicit user approval.
+> Start from current accepted `main`. Establish current context from `AGENTS.md`, `README.md`, `docs/GymBro_PRD.md`, `docs/CURRENT_ARCHITECTURE.md`, this workflow, the target issue, and its governing references and dependencies, using the efficient-execution rules above to reuse prior reading and inspect relevant changes. Verify the assigned Change Level and rationale and satisfy required proposal/approval gates. Implement only the target issue within approved product and architectural constraints. Preserve existing behavior and historical data unless the issue explicitly changes them within those constraints. Apply the conflict procedure before dependent implementation when a material conflict, ambiguity or missing decision is discovered. Use the existing repository, checkout, Vercel project, and approved architecture. Create a focused branch and pull request. Link the PR to the issue. Define a scope-appropriate Validation approach, perform applicable checks and report evidence. Do not merge or change Production data without explicit user approval.
 
 The issue body should contain the product-specific prompt. A separate giant Codex prompt should normally be unnecessary.
 
@@ -234,7 +242,7 @@ Identify remaining work, known negative evidence, blockers and pending actions i
 
 ### Completion report
 
-Provide this report for completed work and partial/blocked handoffs. Keep it proportionate; use `None` or `Not applicable` where appropriate and link evidence rather than repeating logs. Include:
+Provide this report for completed work and partial/blocked handoffs, normally once in the PR body. Issue/final-response summaries may link to it; a separate repository report file is not required. For a task without a PR, the final response can hold the report. Keep it proportionate; use `None` or `Not applicable` where appropriate and link evidence rather than repeating logs. Include:
 
 - **Scope and delivery:** issue or approved work package; branch; final commit; PR; exact files changed; concise implementation summary and user-visible behavior changes/preservation; unexpected changes (or `None`); repository scope-check method and result.
 - **Classification and verification:** assigned Change Level and rationale; issue-specific Validation approach; actual tests/checks and results; applicable exact Preview environment/revision/build and browser/device evidence (actual device/iOS/browser/build/commit/results for required physical iPhone checks).

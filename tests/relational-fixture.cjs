@@ -5,7 +5,7 @@ const vm = require("node:vm");
 const { webcrypto } = require("node:crypto");
 function runtime() {
   const context = vm.createContext({ structuredClone,crypto:webcrypto,TextEncoder });
-  for(const file of ["seed.js","workout-data.js","workout-sessions.js","guided-workouts.js","performance-context.js","workout-actions.js","exercise-identity.js","workout-repository.js"])
+  for(const file of ["seed.js","workout-data.js","workout-sessions.js","guided-workouts.js","performance-context.js","workout-actions.js","exercise-identity.js","workout-concurrency.js","workout-repository.js"])
     vm.runInContext(fs.readFileSync(path.join(__dirname,"..",file),"utf8"),context,{filename:file});
   const get=name=>vm.runInContext(name,context);
   return { get, repository:get("WorkoutRepository"), identity:get("ExerciseIdentity") };

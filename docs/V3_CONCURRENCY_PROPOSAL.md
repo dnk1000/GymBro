@@ -1,3 +1,7 @@
+# Approved implementation decision — October 30, 2026
+
+The owner approved this exact proposal at bee6650f0dcac4cd6c0b537c224de401e5049e9a and 3.6.0 for #40 alone in the attached execution request. This satisfies the Level 3 design/release gate. The original preparation status below is retained as historical evidence and is superseded by this approval. No new design is proposed. Implementation evidence: [V3_CONCURRENCY.md](V3_CONCURRENCY.md). Merge and Production remain unauthorized.
+
 # Issue #40 — concurrency, revision and retry proposal
 
 Status: **proposed; implementation blocked pending design approval**. Prepared for [issue #40](https://github.com/dnk1000/GymBro/issues/40) from accepted `main` **7f4408aee7d51ff21aad421bf924c529baaae90e** on October 29, 2026 (America/New_York). This is a design deliverable, not an implemented protocol or an acceptance claim.

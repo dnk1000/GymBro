@@ -84,6 +84,9 @@ let db = load();
 let editingSetId = null;
 let selectedExercise = "Seated Row";
 let selectedTemplateId = null;
+// Disclosure is transient presentation state, keyed separately for real sessions
+// and legacy date groups. Hidden source-filter groups retain their state.
+const expandedHistoryGroups = new Set();
 // Unsaved notes are presentation state. A draft retains its original target and
 // committed text across unrelated renders; it never follows a substitution.
 const noteDrafts = new Map();
@@ -214,13 +217,21 @@ function setDefaultDates() {
 document.querySelectorAll(".tab").forEach(
   (t) =>
     (t.onclick = () => {
+      if (t.dataset.view === "history" && !document.getElementById("history").classList.contains("active")) {
+        expandedHistoryGroups.clear();
+        historyTable.replaceChildren();
+      }
       document
         .querySelectorAll(".tab")
-        .forEach((x) => x.classList.remove("active"));
+        .forEach((x) => {
+          x.classList.remove("active");
+          x.removeAttribute("aria-current");
+        });
       document
         .querySelectorAll(".view")
         .forEach((x) => x.classList.remove("active"));
       t.classList.add("active");
+      t.setAttribute("aria-current", "page");
       document.getElementById(t.dataset.view).classList.add("active");
       if (t.dataset.view === "exercises") renderExercises();
       if (t.dataset.view === "history") renderHistory();
@@ -419,7 +430,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     h = canvas.height;
   c.clearRect(0, 0, w, h);
   c.font = "12px system-ui";
-  c.fillStyle = "#9eabc7";
+  c.fillStyle = getComputedStyle(canvas).getPropertyValue("--muted").trim();
   if (!pts.length) {
     c.fillText("Not enough data yet", 20, 30);
     return;
@@ -436,7 +447,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     pad.l +
     (w - pad.l - pad.r) * (pts.length === 1 ? 0.5 : i / (pts.length - 1));
   const y = (v) => pad.t + (h - pad.t - pad.b) * (1 - (v - min) / (max - min));
-  c.strokeStyle = "#2b3654";
+  c.strokeStyle = getComputedStyle(canvas).getPropertyValue("--line").trim();
   c.lineWidth = 1;
   for (let i = 0; i < 4; i++) {
     const yy = pad.t + ((h - pad.t - pad.b) * i) / 3;
@@ -447,7 +458,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     const val = max - ((max - min) * i) / 3;
     c.fillText(labelFn(val), 4, yy + 4);
   }
-  c.strokeStyle = "#66a6ff";
+  c.strokeStyle = getComputedStyle(canvas).getPropertyValue("--accent-text").trim();
   c.lineWidth = 3;
   c.beginPath();
   pts.forEach((p, i) => {
@@ -456,7 +467,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     i ? c.lineTo(xx, yy) : c.moveTo(xx, yy);
   });
   c.stroke();
-  c.fillStyle = "#eef3ff";
+  c.fillStyle = getComputedStyle(canvas).getPropertyValue("--text").trim();
   pts.forEach((p, i) => {
     const xx = x(i),
       yy = y(p.v);
@@ -628,38 +639,99 @@ function renderToday() {
     : `<div class="sub">No sets logged for ${d}.</div>`;
 }
 
-function historySetTable(group) {
-  const rows = group.sets;
-  return `<table><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td>${s.date}</td><td><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : index + 1}.</span> ${esc(s.exercise)}</td><td>${fmt(s.weight)} ${esc(s.unit)}</td><td>${fmt(s.reps)}</td><td>${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td>${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td>${esc(s.notes || "—")}<details class="set-record"><summary>Record details</summary><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+function historySetTable(group, rows = group.sets) {
+  return `<table class="history-sets"><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td data-label="Date">${s.date}</td><td class="history-set-exercise" data-label="Exercise / order"><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : group.sets.indexOf(s) + 1}.</span> ${esc(s.exercise)}</td><td data-label="Load">${fmt(s.weight)} ${esc(s.unit)}</td><td data-label="Reps">${fmt(s.reps)}</td><td data-label="Effort">${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td data-label="Pain">${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td class="history-set-notes"><span class="history-desktop-notes">${esc(s.notes || "—")}</span><details class="set-record"><summary>Record details / notes</summary><p class="history-mobile-notes">Set notes: ${esc(s.notes || "—")}</p><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td class="history-set-source" data-label="Source"><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td class="history-set-controls"><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+}
+function rememberHistoryExpansion() {
+  historyTable.querySelectorAll("[data-history-key]").forEach((el) => {
+    if (el.open) expandedHistoryGroups.add(el.dataset.historyKey);
+    else expandedHistoryGroups.delete(el.dataset.historyKey);
+  });
+}
+function setHistoryExpanded(open) {
+  historyTable.querySelectorAll(".history-disclosure").forEach((el) => {
+    el.open = open;
+  });
+  rememberHistoryExpansion();
+}
+function historyExerciseDisclosures(group, key) {
+  return group.exerciseGroups.map((run) => {
+    const runKey = JSON.stringify([key, run.firstSetId]);
+    const performance = run.sets.slice(0, 3).map((set) =>
+      `${fmt(set.weight)} ${esc(set.unit)} × ${fmt(set.reps)}${set.complete === false ? " (incomplete)" : ""}`,
+    ).join(" · ");
+    return `<details class="history-exercise" data-history-key="${esc(runKey)}" ${expandedHistoryGroups.has(runKey) ? "open" : ""}>
+      <summary class="history-summary history-exercise-summary"><strong>${esc(run.exercise)}</strong><span class="sub history-counts">${run.sets.length} ${run.sets.length === 1 ? "set" : "sets"} · ${performance}${run.sets.length > 3 ? ` · +${run.sets.length - 3} more` : ""}</span></summary>
+      <div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(run.exercise)} set details">${historySetTable(group, run.sets)}</div>
+    </details>`;
+  }).join("");
+}
+function historyFilterValues() {
+  return Object.fromEntries([['exercise', 'historyExercise'], ['workout', 'historyWorkout'], ['from', 'historyFrom'], ['to', 'historyTo']]
+    .map(([key, id]) => [key, document.getElementById(id).value]));
+}
+function resetHistoryFilters() {
+  historyFilter.value = 'all';
+  for (const id of ['historyExercise', 'historyWorkout', 'historyFrom', 'historyTo']) document.getElementById(id).value = '';
+  renderHistory();
+}
+function renderHistoryFilterOptions(state) {
+  const fill = (id, values, allLabel) => {
+    const el = document.getElementById(id), selected = el.value;
+    // Keep a selected value even if its final matching record is corrected/deleted.
+    // Silently broadening a filter would misrepresent the current selection.
+    if (selected && !values.some(([value]) => value === selected)) values.push([selected, el.selectedOptions[0].textContent]);
+    el.innerHTML = '<option value="">' + allLabel + '</option>' + values.map(([value, label]) =>
+      '<option value="' + esc(value) + '">' + esc(label) + '</option>').join('');
+    el.value = selected;
+  };
+  fill('historyExercise', unique(state.sets.map(set => set.exercise)).sort().map(name => [name, name]), 'All exercises');
+  const names = unique(state.sessions.map(session => session.planSnapshot?.name || 'Unplanned workout')).sort();
+  fill('historyWorkout', [...names.map(name => ['session:' + name, name]), ['legacy', 'Legacy / sessionless']], 'All workouts / sessions');
 }
 function renderHistory() {
+  // Read native details state synchronously before replacing the DOM; a toggle
+  // event may still be queued when a filter/action causes another render.
+  rememberHistoryExpansion();
   const filter = historyFilter?.value || "all";
-  const groups = getHistoryGroups(getWorkoutState(), filter);
+  const state = getWorkoutState();
+  renderHistoryFilterOptions(state);
+  const filters = historyFilterValues();
+  const invalidRange = filters.from && filters.to && filters.from > filters.to;
+  const groups = invalidRange ? [] : getHistoryGroups(state, filter, filters);
+  const setFiltered = filter !== 'all' || !!filters.exercise;
+  document.getElementById('historyFilterStatus').textContent = invalidRange
+    ? 'From date must be on or before Through date.'
+    : groups.length + ' workout/session groups shown.';
   historyTable.innerHTML =
     groups
       .map((group) => {
         const session = group.session;
         const name = session?.planSnapshot?.name || "Unplanned workout";
         const exercises = unique(group.sets.map((set) => set.exercise));
-        const heading =
-          group.kind === "session"
-            ? `<h3>${esc(group.date)} · ${esc(name)}</h3><div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>`
-            : `<h3>${esc(group.date)} · Legacy / sessionless</h3><p class="sub">Grouped by date for display only. These records have no saved session identity.</p>`;
+        const heading = `<h3${session ? "" : ' title="Grouped by date for display only. These records have no saved session identity."'}>${esc(group.date)} · ${esc(session ? name : "Legacy / sessionless")}</h3>`;
         const count = (n) => `${n} ${n === 1 ? "set" : "sets"}`;
         const countText =
-          session && filter !== "all"
+          session && setFiltered
             ? `${group.sets.length} matching ${group.sets.length === 1 ? "set" : "sets"} · ${count(group.totalSetCount)} in session`
             : count(group.sets.length);
+        const key = JSON.stringify([group.kind, session ? session.id : group.date]);
         return `<article class="history-group" ${session ? `data-session-id="${esc(session.id)}"` : `data-legacy-date="${esc(group.date)}"`}>
-      ${heading}
-      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul><p class="sub">Set records below show the actual exercise performed, including earlier substitutions.</p></details>` : ""}
+      <details class="history-disclosure" data-history-key="${esc(key)}" ${expandedHistoryGroups.has(key) ? "open" : ""}>
+      <summary class="history-summary">
+        ${heading}
+        <span class="sub history-counts">${countText} · ${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"}${setFiltered ? " shown" : ""}</span>
+        <span class="history-exercise-preview"><span>${exercises.length ? exercises.slice(0, 2).map(esc).join(" · ") : "No sets logged in this session."}</span>${exercises.length > 2 ? `<span class="history-more">· +${exercises.length - 2}</span>` : ""}</span>
+      </summary>
+      <div class="history-details">
+      ${session ? `<div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>` : ""}
+      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul></details>` : ""}
       ${session ? historyScopedNotes(session) : ""}
-      <p class="sub">${countText}</p>
-      <p class="history-exercises">${exercises.length ? `Exercises shown: ${exercises.map(esc).join(" · ")}` : "No sets logged in this session."}</p>
-      ${group.sets.length ? `<p class="sub">Scroll the table sideways for all fields and actions.</p><div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(session ? name : "legacy / sessionless")} set details">${historySetTable(group)}</div>` : ""}
+      ${group.sets.length ? `${historyExerciseDisclosures(group, key)}` : ""}
+      </div></details>
     </article>`;
       })
-      .join("") || '<p class="sub">No history matches this source filter.</p>';
+      .join("") || '<p class="sub">No history matches these filters.</p>';
 }
 // Legacy dates are display groups only, never inferred persisted sessions.
 function exerciseSessionCount(records) {
