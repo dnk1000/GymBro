@@ -1,14 +1,42 @@
+/* Heritage Utility: shared visual contract. See docs/BRAND_AND_UI.md. */
 :root {
-  --bg: #0b1020;
-  --panel: #131a2c;
-  --panel2: #1b243a;
-  --text: #eef3ff;
-  --muted: #9eabc7;
-  --accent: #66a6ff;
-  --good: #51d88a;
-  --warn: #ffcc66;
-  --bad: #ff7a7a;
-  --line: #2b3654;
+  color-scheme: dark;
+  --bg: #171716;
+  --panel: #222220;
+  --panel2: #2d2d29;
+  --surface-inset: #1b1b19;
+  --text: #f2eee5;
+  --muted: #b9b4a9;
+  --heritage: #f4e6ca;
+  --accent: #91443f;
+  --accent-hover: #a25049;
+  --accent-active: #763631;
+  --accent-text: #e0a69e;
+  --on-accent: #fff8ed;
+  --good: #9bc5a3;
+  --warn: #dfc078;
+  --bad: #e4a09a;
+  --good-surface: #28392d;
+  --warn-surface: #3c3423;
+  --bad-surface: #452c2a;
+  --line: #48473f;
+  --control-line: #817b71;
+  --focus: #f4d9a3;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-brand: Georgia, "Times New Roman", serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-control: 6px;
+  --radius-panel: 10px;
+  --radius-detail: 6px;
+  --radius-pill: 999px;
+  --shadow-panel: none;
+  --shadow-dialog: 0 12px 40px rgb(0 0 0 / 35%);
+  --backdrop: rgb(0 0 0 / 65%);
 }
 #supabaseProbe[hidden] { display: none; }
 .probe-card { margin-top: 14px; overflow-wrap: anywhere; }
@@ -19,20 +47,15 @@
 }
 body {
   margin: 0;
-  background: linear-gradient(180deg, #0b1020, #0e1425 60%, #0b1020);
+  background: var(--bg);
   color: var(--text);
-  font:
-    15px/1.45 system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    sans-serif;
+  font: 15px/1.45 var(--font-ui);
 }
 header {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: rgba(11, 16, 32, 0.94);
+  background: var(--bg);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
@@ -58,16 +81,16 @@ header {
   height: 58px;
   object-fit: cover;
   object-position: center 42%;
-  border-radius: 10px;
+  border-radius: var(--radius-panel);
   border: 1px solid var(--line);
-  background: #f3efe4;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  background: var(--heritage);
+  box-shadow: var(--shadow-panel);
   flex: 0 0 auto;
 }
 .brand-copy h1 {
   font-size: 24px;
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-brand);
   letter-spacing: 0.02em;
   line-height: 1.05;
 }
@@ -81,7 +104,7 @@ header {
   gap: 8px;
   overflow: auto;
   padding: 10px 24px;
-  border-top: 1px solid #151c2d;
+  border-top: 1px solid var(--line);
   max-width: 1240px;
   margin: 0 auto;
 }
@@ -90,7 +113,7 @@ header {
   background: transparent;
   color: var(--muted);
   padding: 9px 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -111,7 +134,7 @@ main {
 }
 .grid {
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .grid.cols4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -120,11 +143,12 @@ main {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .card {
+  min-width: 0;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-panel);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-panel);
 }
 .kpi {
   font-size: 27px;
@@ -150,7 +174,9 @@ main {
   color: var(--bad);
 }
 h2 {
-  font-size: 18px;
+  font-family: var(--font-brand);
+  color: var(--heritage);
+  font-size: 20px;
   margin: 0 0 12px;
 }
 h3 {
@@ -160,19 +186,23 @@ h3 {
 button,
 .btn {
   background: var(--accent);
-  color: white;
-  border: 0;
-  border-radius: 9px;
+  color: var(--on-accent);
+  font-family: var(--font-ui);
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   padding: 10px 13px;
   font-weight: 650;
   cursor: pointer;
 }
 .btn.secondary {
+  color: var(--text);
   background: var(--panel2);
   border: 1px solid var(--line);
 }
 .btn.danger {
-  background: #5d2530;
+  border-color: var(--bad);
+  background: var(--bad-surface);
 }
 .btn.small {
   padding: 7px 9px;
@@ -182,10 +212,13 @@ input,
 select,
 textarea {
   width: 100%;
-  background: #0d1425;
+  min-width: 0;
+  min-height: 44px;
+  font: inherit;
+  background: var(--surface-inset);
   color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 9px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-control);
   padding: 10px;
 }
 textarea {
@@ -231,21 +264,21 @@ th {
 .pill {
   display: inline-block;
   padding: 3px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--panel2);
   font-size: 11px;
   color: var(--muted);
 }
 .pill.good {
-  background: rgba(81, 216, 138, 0.12);
+  background: var(--good-surface);
   color: var(--good);
 }
 .pill.warn {
-  background: rgba(255, 204, 102, 0.12);
+  background: var(--warn-surface);
   color: var(--warn);
 }
 .pill.bad {
-  background: rgba(255, 122, 122, 0.12);
+  background: var(--bad-surface);
   color: var(--bad);
 }
 .list {
@@ -256,8 +289,8 @@ th {
 .item {
   padding: 11px;
   border: 1px solid var(--line);
-  border-radius: 11px;
-  background: #0e1527;
+  border-radius: var(--radius-detail);
+  background: var(--surface-inset);
 }
 .item strong {
   display: block;
@@ -274,15 +307,15 @@ th {
 canvas {
   width: 100%;
   height: 230px;
-  background: #0d1425;
-  border-radius: 10px;
+  background: var(--surface-inset);
+  border-radius: var(--radius-panel);
   border: 1px solid var(--line);
 }
 .exercise-row {
   cursor: pointer;
 }
 .exercise-row:hover {
-  background: #121b30;
+  background: var(--panel2);
 }
 .role-core {
   border-left: 3px solid var(--good);
@@ -297,16 +330,16 @@ canvas {
   display: inline-block;
   margin: 2px 4px 2px 0;
   padding: 2px 7px;
-  border-radius: 999px;
-  background: #202b45;
-  color: #c8d4ef;
+  border-radius: var(--radius-pill);
+  background: var(--panel2);
+  color: var(--text);
   font-size: 11px;
 }
 .template-card {
   cursor: pointer;
 }
 .template-card:hover {
-  border-color: #49658f;
+  border-color: var(--accent-text);
 }
 .plan-actions {
   display: flex;
@@ -317,8 +350,8 @@ canvas {
 .notice {
   padding: 10px 12px;
   border-left: 3px solid var(--accent);
-  background: #0e1527;
-  border-radius: 8px;
+  background: var(--surface-inset);
+  border-radius: var(--radius-detail);
 }
 .status-ok {
   border-left: 3px solid var(--good);
@@ -348,6 +381,8 @@ canvas {
   gap: 8px;
 }
 .checkline input {
+  min-height: auto;
+  accent-color: var(--accent);
   width: auto;
 }
 .codebox {
@@ -417,6 +452,8 @@ canvas {
   .brand-copy h1 {
     font-size: 20px;
   }
+  /* Keep shared 44px utilities from increasing phone header chrome. */
+  .brand-copy p { display: none; }
   .top {
     justify-content: flex-start;
     min-height: 72px;
@@ -438,7 +475,7 @@ canvas {
   gap: 8px;
 }
 .header-tools {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 .history-actions {
@@ -446,6 +483,7 @@ canvas {
   flex-wrap: nowrap;
 }
 .icon-button {
+  min-height: 28px;
   width: 28px;
   min-width: 28px;
   height: 28px;
@@ -467,7 +505,7 @@ canvas {
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-panel);
 }
 #helpDialog::backdrop {
   background: rgb(0 0 0 / 65%);
@@ -486,7 +524,7 @@ canvas {
   min-width: 0;
   margin-top: 6px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
 }
 .history-heading {
   display: grid;
@@ -528,16 +566,16 @@ canvas {
   right: 12px;
   font-size: 24px;
   line-height: 1;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .history-disclosure[open] > .history-summary::after,
 .history-exercise[open] > .history-summary::after {
   transform: rotate(90deg);
 }
 .history-summary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: -2px;
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
 }
 .history-counts {
   display: block;
@@ -564,7 +602,7 @@ canvas {
   min-width: 0;
   margin-top: 6px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-detail);
 }
 .history-exercise-summary {
   padding-left: 10px;
@@ -738,3 +776,24 @@ button:disabled {
 .history-filters input, .history-filters select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; }
 .history-filters button { min-height: 44px; }
 @media (max-width: 600px) { .history-filters { grid-template-columns: minmax(0, 1fr); } }
+
+/* Controls stay modern; heritage typography is reserved for major headings. */
+.kpi, table, input, select, .guided-sets, .history-counts {
+  font-variant-numeric: tabular-nums;
+}
+.kpi { color: var(--text); line-height: 1.2; margin: var(--space-1) 0; }
+:where(button, .btn, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+#helpDialog { box-shadow: var(--shadow-dialog); }
+@media (hover: hover) {
+  button:not(:disabled):not(.secondary):not(.danger):not(.tab):hover,
+  .btn:not(.secondary):not(.danger):hover { background: var(--accent-hover); }
+  .btn.secondary:not(:disabled):hover { background: var(--line); }
+  .btn.danger:not(:disabled):hover { background: var(--accent-active); }
+}
+button:not(:disabled):not(.secondary):not(.danger):not(.tab):active {
+  background: var(--accent-active);
+}

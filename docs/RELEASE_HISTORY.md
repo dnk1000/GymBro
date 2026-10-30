@@ -1,5 +1,10 @@
 # GymBro release history
 
+## Heritage Utility #71-only candidate — not accepted
+
+`3.11.3-20261030T171451Z`, schema 8 unchanged. Revised #71 design authority/reference and shared-system styling only; separate from unmerged PR #76. Focused PR owns evidence; no Production acceptance or merge.
+
+
 ## Mobile History 3.11.0 candidate — not yet accepted
 
 `3.11.0-20261030T164140Z`, #36/PR #69; schema 8 unchanged. User-approved remapping after #22 merged. Main integration retains both filters and responsive set details. PR owns evidence; physical Safari remains pending.

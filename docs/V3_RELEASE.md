@@ -1,3 +1,11 @@
+# Heritage Utility foundation candidate — issue #71 only
+
+Application version: `3.11.3-20261030T171451Z`
+Data schema: `8`
+Release status: **preparation**
+
+Presentation-only patch from accepted main 2255a91 for revised #71: canonical BRAND_AND_UI guidance, approved directional board, shared tokens/components and chart colors. No #72 app-shell pass or domain/schema/storage changes. Verification and acceptance belong in the focused #71 PR; no Production acceptance or merge. The earlier combined PR #76 remains separate and unmerged.
+
 # Mobile History candidate — integrated main
 
 Application version: `3.11.0-20261030T164140Z`

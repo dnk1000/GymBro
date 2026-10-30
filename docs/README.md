@@ -73,3 +73,7 @@ The Workout Coach skill is approved and implemented in the repository through is
 ## Issue #27 account candidate
 
 [V3_ACCOUNT_ACCESS.md](V3_ACCOUNT_ACCESS.md) defines Preview email-link recovery, private ownership requirements for #39, setup and pending acceptance evidence. Local workout schema remains 7.
+
+## Current visual design authority
+
+[BRAND_AND_UI.md](BRAND_AND_UI.md) is the canonical Heritage Utility design authority for shared presentation and future UI issues. It implements product intent without changing domain, storage or workflow contracts. Its committed design board is directional, not pixel-perfect.

@@ -1,3 +1,7 @@
+## 3.11.3 — Heritage Utility foundation candidate (#71 only)
+
+Canonical BRAND_AND_UI guidance and approved directional reference; charcoal/ivory/oxblood shared tokens, modern controls and numeric hierarchy. No screen redesign, workout/data/schema change or #72 app-shell work.
+
 ## 3.11.0 — Mobile History integrated with accepted filters
 
 Retain phone-friendly set details and compact History copy alongside #22 filters on accepted main. No stored-data changes.
