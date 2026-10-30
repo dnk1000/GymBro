@@ -21,6 +21,9 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
+- [V3_CONCURRENCY_PROPOSAL.md](V3_CONCURRENCY_PROPOSAL.md) — approved #40 protocol/security/Preview design.
+- [V3_CONCURRENCY.md](V3_CONCURRENCY.md) — implemented protocol boundary and actual verification status.
+
 - [V3_RELATIONAL_SCHEMA_PROPOSAL.md](V3_RELATIONAL_SCHEMA_PROPOSAL.md) — approved #39 relational model, persistence boundary and verification plan.
 - [V3_RELATIONAL_PERSISTENCE.md](V3_RELATIONAL_PERSISTENCE.md) — #39 implementation boundary, relational migration and actual verification evidence.
 

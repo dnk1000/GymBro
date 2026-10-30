@@ -2,6 +2,7 @@ const {test}=require("node:test");
 const assert=require("node:assert/strict");
 const {fixture}=require("./relational-fixture.cjs");
 const plain=x=>JSON.parse(JSON.stringify(x));
+const {makeActions,handle}=require("./protocol-fixture.cjs");
 test("relational projection preserves complete content, optional presence, original labels and independent ordering",async()=>{
   const f=await fixture(), rows=f.repository.project(f.document,f.owner,f.bodyweightIds);
   Object.values(rows).forEach(list=>list.reverse());
@@ -33,20 +34,21 @@ test("unsupported database text rejects without modifying source; literal escape
 test("DOM-free actions await durable acknowledgement; failed/late saves do not publish candidate state",async()=>{
   const f=await fixture();let resolve, calls=0;
   const repository={commit:async(before,after)=>{calls++;await new Promise(r=>{resolve=r;});return after;}};
-  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository,createId:()=>"synthetic-next"});
+  const actions=makeActions(f,{initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository,createId:()=>"synthetic-next"});
   const before=plain(actions.getWorkoutState()), id=f.identity.resolveLabel(f.document.catalog,"Bench Press");
   const pending=actions.execute("logSet",{date:"2026-10-28",exercise:id,weight:15,reps:8,sessionId:null});
+  await new Promise(setImmediate); // preparation now precedes the remote protocol
   assert.equal(calls,1);assert.deepEqual(plain(actions.getWorkoutState()),before);
   assert.equal((await actions.execute("clearPlan")).ok,false);
   resolve();const saved=await pending;assert.equal(saved.ok,true);assert.equal(saved.code,"OK");
   assert.equal(saved.state.data.sets.at(-1).exercise.exerciseId,id);
-  const failing=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async()=>{throw Error("rejected");}},createId:()=>"failed"});
+  const failing=makeActions(f,{initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async()=>{throw Error("rejected");}},createId:()=>"failed"});
   const failure=await failing.execute("logSet",{date:"2026-10-28",exercise:id,weight:1,reps:1,sessionId:null});
-  assert.equal(failure.code,"PERSISTENCE_ERROR");assert.deepEqual(plain(failing.getWorkoutState()),before);
+  assert.equal(failure.code,"OUTCOME_UNKNOWN");assert.deepEqual(plain(failing.getWorkoutState()),before);
 });
 test("canonical facade reuses guidance replay/tombstones, corrections, note and template rules",async()=>{
   const f=await fixture();let writes=0;
-  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,next)=>{writes++;return next;}},createId:()=>"facade-id"});
+  const actions=makeActions(f,{initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,next)=>{writes++;return next;}},createId:()=>"facade-id"});
   const id=f.identity.resolveLabel(f.document.catalog,"Bench Press");
   const tombstone=await actions.execute("logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"request-b",weight:20,reps:8});
   assert.equal(tombstone.code,"REPLAY");assert.equal(tombstone.deleted,true);assert.equal(writes,0);
@@ -61,14 +63,16 @@ test("canonical facade reuses guidance replay/tombstones, corrections, note and 
 test("repository transport uses single RPC loads and acknowledges complete matching committed facts",async()=>{
   const f=await fixture(),rows=f.repository.project(f.document,f.owner,f.bodyweightIds);let fail=false;
   const calls=[];
-  const repo=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=>{calls.push(name);return fail?{error:{message:"private details"}}:{data:plain(name.endsWith("commit")?args.next_rows:rows)};}}});
+  const snapshot=(rows,revision="0")=>({protocolVersion:1,ownerId:f.owner,revision,rows});
+  const repo=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=>{calls.push(name);return fail?{error:{message:"private details"}}:{data:name==="gymbro_workout_mutate"?{code:"OK",operation:args.packet.operation,operationRevision:"1",result:args.packet.result,snapshot:snapshot(args.packet.next,"1")}:snapshot(rows)};}}});
   assert.equal((await repo.load()).initialized,true);
-  assert((await repo.commit(null,f)).document);
-  assert.deepEqual(calls,["gymbro_workout_read","gymbro_workout_commit"]);
-  fail=true;await assert.rejects(repo.load(),/not acknowledged/);
+  const packet=repo.prepare(null,f,{action:"initialize",args:[],operation:["initialize","fixture"],result:{}});
+  assert((await repo.submit(packet)).saved.document);
+  assert.deepEqual(calls,["gymbro_workout_snapshot","gymbro_workout_mutate"]);
+  fail=true;await assert.rejects(repo.load(),/rejected/);
   const empty=Object.fromEntries(Object.keys(rows).map(t=>[t,[]]));
-  const uninitialized=f.repository.create({ownerId:f.owner,client:{rpc:async()=>({data:empty})}});
-  assert.deepEqual(plain(await uninitialized.load()),{initialized:false});
+  const uninitialized=f.repository.create({ownerId:f.owner,client:{rpc:async()=>({data:snapshot(empty)})}});
+  assert.deepEqual(plain(await uninitialized.load()),{initialized:false,protocolVersion:1,ownerId:f.owner,revision:"0"});
 });
 test("new snapshots/guidance retain recorded template labels after canonical rename",async()=>{
   const f=await fixture(),id=f.identity.resolveLabel(f.document.catalog,"Smith Press");
@@ -76,7 +80,7 @@ test("new snapshots/guidance retain recorded template labels after canonical ren
   doc.data.sessions=[];doc.data.activeSessionId=null;doc.data.sets=[];
   doc.data.noteScopes.session=[];doc.data.noteScopes.exerciseSession=[];
   doc.catalog=f.identity.renameExercise(doc.catalog,id,"Renamed canonical press");
-  const actions=f.repository.createActions({initial:{document:doc,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>after},createId:()=>"new-synthetic-session",now:()=>"2026-10-28T05:00:00.000Z"});
+  const actions=makeActions(f,{initial:{document:doc,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>after},createId:()=>"new-synthetic-session",now:()=>"2026-10-28T05:00:00.000Z"});
   const result=await actions.execute("startGuidedSession",{date:"2026-10-28",templateId:"push",duration:60});
   assert.equal(result.ok,true);
   assert.equal(result.state.data.sessions[0].planSnapshot.slots[0].exercise.originalLabel,"Smith Press");
@@ -91,26 +95,30 @@ test("request identity schemes distinguish UUID-shaped legacy labels from canoni
   const legacy={sessionId:f.sessionId,planSlotId:"slot-1",exercise:a,weight:7,reps:2};
   const signature=f.get("guidedRequestSignature")(legacy);
   doc.data.sessions[0].guided.requests.push({id:"legacy-uuid-label",setId:"legacy-dead",signature});
-  let rows;
+  let rows=plain(f.repository.project(doc,f.owner,f.bodyweightIds));
+  let revision=0;
   const repository=f.repository.create({ownerId:f.owner,client:{rpc:async(name,args)=> {
-    if(name.endsWith("commit")) rows=plain(args.next_rows);
-    return {data:rows};
+    if(name==="gymbro_workout_mutate") {
+      rows=plain(args.packet.next);revision++;
+      return {data:{code:"OK",operation:args.packet.operation,result:args.packet.result,operationRevision:String(revision),snapshot:{protocolVersion:1,ownerId:f.owner,revision:String(revision),rows}}};
+    }
+    return {data:{protocolVersion:1,ownerId:f.owner,revision:String(revision),rows}};
   }}});
-  let actions=f.repository.createActions({initial:{document:doc,bodyweightIds:f.bodyweightIds},repository,createId:()=>"canonical-request-set"});
+  let actions=makeActions(f,{initial:{document:doc,bodyweightIds:f.bodyweightIds},repository,createId:()=>"canonical-request-set"});
   assert.equal((await actions.execute("logGuidedSet",{...legacy,exercise:b,requestId:"legacy-uuid-label",expectedRevision:3})).code,"REPLAY");
   assert.equal((await actions.execute("substituteGuidedExercise",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,exercise:a})).ok,true);
   const input={sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:4,requestId:"canonical-id",exercise:a,weight:10,reps:8};
   assert.equal((await actions.execute("logGuidedSet",input)).ok,true);
   const loaded=await repository.load();
   assert.equal(loaded.signatureSchemes[JSON.stringify([f.sessionId,"canonical-id"])],"canonical-ids");
-  actions=f.repository.createActions({initial:loaded,repository,createId:()=>"unused"});
+  actions=makeActions(f,{initial:loaded,repository,createId:()=>"unused"});
   assert.equal((await actions.execute("logGuidedSet",input)).code,"REPLAY");
   assert.equal((await actions.execute("logGuidedSet",{...input,weight:11})).code,"REQUEST_CONFLICT");
   assert.equal(actions.getWorkoutState().data.sessions[0].guided.requests.find(r=>r.id==="legacy-uuid-label").signature,signature);
 });
 test("reviewed imports resolve only included rows and preserve duplicate protection and provenance",async()=>{
   const f=await fixture(),id=f.identity.resolveLabel(f.document.catalog,"Bench Press");let writes=0;
-  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>{writes++;return after;}},createBodyweightId:()=>"import-bodyweight"});
+  const actions=makeActions(f,{initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>{writes++;return after;}},createBodyweightId:()=>"import-bodyweight"});
   const draft={importId:"selected-canonical-import",date:"2026-10-28",template:"synthetic",duration:30,sessionNotes:"  exact summary\n",bodyweight:201,sets:[
     {include:true,exercise:id,originalLabel:"Bench Press",weight:10,reps:8,unit:"lb",rpe:null,rir:0,pain:0,painArea:"",notes:"  exact imported\n",complete:true},
     {include:false,exercise:"unresolved excluded label",weight:-10,reps:0,unit:"invalid"},
@@ -126,7 +134,7 @@ test("unknown legacy signature fields remain opaque and cannot become a false ex
   const f=await fixture(),doc=structuredClone(f.document),id=f.identity.resolveLabel(doc.catalog,"Bench Press");
   const signature=JSON.stringify({sessionId:f.sessionId,planSlotId:"slot-1",exercise:"Bench Press",weight:10,reps:8,futureMeaning:"must not discard"});
   doc.data.sessions[0].guided.requests.push({id:"opaque-request",setId:"opaque-tombstone",signature});let writes=0;
-  const actions=f.repository.createActions({initial:{document:doc,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>{writes++;return after;}}});
+  const actions=makeActions(f,{initial:{document:doc,bodyweightIds:f.bodyweightIds},repository:{commit:async(_,after)=>{writes++;return after;}}});
   const result=await actions.execute("logGuidedSet",{sessionId:f.sessionId,planSlotId:"slot-1",expectedRevision:3,requestId:"opaque-request",exercise:id,weight:10,reps:8});
   assert.equal(result.code,"REQUEST_CONFLICT");assert.equal(writes,0);
   assert.equal(actions.getWorkoutState().data.sessions[0].guided.requests.at(-1).signature,signature);

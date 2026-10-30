@@ -2,16 +2,18 @@
 // calls to the actual RPCs. Generated data is synthetic and transaction-scoped.
 const fs=require("node:fs"),path=require("node:path");
 const {fixture}=require("../tests/relational-fixture.cjs");
-async function buildSql() {
+const {storage,handle}=require("../tests/protocol-fixture.cjs");
+async function buildSql(capture) {
   const f=await fixture(),other="99999999-9999-4999-8999-999999999940";
   const bundles=[f.repository.project(f.document,f.owner,f.bodyweightIds)];
+  const packets=[];let revision=0;
   const client={rpc:async(name,args)=> {
-    if(name!=="gymbro_workout_commit") throw Error("Unexpected generated RPC");
-    bundles.push(args.next_rows);return {data:structuredClone(args.next_rows)};
+    if(name!=="gymbro_workout_mutate") throw Error("Unexpected generated RPC");
+    packets.push(args.packet);bundles.push(args.packet.next);revision++;return {data:{code:"OK",operation:args.packet.operation,result:args.packet.result,operationRevision:String(revision),snapshot:{protocolVersion:1,ownerId:f.owner,revision:String(revision),rows:structuredClone(args.packet.next)}}};
   }};
   const repository=f.repository.create({client,ownerId:f.owner});
   let sequence=0;
-  const actions=f.repository.createActions({initial:{document:f.document,bodyweightIds:f.bodyweightIds},repository,
+  const actions=f.repository.createActions({initial:handle(f),repository,recoveryStorage:storage(),
     createId:()=>`synthetic-relational-new-${++sequence}`,createBodyweightId:()=>"synthetic-relational-new-bw",now:()=>"2026-10-28T04:30:00.000Z"});
   const id=f.identity.resolveLabel(f.document.catalog,"Bench Press");
   const steps=[
@@ -38,9 +40,9 @@ set local search_path=public,extensions;
 select no_plan();
 insert into auth.users(id) values ('${f.owner}'),('${other}');
 create temporary table relational_expected(step int primary key,rows jsonb);
-grant select on relational_expected to authenticated;`];
+grant select on relational_expected to gymbro_workout_writer;`];
   bundles.forEach((rows,i)=>sql.push(`insert into relational_expected values(${i},${literal(rows)});`));
-  sql.push(`set local role authenticated;
+  sql.push(`set local role gymbro_workout_writer;
 select set_config('request.jwt.claim.sub','${f.owner}',true);
 select set_config('request.jwt.claims','{"sub":"${f.owner}","is_anonymous":false}',true);
 select is(jsonb_array_length(public.gymbro_workout_read()->'workout_state'),0,'empty is explicitly uninitialized');
@@ -104,6 +106,7 @@ select throws_ok($test$update public.gymbro_sets set session_id='owner-a-only',s
 reset role;
 select * from finish();
 rollback;`);
+  if(capture) Object.assign(capture,{f,bundles,packets,steps});
   return sql.join("\n")+"\n";
 }
 if(require.main===module) buildSql().then(sql=>{

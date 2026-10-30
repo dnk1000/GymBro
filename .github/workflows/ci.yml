@@ -38,6 +38,8 @@ jobs:
           npx --no-install supabase test db --local test-results/exercise-identity-migration.test.sql
           node scripts/workout-repository-db-fixture.cjs
           npx --no-install supabase test db --local test-results/workout-repository.test.sql
+          node scripts/workout-concurrency-db-fixture.cjs
+          npx --no-install supabase test db --local test-results/workout-concurrency.test.sql
       - name: Replay from empty local database and verify retry
         run: |
           npx --no-install supabase db reset --local --no-seed

@@ -1,5 +1,9 @@
 # GymBro release history
 
+## V3 concurrency candidate — not yet accepted
+
+`3.6.0-20261030T042352Z`, workout schema 8/model 1/protocol 1, migration 20261030043000; #40 alone. User approved the design and mapping on October 30, 2026. Verification pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md). No personal migration, Production operation, acceptance or merge is claimed.
+
 This file records accepted milestone releases and the preview builds that led to them. Application version is independent of data schema. Build timestamps are UTC and come from the committed `app-version.js`; no versions or device-test results are inferred retroactively. See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 ## V3 opaque request-signature fix candidate — not yet accepted

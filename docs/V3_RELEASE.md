@@ -1,6 +1,8 @@
 # V3 relational foundation candidate — issue #39
 
-Application version: `3.5.5-20261028T205308Z`
+Issue #40 candidate: protocol 1, owner revisions, durable receipts and cancellation fencing. Implementation verification pending; current workouts remain local. See [concurrency contract](V3_CONCURRENCY.md).
+
+Application version: `3.6.0-20261030T042352Z`
 Data schema: `8`
 Release status: **preparation**
 

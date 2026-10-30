@@ -1,5 +1,9 @@
 # Changes
 
+## 3.6.0 — concurrency/retry protocol candidate
+
+`3.6.0-20261030T042352Z`, workout schema 8/model 1/protocol 1, migration 20261030043000; #40 alone. User approved the design and mapping on October 30, 2026. Verification pending in [V3_CONCURRENCY.md](V3_CONCURRENCY.md). No personal migration, Production operation, acceptance or merge is claimed.
+
 ## 3.5.5 — preserve opaque request-signature meaning
 
 `3.5.5-20261028T205308Z`, schema 8; #39 only. Only recognized legacy signature serialization is normalized for canonical comparison. Unknown signature fields remain opaque and cannot become false exact replays. Ten focused tests pass; schema migration/SQL fixture are unchanged. [Evidence](V3_RELATIONAL_PERSISTENCE.md).

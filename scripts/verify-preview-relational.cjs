@@ -19,7 +19,7 @@ async function main() {
   // Collect actual pgTAP results and raise on any failure before rollback;
   // a command's zero exit status alone is never treated as assertion evidence.
   const sql=source.replace('create temporary table relational_expected',
-    'create temporary table repo_tap_report(output text);\ngrant insert,select on repo_tap_report to authenticated;\ncreate temporary table relational_expected')
+    'create temporary table repo_tap_report(output text);\ngrant insert,select on repo_tap_report to authenticated,gymbro_workout_writer;\ncreate temporary table relational_expected')
     .replace(/^select (lives_ok|throws_ok|is|ok|is_empty)\(/gm,'insert into repo_tap_report select $1(')
     .replace('select * from finish();',`insert into repo_tap_report select * from finish();
 do $assert$ begin

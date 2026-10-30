@@ -160,30 +160,60 @@ const WorkoutRepository = (() => {
     check(uuid.test(ownerId), "Verified authenticated owner UUID required.");
     async function rpc(name, args) {
       const result = await client.rpc(name, args);
-      check(!result.error && result.data, "Database operation was not acknowledged.");
+      if (result.error) {
+        const error = Error("Database operation was rejected.");
+        error.code = result.error.code;
+        throw error;
+      }
+      check(result.data, "Database operation was not acknowledged.");
       return result.data;
     }
+    function snapshot(value) {
+      check(value?.protocolVersion === 1 && value.ownerId === ownerId && WorkoutConcurrency.revision(value.revision), "Invalid protocol snapshot.");
+      const rows = value.rows;
+      if (rows.workout_state?.length === 0) {
+        check(tables.slice(1).every(t=>rows[t]?.length===0), "Uninitialized account has orphan workout rows.");
+        return { initialized:false, protocolVersion:1, ownerId, revision:value.revision };
+      }
+      return { initialized:true, protocolVersion:1, ownerId, revision:value.revision, ...assemble(rows,ownerId) };
+    }
+    function prepare(before, after, context) {
+      check(WorkoutConcurrency.revision(before?.revision ?? "0"), "Loaded revision required.");
+      const {state,ok,code,errors,...identifiers} = clone(context.result);
+      const packet = { protocolVersion:1, ownerId, expectedRevision:before?.revision ?? "0", action:context.action,
+        args:clone(context.args),operation:clone(context.operation),result:identifiers,
+        base:before?.document ? project(before.document,ownerId,before.bodyweightIds,before.signatureSchemes) : null,
+        next:project(after.document,ownerId,after.bodyweightIds,after.signatureSchemes) };
+      function freeze(value) { if(value && typeof value==="object") { Object.values(value).forEach(freeze); Object.freeze(value); } return value; }
+      return freeze(packet);
+    }
+    async function transmit(name, args, operation, packet) {
+      let response;
+      try { response = await rpc(name,args); }
+      catch(error) {
+        if (/^(?:22|23|42|P0001)/.test(error.code ?? ""))
+          return {code:error.code==="42501" ? "AUTHORIZATION_ERROR" : "VALIDATION_ERROR"};
+        throw error;
+      }
+      check(JSON.stringify(response.operation)===JSON.stringify(operation), "Wrong request acknowledgement.");
+      const saved = snapshot(response.snapshot);
+      if (["OK","REPLAY"].includes(response.code)) {
+        check(WorkoutConcurrency.revision(response.operationRevision) && BigInt(response.operationRevision)<=BigInt(saved.revision) && isObject(response.result), "Invalid receipt acknowledgement.");
+      }
+      if(response.code==="OK") check(packet && equalRows(project(saved.document,ownerId,saved.bodyweightIds,saved.signatureSchemes),packet.next), "Database acknowledgement differs from submitted facts.");
+      if(response.result?.setId && saved.document) response.result = { ...response.result,deleted:!saved.document.data.sets.some(s=>s.id===response.result.setId) };
+      return {code:response.code,saved,result:response.result,operationRevision:response.operationRevision};
+    }
     return Object.freeze({
+      ownerId, prepare,
       async load() {
-        const rows = await rpc("gymbro_workout_read", {});
-        if (rows.workout_state?.length === 0) {
-          check(tables.slice(1).every(t=>rows[t]?.length===0), "Uninitialized account has orphan workout rows.");
-          return { initialized: false };
-        }
-        return { initialized: true, ...assemble(rows,ownerId) };
+        return snapshot(await rpc("gymbro_workout_snapshot", {}));
       },
-      async commit(before, after) {
-        const oldRows = before ? project(before.document, ownerId, before.bodyweightIds,before.signatureSchemes) : null;
-        const newRows = project(after.document, ownerId, after.bodyweightIds,after.signatureSchemes);
-        const rows = await rpc("gymbro_workout_commit", { previous_rows: oldRows, next_rows: newRows });
-        const saved = assemble(rows,ownerId);
-        // Read order for canonical catalog rows is unspecified.
-        check(equalRows(project(saved.document,ownerId,saved.bodyweightIds,saved.signatureSchemes),newRows), "Database acknowledgement differs from submitted facts.");
-        return saved;
-      },
+      submit: packet => transmit("gymbro_workout_mutate",{packet},packet.operation,packet),
+      resolve: operation => transmit("gymbro_workout_resolve",{operation},operation),
     });
   }
-  function createActions({ initial, repository, createId, now, createBodyweightId = () => crypto.randomUUID() }) {
+  function createPreparedActions({ initial, repository, createId, now, createBodyweightId = () => crypto.randomUUID() }) {
     validate(initial.document);
     let committed = clone(initial), pending = false;
     const state = () => clone(committed.document);
@@ -262,5 +292,13 @@ const WorkoutRepository = (() => {
       },
     });
   }
-  return Object.freeze({ MODEL_VERSION:1, tables:Object.freeze(tables), project, assemble, create, createActions });
+  function createActions(options) {
+    return WorkoutConcurrency.create({ ...options, prepare:async(initial,name,args)=> {
+      let candidate;
+      const preparer=createPreparedActions({ createId:()=>crypto.randomUUID(), ...options,initial,repository:{commit:async(_,after)=>{candidate=clone(after);return after;}} });
+      const result=await preparer.execute(name,...args);
+      return {result,candidate};
+    } });
+  }
+  return Object.freeze({ MODEL_VERSION:1, PROTOCOL_VERSION:1, tables:Object.freeze(tables), project, assemble, create, createActions });
 })();

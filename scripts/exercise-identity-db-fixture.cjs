@@ -28,9 +28,9 @@ create table public.gymbro_identity_test_facts (
   owner_id uuid not null, set_id text primary key, exercise_id uuid not null, fact jsonb not null,
   foreign key (owner_id, exercise_id) references public.gymbro_exercises(owner_id, exercise_id)
 );
-grant select on identity_expected to authenticated;
-grant select, insert on gymbro_identity_test_facts to authenticated;
-set local role authenticated;
+grant select on identity_expected to gymbro_workout_writer;
+grant select, insert on gymbro_identity_test_facts to gymbro_workout_writer;
+set local role gymbro_workout_writer;
 select set_config('request.jwt.claim.sub', '${owner}', true);
 select set_config('request.jwt.claims', '{"sub":"${owner}","is_anonymous":false}', true);
 insert into public.gymbro_exercises select x.* from identity_expected,
