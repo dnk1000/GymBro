@@ -1,3 +1,7 @@
+## 3.11.0 — Mobile History integrated with accepted filters
+
+Retain phone-friendly set details and compact History copy alongside #22 filters on accepted main. No stored-data changes.
+
 ## 3.9.1 — Compact History copy candidate
 
 Remove repeated exercise lists and instructional paragraphs from History. Keep sessionless context as a heading tooltip.
@@ -5,6 +9,14 @@ Remove repeated exercise lists and instructional paragraphs from History. Keep s
 ## 3.9.0 — Mobile History candidate
 
 Phone History set details stack without sideways review/action scrolling. Desktop tables remain; no historical data changes.
+
+## 3.10.1 — Compact History copy candidate
+
+Remove repeated exercise lists and instructional paragraphs from History. Keep sessionless context as a heading tooltip.
+
+## 3.10.0 — History filters candidate
+
+Filter by exact recorded exercise, saved workout name, inclusive dates and source; reset all filters or see a clear no-match state. No stored-data change.
 
 # Changes
 

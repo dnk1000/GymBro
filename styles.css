@@ -733,3 +733,8 @@ button:disabled {
   .history-sets .icon-button { width: 44px; min-width: 44px; height: 44px; }
   .history-sets .set-record summary { white-space: normal; min-height: 44px; display: flex; align-items: center; }
 }
+.history-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; align-items: end; }
+.history-filters label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.history-filters input, .history-filters select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; }
+.history-filters button { min-height: 44px; }
+@media (max-width: 600px) { .history-filters { grid-template-columns: minmax(0, 1fr); } }

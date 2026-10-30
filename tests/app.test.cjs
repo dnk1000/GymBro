@@ -1763,7 +1763,8 @@ test("History shows same-day sessions, saved intent, ordered sets and separate l
     /incomplete/,
   );
   const legacy = p.locator('[data-legacy-date="2026-10-23"]');
-  assert.match(await legacy.innerText(), /display only/);
+  assert.match(await legacy.locator("h3").getAttribute("title"), /display only/);
+  assert.doesNotMatch(await legacy.innerText(), /Grouped by date for display only/);
   assert.match(await legacy.innerText(), /manual-sessionless/);
   assert.match(await legacy.innerText(), /legacy-import-only/);
   const imported = legacy
@@ -3040,5 +3041,49 @@ for (const width of [320, 390, 1280]) {
     assert.deepEqual(await backup(p), before);
     assert.equal(await stored(p), raw);
     await row.screenshot({ path: 'test-results/issue36-' + width + '.png' });
+  });
+}
+
+for (const width of [320, 390, 1280]) {
+  test(`History search controls intersect, reset, explain empty results and never save at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 } });
+    const fixture = await sessionHistoryFixture(p);
+    await p.evaluate(({first, second}) => {
+      db.sessions.find(s => s.id === first).planSnapshot.name = 'Saved Alpha <test>';
+      db.sessions.find(s => s.id === second).planSnapshot.name = 'Saved Beta';
+      renderAll();
+      window.filterWrites = 0;
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(...args) { window.filterWrites++; return original.apply(this, args); };
+    }, fixture);
+    const before = await backup(p), raw = await stored(p);
+    await p.locator('[data-view="history"]').click();
+    const allCount = await p.locator('.history-group').count();
+    await p.locator('#historyExercise').selectOption('Bench Press');
+    assert.equal(await p.locator('[data-session-id="' + fixture.first + '"]').count(), 1);
+    assert.equal(await p.locator('[data-session-id="' + fixture.second + '"]').count(), 1);
+    await p.locator('#historyFrom').fill('2026-10-23'); await p.locator('#historyFrom').dispatchEvent('change');
+    await p.locator('#historyTo').fill('2026-10-23'); await p.locator('#historyTo').dispatchEvent('change');
+    await p.locator('#historyWorkout').selectOption('session:Saved Alpha <test>');
+    assert.equal(await p.locator('.history-group').count(), 1);
+    await p.getByRole('button', {name:'Expand all', exact:true}).click();
+    await p.locator('.history-exercise > summary').first().click();
+    assert.deepEqual(await p.locator('#historyTable tr[data-set-id]').evaluateAll(els => els.map(el => el.dataset.setId)), [fixture.b]);
+    assert.match(await p.locator('.history-counts').first().innerText(), /1 matching set.*2 sets in session/);
+    await p.locator('#historyWorkout').selectOption('legacy');
+    assert.equal(await p.locator('[data-session-id]').count(), 0);
+    await p.locator('#historyFrom').fill('2099-01-01'); await p.locator('#historyFrom').dispatchEvent('change');
+    assert.match(await p.locator('#historyFilterStatus').innerText(), /From date must/);
+    await p.locator('#historyTo').fill('2099-12-31'); await p.locator('#historyTo').dispatchEvent('change');
+    assert.match(await p.locator('#historyTable').innerText(), /No history matches these filters/);
+    await p.locator('#historyFilter').selectOption('manual');
+    await p.getByRole('button', {name:'Reset filters', exact:true}).click();
+    assert.equal(await p.locator('.history-group').count(), allCount);
+    for (const id of ['historyExercise','historyWorkout','historyFrom','historyTo']) assert.equal(await p.locator('#'+id).inputValue(), '');
+    assert.equal(await p.locator('#historyFilter').inputValue(), 'all');
+    assert.deepEqual(await backup(p), before); assert.equal(await stored(p), raw);
+    assert.equal(await p.evaluate(() => window.filterWrites), 0);
+    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await p.locator('.history-filters').screenshot({path: 'test-results/issue22-filters-' + width + '.png'});
   });
 }

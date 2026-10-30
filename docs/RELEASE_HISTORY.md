@@ -1,5 +1,11 @@
 # GymBro release history
 
+## Mobile History 3.11.0 candidate — not yet accepted
+
+`3.11.0-20261030T164140Z`, #36/PR #69; schema 8 unchanged. User-approved remapping after #22 merged. Main integration retains both filters and responsive set details. PR owns evidence; physical Safari remains pending.
+
+
+
 ## Compact History copy candidate — not yet accepted
 
 `3.9.1-20261030T163206Z`, #36; schema 8 unchanged. User-approved removal of guidance paragraphs and redundant exercise list; sessionless explanation moved to heading tooltip. Verification belongs in the existing PR; physical Safari pending.
@@ -7,6 +13,16 @@
 ## Mobile History candidate — not yet accepted
 
 `3.9.0-20261030T155016Z`, #36 alone; schema 8 unchanged. Phone set cards retain full labels/facts and existing correction actions; desktop tables remain. PR owns verification; physical Safari pending. No Production acceptance.
+
+
+
+## Compact History copy candidate — not yet accepted
+
+`3.10.1-20261030T163206Z`, #22; schema 8 unchanged. User-approved removal of guidance paragraphs and redundant exercise list; sessionless explanation moved to heading tooltip. Verification belongs in the existing PR; physical Safari pending.
+
+## History filters candidate — not yet accepted
+
+`3.10.0-20261030T161206Z`, #22 alone; schema 8 unchanged. Exercise/workout/date/source filters and reset preserve historical facts/order. Separate from unmerged #36. Verification belongs in the PR; no Production acceptance.
 
 ## History exercise disclosure candidate — not yet accepted
 
