@@ -41,6 +41,8 @@ jobs:
           node scripts/workout-concurrency-db-fixture.cjs
           npx --no-install supabase test db --local test-results/workout-concurrency.test.sql
           node scripts/workout-concurrency-races.cjs --local
+          node scripts/workout-lifecycle-db-fixture.cjs
+          npx --no-install supabase test db --local test-results/workout-lifecycle.test.sql
       - name: Replay from empty local database and verify retry
         run: |
           npx --no-install supabase db reset --local --version 20261028042000 --no-seed
@@ -52,6 +54,7 @@ jobs:
           npx --no-install supabase test db --local test-results/workout-repository.test.sql
           npm run db:local:apply
           npx --no-install supabase test db --local test-results/workout-concurrency.test.sql
+          npx --no-install supabase test db --local test-results/workout-lifecycle.test.sql
           npx --no-install supabase db query --local --file supabase/verify-infrastructure.sql
       - name: Retain database evidence
         if: always()

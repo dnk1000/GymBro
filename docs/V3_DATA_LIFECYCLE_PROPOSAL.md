@@ -1,6 +1,6 @@
 # V3 cloud data lifecycle proposal — issue #41
 
-Status: **proposal; Needs decision**. No lifecycle implementation or approval is claimed. Prepared from freshly fetched accepted main `432b5bb32e39d10e3d61ce3d71b3af4841293ae8` on October 30, 2026 (America/New_York). Scope is [issue #41](https://github.com/dnk1000/GymBro/issues/41) only.
+Status: **approved design** at `75f2247fdccf32079fab32bbd43bcbea4a6e9e3c`. On October 30, 2026 the owner explicitly accepted #40 and requested completion of #41 based on that exact revision, approving its enumerated design and 3.12.0 mapping; recorded in [issue #41](https://github.com/dnk1000/GymBro/issues/41). This supersedes preparation-era pending wording below without rewriting historical evidence. Runtime verification and acceptance are tracked in [PR #79](https://github.com/dnk1000/GymBro/pull/79). Starting accepted main: `432b5bb32e39d10e3d61ce3d71b3af4841293ae8`. Scope is #41 only; no merge or Production operation is authorized.
 
 ## Authority, gate and requested decisions
 

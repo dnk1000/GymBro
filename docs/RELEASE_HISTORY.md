@@ -1,5 +1,9 @@
 # GymBro release history
 
+## Cloud lifecycle candidate — not accepted
+
+`3.12.0-20261030T180353Z`, #41/PR #79; workout schema 8, relational model 1/protocol 1; migration `20261030180000`. Approved design, synthetic Preview delivery; [canonical completion and acceptance evidence](https://github.com/dnk1000/GymBro/pull/79). No Production release, personal migration or cutover is claimed.
+
 ## Earlier #71-only Preview — historical, not accepted
 
 `3.11.3-20261030T171451Z`, schema 8 unchanged, was the original [PR #78](https://github.com/dnk1000/GymBro/pull/78) Preview from main 2255a91. After PR #76 merged as main 4278e34, the conflict resolution preserves that accepted runtime unchanged. Remaining #78 changes are the canonical design authority/reference and documentation; they produce no new application build. Its earlier Preview evidence remains historical, not current runtime or Production acceptance.
