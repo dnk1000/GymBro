@@ -3,8 +3,8 @@
 const APP_VERSION = (() => {
   const major = 3;
   const minor = 11;
-  const patch = 0;
-  const build = "20261030T164140Z";
+  const patch = 2;
+  const build = "20261030T170057Z";
   return Object.freeze({
     major,
     minor,

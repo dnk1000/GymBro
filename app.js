@@ -223,11 +223,15 @@ document.querySelectorAll(".tab").forEach(
       }
       document
         .querySelectorAll(".tab")
-        .forEach((x) => x.classList.remove("active"));
+        .forEach((x) => {
+          x.classList.remove("active");
+          x.removeAttribute("aria-current");
+        });
       document
         .querySelectorAll(".view")
         .forEach((x) => x.classList.remove("active"));
       t.classList.add("active");
+      t.setAttribute("aria-current", "page");
       document.getElementById(t.dataset.view).classList.add("active");
       if (t.dataset.view === "exercises") renderExercises();
       if (t.dataset.view === "history") renderHistory();
@@ -426,7 +430,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     h = canvas.height;
   c.clearRect(0, 0, w, h);
   c.font = "12px system-ui";
-  c.fillStyle = "#9eabc7";
+  c.fillStyle = getComputedStyle(canvas).getPropertyValue("--muted").trim();
   if (!pts.length) {
     c.fillText("Not enough data yet", 20, 30);
     return;
@@ -443,7 +447,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     pad.l +
     (w - pad.l - pad.r) * (pts.length === 1 ? 0.5 : i / (pts.length - 1));
   const y = (v) => pad.t + (h - pad.t - pad.b) * (1 - (v - min) / (max - min));
-  c.strokeStyle = "#2b3654";
+  c.strokeStyle = getComputedStyle(canvas).getPropertyValue("--line").trim();
   c.lineWidth = 1;
   for (let i = 0; i < 4; i++) {
     const yy = pad.t + ((h - pad.t - pad.b) * i) / 3;
@@ -454,7 +458,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     const val = max - ((max - min) * i) / 3;
     c.fillText(labelFn(val), 4, yy + 4);
   }
-  c.strokeStyle = "#66a6ff";
+  c.strokeStyle = getComputedStyle(canvas).getPropertyValue("--accent-text").trim();
   c.lineWidth = 3;
   c.beginPath();
   pts.forEach((p, i) => {
@@ -463,7 +467,7 @@ function lineChart(canvas, pts, labelFn = (v) => v) {
     i ? c.lineTo(xx, yy) : c.moveTo(xx, yy);
   });
   c.stroke();
-  c.fillStyle = "#eef3ff";
+  c.fillStyle = getComputedStyle(canvas).getPropertyValue("--text").trim();
   pts.forEach((p, i) => {
     const xx = x(i),
       yy = y(p.v);
