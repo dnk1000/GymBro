@@ -1,3 +1,7 @@
+## 3.10.1 — Compact History copy candidate
+
+Remove repeated exercise lists and instructional paragraphs from History. Keep sessionless context as a heading tooltip.
+
 ## 3.10.0 — History filters candidate
 
 Filter by exact recorded exercise, saved workout name, inclusive dates and source; reset all filters or see a clear no-match state. No stored-data change.

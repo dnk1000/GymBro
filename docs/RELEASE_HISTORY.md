@@ -1,5 +1,9 @@
 # GymBro release history
 
+## Compact History copy candidate — not yet accepted
+
+`3.10.1-20261030T163206Z`, #22; schema 8 unchanged. User-approved removal of guidance paragraphs and redundant exercise list; sessionless explanation moved to heading tooltip. Verification belongs in the existing PR; physical Safari pending.
+
 ## History filters candidate — not yet accepted
 
 `3.10.0-20261030T161206Z`, #22 alone; schema 8 unchanged. Exercise/workout/date/source filters and reset preserve historical facts/order. Separate from unmerged #36. Verification belongs in the PR; no Production acceptance.

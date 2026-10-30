@@ -1,3 +1,11 @@
+# Compact History copy refinement — issue #22
+
+Application version: `3.10.1-20261030T163206Z`
+Data schema: `8`
+Release status: **preparation**
+
+User requested removal of redundant History guidance and repeated exercise lists on October 30, 2026. Expanded cards retain exercise headings, recorded facts/notes and actions. Legacy / sessionless remains visible; its date-group explanation is available as a heading tooltip. No stored data/action/filter changes. Change Level 1 refinement within the existing issue PR. Current verification and physical Safari status belong in that PR completion report; not accepted or merged.
+
 # History filters candidate — issue #22
 
 Application version: `3.10.0-20261030T161206Z`
