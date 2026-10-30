@@ -1,7 +1,7 @@
 # GymBro PRD addendum — Workout Coach and trainer integration direction
 
-**Status:** Approved product decision addendum  
-**Date:** October 29, 2026  
+**Status:** Approved product decision addendum
+**Date:** October 29, 2026
 **Applies to:** `GymBro_PRD.md`, current architecture, trainer-evidence/guided-workout boundaries, and future trainer-integration work
 
 ## Authority and supersession
