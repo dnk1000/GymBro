@@ -1,5 +1,9 @@
 # GymBro release history
 
+## Mobile History candidate — not yet accepted
+
+`3.9.0-20261030T155016Z`, #36 alone; schema 8 unchanged. Phone set cards retain full labels/facts and existing correction actions; desktop tables remain. PR owns verification; physical Safari pending. No Production acceptance.
+
 ## History exercise disclosure candidate — not yet accepted
 
 `3.8.0-20261030T150933Z`, #21 alone; schema 8 unchanged. Consecutive exercise occurrences have independent collapsed summaries inside session/date cards. Recorded load/unit/reps summaries reveal existing ordered sets/actions. No data/schema/persistence change. Candidate verification belongs in the #21 PR; physical iPhone Safari remains unverified. No accepted Production release is claimed.

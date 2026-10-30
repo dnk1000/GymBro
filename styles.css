@@ -713,3 +713,23 @@ button:disabled {
 .note-editor output { margin-left: 8px; }
 .note-text { margin: 10px 0; }
 .note-text > div { white-space: pre-wrap; }
+
+/* #36: retain one ordered set/action DOM, stack it on phones. */
+.history-mobile-notes { display: none; }
+@media (max-width: 600px) {
+  .history-set-scroll { overflow: visible; }
+  .history-set-scroll .history-sets { display: block; min-width: 0; width: 100%; }
+  .history-sets thead { display: none; }
+  .history-sets tbody { display: block; }
+  .history-sets tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 10px 0; border-top: 1px solid var(--line); }
+  #historyTable .history-sets td { min-width: 0; padding: 5px; border: 0; white-space: normal; overflow-wrap: anywhere; }
+  .history-sets td::before { content: attr(data-label); display: block; color: var(--muted); font-size: 12px; }
+  .history-sets .history-set-exercise { grid-column: 1 / -1; grid-row: 1; font-weight: 600; }
+  .history-sets td:first-child, .history-sets td:nth-child(5), .history-sets td:nth-child(6),
+  .history-set-notes, .history-set-source, .history-set-controls { grid-column: 1 / -1; }
+  .history-desktop-notes { display: none; }
+  .history-mobile-notes { display: block; white-space: pre-wrap; }
+  .history-sets .set-record pre { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .history-sets .icon-button { width: 44px; min-width: 44px; height: 44px; }
+  .history-sets .set-record summary { white-space: normal; min-height: 44px; display: flex; align-items: center; }
+}

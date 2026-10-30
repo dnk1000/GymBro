@@ -1,3 +1,7 @@
+## 3.9.0 — Mobile History candidate
+
+Phone History set details stack without sideways review/action scrolling. Desktop tables remain; no historical data changes.
+
 # Changes
 
 ## 3.8.0 — History exercise disclosure candidate

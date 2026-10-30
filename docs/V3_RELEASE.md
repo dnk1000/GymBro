@@ -1,3 +1,11 @@
+# Mobile History candidate — issue #36
+
+Application version: `3.9.0-20261030T155016Z`
+Data schema: `8`
+Release status: **preparation**
+
+User approved 3.9.0 for #36 alone on October 30, 2026. Base 77bd5ab. Change Level 2. Narrow History set rows stack with full labels, key facts and reachable actions; desktop tables and existing selectors/actions remain. No data/schema change. Verification and pending physical Safari acceptance belong in the PR completion report. Not accepted or merged.
+
 # History exercise disclosure candidate — issue #21
 
 Application version: `3.8.0-20261030T150933Z`

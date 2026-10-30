@@ -1236,9 +1236,9 @@ test("History icon actions stay together, preserve accessible names and confirm 
     const a = await edit.boundingBox(),
       b = await remove.boundingBox();
     assert.equal(a.y, b.y);
-    assert.ok(b.x + b.width - a.x <= 60, "Actions fit within 60px");
+    assert.ok(b.x + b.width - a.x <= (width < 600 ? 92 : 60), "Actions fit their responsive row");
     assert.ok(
-      a.width === 28 && a.height === 28 && b.width === 28 && b.height === 28,
+      [a.width, a.height, b.width, b.height].every(size => size === (width < 600 ? 44 : 28)),
     );
     assert.equal(
       await p.evaluate(
@@ -1901,7 +1901,7 @@ test("History session cards and expanded record metadata fit narrow phones and d
       );
     assert.ok(regions.length > 1);
     assert.ok(
-      regions.every((item) => item.width <= width && item.overflow === "auto"),
+      regions.every((item) => item.width <= width && item.overflow === (width < 600 ? "visible" : "auto")),
     );
   }
 });
@@ -3010,3 +3010,32 @@ test('schema-7 note upgrade never writes at startup and stale-tab note save pres
   assert.equal(await p.locator('#sessionNote').inputValue(), 'my draft');
   assert.equal((await backup(p)).noteScopes.session.length, 0);
 });
+
+for (const width of [320, 390, 1280]) {
+  test(`mobile History set layout preserves full fields, reachable controls and data at ${width}px`, async (t) => {
+    const p = await app(t, { viewport: { width, height: 900 } });
+    const fixture = await sessionHistoryFixture(p);
+    const label = 'Very long canonical exercise label with unilateral seated cable shoulder external rotation';
+    await p.evaluate(([label, id]) => { db.sets.find(s => s.id === id).exercise = label; renderAll(); }, [label, fixture.a]);
+    const before = await backup(p), raw = await stored(p);
+    await showHistoryDetails(p);
+    const row = p.locator('[data-set-id="' + fixture.a + '"]');
+    assert.equal(await row.locator('td').nth(1).innerText(), '1. ' + label);
+    assert.match(await row.innerText(), /RPE 8.*2 RIR/);
+    assert.match(await row.innerText(), /3\/10 elbow/);
+    if (width < 600) {
+      assert.equal(await row.evaluate(el => getComputedStyle(el).display), 'grid');
+      assert.equal(await row.locator('.history-desktop-notes').isVisible(), false);
+      for (const name of ['Edit', 'Delete']) {
+        const b = await row.getByRole('button', { name, exact: true }).boundingBox();
+        assert(b.x >= 0 && b.x + b.width <= width && b.height >= 44);
+      }
+    } else assert.equal(await row.evaluate(el => getComputedStyle(el).display), 'table-row');
+    await row.locator('.set-record summary').click();
+    assert.match(await row.locator('.set-record pre').innerText(), /session-first/);
+    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(await backup(p), before);
+    assert.equal(await stored(p), raw);
+    await p.locator('#historyTable').screenshot({ path: 'test-results/issue36-' + width + '.png' });
+  });
+}
