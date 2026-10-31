@@ -34,17 +34,19 @@ async function fixture(){
     return {data:{...answer,operation:op,snapshot:saved}};
   }};
 }
-async function open(t,f,width){
+async function open(t,f,width,accountModule=false){
   const context=await browser.newContext({viewport:{width,height:844}});t.after(()=>context.close());const page=await context.newPage(),errors=[];
   page.setDefaultTimeout(8000);page.on('pageerror',e=>errors.push(e.message));
   await context.addInitScript(()=>{window.workoutReads=0;window.workoutWrites=0;const get=Storage.prototype.getItem,set=Storage.prototype.setItem;
     Storage.prototype.getItem=function(k){if(k==='daveGymTrackerV1')window.workoutReads++;return get.call(this,k);};
     Storage.prototype.setItem=function(k,v){if(k==='daveGymTrackerV1')window.workoutWrites++;return set.call(this,k,v);};});
-  await context.route('**/api/*',route=>route.fulfill({json:route.request().url().endsWith('/workout-config')?workoutConfig({...env,GYMBRO_PREVIEW_WORKOUT_OWNERS:f.owner}):{enabled:false}}));
+  await context.route('**/api/*',route=>route.fulfill({json:(route.request().url().endsWith('/workout-config')||(accountModule&&route.request().url().endsWith('/account-config')))?workoutConfig({...env,GYMBRO_PREVIEW_WORKOUT_OWNERS:f.owner}):{enabled:false}}));
   await context.route('**/synthetic-rpc',async route=>{const {name,args}=route.request().postDataJSON();try{await route.fulfill({json:await f.rpc(name,args)});}catch{await route.abort();}});
+  if(accountModule)await context.addInitScript(({owner})=>{window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user:{id:owner}}}}),getUser:async()=>({data:{user:{id:owner,is_anonymous:false,email:'synthetic@example.invalid'}}}),onAuthStateChange:()=>{}},rpc:async(name,args)=>fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})}).then(r=>r.json())})};},{owner:f.owner});
   await page.goto(origin+'/?storage=cloud');
   assert.deepEqual(errors,[]);
-  await page.evaluate(({owner,ref})=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{user:{id:owner},config:{projectRef:ref},client:{auth:{getUser:async()=>({data:{user:{id:owner,is_anonymous:false}}})},rpc:async(name,args)=>fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})}).then(r=>r.json())}}})),{owner:f.owner,ref});
+  if(!accountModule)await page.evaluate(({owner,ref})=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{user:{id:owner},config:{projectRef:ref},client:{auth:{getUser:async()=>({data:{user:{id:owner,is_anonymous:false}}})},rpc:async(name,args)=>fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})}).then(r=>r.json())}}})),{owner:f.owner,ref});
+  if(accountModule)await page.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');
   await page.locator('#cloudConnect').click();await page.waitForFunction(()=>!document.getElementById('migrationControls').disabled);
   t.after(()=>assert.deepEqual(errors,[],'uncaught normal-app browser errors'));
   return page;
@@ -122,3 +124,5 @@ for(const width of [320,390,1280])test('normal seven-view cloud app migrates, pr
   await page.locator('#cloudConnect').click();await page.waitForFunction(()=>cloudReady);assert.equal(await page.evaluate(()=>db.activeSessionId),f.sessionId);
   assert.deepEqual(await page.evaluate(()=>[window.workoutReads,window.workoutWrites]),[0,0]);
 });
+
+test('cloud entry initializes the existing account module before connecting, without a second Data click',async t=>{const f=await fixture(),page=await open(t,f,390,true);assert.equal(await page.locator('#accountStatus').textContent(),'Account restored.');assert.equal(f.calls.filter(x=>x.args.packet).length,0);assert.deepEqual(await page.evaluate(()=>[window.workoutReads,window.workoutWrites]),[0,0]);});

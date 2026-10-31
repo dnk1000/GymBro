@@ -1,3 +1,13 @@
+# Issue #28 account-entry correction
+
+Release status: **preparation**
+
+Application version: `3.13.2-20261031T024749Z`
+
+Data schema: `8`
+
+The signed normal-app test exposed Data selection before account-handler registration. Load account access before cloud entry; authentication/persistence contracts remain unchanged. The owner explicitly approved scoped PATCH increments for fixes within #28. Actual verification: PR #80. Personal readiness and Production remain gated.
+
 # Issue #28 compatibility follow-up
 
 Release status: **preparation**

@@ -1,3 +1,7 @@
+## 3.13.2 — Preview account-entry correction
+
+Register account access before cloud mode selects Data so the existing account restoration starts on first entry.
+
 ## 3.13.1 — Preview compatibility corrections
 
 Preserve preference labels/legacy catalog status in cloud presentation; clear obsolete drafts after acknowledged replacement, fail closed on verification metadata failure and wrap narrow Data summaries.

@@ -1,3 +1,7 @@
+# Pending #28 account-entry correction
+
+`3.13.2-20261031T024749Z`, schema 8. Owner-approved Preview PATCH; verification/exact revision in PR #80. No Production acceptance or cutover.
+
 # Pending #28 follow-up
 
 `3.13.1-20261031T022844Z`, schema 8. Owner-approved candidate PATCH; verification/exact revision in PR #80. No Production acceptance/cutover.
