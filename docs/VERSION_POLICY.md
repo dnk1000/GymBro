@@ -85,3 +85,6 @@ The owner approved **3.13.0 for #28 alone** against amended proposal `477f31e474
 The owner explicitly approved **3.13.1 PATCH** for the #28 compatibility corrections in the implementation chat, preserving the 3.13.0/#28 mapping. This resolves the prior automatic approval rejection; merge, Production and personal migration remain separately gated.
 
 The owner subsequently approved **scoped PATCH increments** required for fixes strictly within the approved #28 scope, including 3.13.2. This does not authorize new features/minors, another issue, Production, personal migration or merge.
+
+
+The owner approved **3.14.0 for #42 alone** on October 31, 2026 by approving the exact [operational recovery design](V3_OPERATIONAL_RECOVERY_PROPOSAL.md) at `0925f8a` and continuing implementation. This is a candidate mapping, not merge, Production, personal migration or acceptance approval.

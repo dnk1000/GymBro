@@ -34,10 +34,10 @@ async function fixture(){
     return {data:{...answer,operation:op,snapshot:saved}};
   }};
 }
-async function open(t,f,width,accountModule=false){
+async function open(t,f,width,accountModule=false,failedLoad=false){
   const context=await browser.newContext({viewport:{width,height:844}});t.after(()=>context.close());const page=await context.newPage(),errors=[];
   page.setDefaultTimeout(8000);page.on('pageerror',e=>errors.push(e.message));
-  await context.addInitScript(()=>{window.workoutReads=0;window.workoutWrites=0;const get=Storage.prototype.getItem,set=Storage.prototype.setItem;
+  await context.addInitScript(()=>{window.addEventListener('gymbro-account',event=>{if(event.detail)window.lastVerifiedAccount=event.detail;});window.workoutReads=0;window.workoutWrites=0;const get=Storage.prototype.getItem,set=Storage.prototype.setItem;
     Storage.prototype.getItem=function(k){if(k==='daveGymTrackerV1')window.workoutReads++;return get.call(this,k);};
     Storage.prototype.setItem=function(k,v){if(k==='daveGymTrackerV1')window.workoutWrites++;return set.call(this,k,v);};});
   await context.route('**/api/*',route=>route.fulfill({json:(route.request().url().endsWith('/workout-config')||(accountModule&&route.request().url().endsWith('/account-config')))?workoutConfig({...env,GYMBRO_PREVIEW_WORKOUT_OWNERS:f.owner}):{enabled:false}}));
@@ -47,14 +47,16 @@ async function open(t,f,width,accountModule=false){
   assert.deepEqual(errors,[]);
   if(!accountModule)await page.evaluate(({owner,ref})=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{user:{id:owner},config:{projectRef:ref},client:{auth:{getUser:async()=>({data:{user:{id:owner,is_anonymous:false}}})},rpc:async(name,args)=>fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})}).then(r=>r.json())}}})),{owner:f.owner,ref});
   if(accountModule)await page.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');
-  await page.locator('#cloudConnect').click();await page.waitForFunction(()=>!document.getElementById('migrationControls').disabled);
+  await page.locator('#cloudConnect').click();
+  if(failedLoad)await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('could not load'));
+  else await page.waitForFunction(()=>!document.getElementById('migrationControls').disabled);
   t.after(()=>assert.deepEqual(errors,[],'uncaught normal-app browser errors'));
   return page;
 }
 for(const width of [320,390,1280])test('normal seven-view cloud app migrates, preserves drafts under lost ack, reloads and exports at '+width+'px',async t=>{
   const f=await fixture(),page=await open(t,f,width);
   const upload=async source=>page.locator('#migrationFile').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(source))});
-  await upload({...f.source,extension:{}});await page.locator('#migrationReview').click();await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('untagged'));
+  await upload({...f.source,extension:{}});await page.locator('#migrationReview').click();await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('could not be validated'));
   assert.equal(f.calls.filter(c=>c.args.packet).length,0);
   await upload(f.source);await page.locator('#migrationReview').click();await page.waitForFunction(()=>!document.getElementById('migrationCommit').disabled);
   page.on('dialog',d=>d.accept());await page.locator('#migrationCommit').click();await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('Migration verified'));
@@ -130,3 +132,54 @@ for(const width of [320,390,1280])test('normal seven-view cloud app migrates, pr
 test('cloud entry initializes the existing account module before connecting, without a second Data click',async t=>{const f=await fixture(),page=await open(t,f,390,true);assert.equal(await page.locator('#accountStatus').textContent(),'Account restored.');assert.equal(f.calls.filter(x=>x.args.packet).length,0);assert.deepEqual(await page.evaluate(()=>[window.workoutReads,window.workoutWrites]),[0,0]);});
 
 test('verified refresh of the same account retains the cloud controller and selected migration file',async t=>{const f=await fixture(),page=await open(t,f,390,true);await page.locator('#migrationFile').setInputFiles({name:'selected-synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});await page.evaluate(()=>{window.originalCloudController=cloudController;});await page.locator('#accountRefresh').click();await page.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');assert.equal(await page.evaluate(()=>cloudController===window.originalCloudController),true);assert.equal(await page.locator('#migrationFile').evaluate(e=>e.files[0]?.name),'selected-synthetic.json');});
+
+for(const width of [320,390,1280])test('diagnostics: failed initial read is unavailable, safely retryable and never an empty account at '+width+'px',async t=>{
+ const f=await fixture(),rpc=f.rpc;let fail=true;
+ f.rpc=async(name,args)=>fail?{status:503,error:{code:'57P01',message:'NEVER_EMIT_SECRET',details:'private rows'}}:rpc(name,args);
+ const p=await open(t,f,width,false,true);
+ assert.equal(await p.evaluate(()=>cloudController),null);assert.equal(await p.locator('#migrationControls').evaluate(e=>e.disabled),true);
+ assert.equal(await p.locator('#workout fieldset').evaluate(e=>e.hidden&&e.disabled),true);
+ const text=await p.locator('#previewCloud > details pre').textContent();assert(!text.includes('NEVER_EMIT_SECRET'));assert(text.includes('DATABASE'));assert(text.includes('Preview'));assert(!text.includes(f.owner));
+ await p.locator('#previewCloud > details').evaluate(e=>e.open=true);
+ await p.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('denied');}}}));
+ await p.locator('#previewCloud > details button').click();assert.match(await p.locator('#previewCloud > details [role=status]').textContent(),/Select and copy/);
+ assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ fail=false;await p.locator('#cloudConnect').click();await p.waitForFunction(()=>cloudController!==null);
+ assert.match(await p.locator('#cloudStatus').textContent(),/Verified cloud state: uninitialized/);
+ assert.equal(f.calls.filter(c=>c.args.packet).length,0);assert.deepEqual(await p.evaluate(()=>[workoutReads,workoutWrites]),[0,0]);
+});
+test('diagnostics: same-account reconnect preserves pending packet, exact drafts, selected source and input privacy on sign-out',async t=>{
+ const f=await fixture();f.document.data.extension.previewMigrationFixture=tag;
+ await f.rpc('gymbro_migration_initialize',{packet:{next:plain(f.repository.project(f.document,f.owner,f.bodyweightIds)),expectedRevision:'0',operation:['initializeMigration','diagnostic-setup'],result:{changes:['workoutData']}}});
+ const p=await open(t,f,390),exercise=f.getSaved().rows.exercises[0].exercise_id;
+ await p.locator('#migrationFile').setInputFiles({name:'keep-source.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});
+ await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());await p.locator('#fExercise').selectOption(exercise);await p.locator('#fDate').fill('2026-10-28');await p.locator('#fWeight').fill('0');await p.locator('#fReps').fill('7');await p.locator('#fNotes').fill('  exact private draft\n');
+ await p.evaluate(()=>{window.originalCloudController=cloudController;});f.lose();await p.locator('#saveSetBtn').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');
+ const original=f.calls.filter(c=>c.args.packet).at(-1).args.packet,count=f.getSaved().rows.sets.length;
+ await p.locator('[data-view="data"]').click();await p.locator('#cloudConnect').click();assert.equal(await p.evaluate(()=>cloudController===originalCloudController),true);
+ assert.equal(await p.evaluate(()=>cloudController.getStatus().phase),'OUTCOME_UNKNOWN');assert.equal(await p.locator('#fNotes').inputValue(),'  exact private draft\n');assert.equal(await p.locator('#migrationFile').evaluate(e=>e.files[0].name),'keep-source.json');
+ assert(!((await p.locator('#previewCloud > details pre').textContent()).includes('private draft')));
+ await p.evaluate(()=>window.dispatchEvent(new Event('gymbro-account-unavailable')));assert.equal(await p.evaluate(()=>cloudReady),false);assert.equal(await p.locator('#fNotes').inputValue(),'  exact private draft\n');
+ await p.evaluate(()=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:window.lastVerifiedAccount})));
+ await p.locator('#cloudRetry').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+ assert.equal(f.getSaved().rows.sets.length,count);assert.deepEqual(f.calls.filter(c=>c.args.packet).at(-1).args.packet,original);
+ const rpc=f.rpc;f.rpc=async()=>({status:401,error:{code:'PGRST301',message:'secret token'}});await p.locator('#cloudRefresh').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='LOAD_ERROR');
+ assert.match(await p.locator('#cloudStatus').textContent(),/fresh sign-in link/);f.rpc=rpc;await p.locator('#cloudRefresh').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+ await p.evaluate(()=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:null})));assert.equal(await p.locator('#fNotes').inputValue(),'');assert.equal(await p.evaluate(()=>cloudController),null);
+});
+
+test('diagnostics: changed backend environment invalidates same-owner/client drafts and controller',async t=>{
+ const f=await fixture(),p=await open(t,f,390);
+ await p.locator('#migrationFile').setInputFiles({name:'private-source.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});
+ await p.evaluate(()=>{window.originalCloudController=cloudController;fNotes.value='private draft';const previous=window.lastVerifiedAccount;window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{...previous,config:{...previous.config,environment:'changed'}}}));});
+ assert.equal(await p.evaluate(()=>cloudController),null);assert.equal(await p.evaluate(()=>originalCloudController.getStatus().phase),'DISPOSED');assert.equal(await p.locator('#fNotes').inputValue(),'');assert.equal(await p.locator('#migrationFile').evaluate(e=>e.files.length),0);
+});
+
+test('diagnostics: acknowledged migration with failed readback stays blocked and distinct from an unsaved request',async t=>{
+ const f=await fixture(),rpc=f.rpc;let failReadback=false;
+ f.rpc=async(name,args)=>{if(name==='gymbro_lifecycle_snapshot'&&failReadback)return {status:503,error:{code:'57P01'}};const result=await rpc(name,args);if(name==='gymbro_migration_initialize')failReadback=true;return result;};
+ const p=await open(t,f,390);p.on('dialog',d=>d.accept());await p.locator('#migrationFile').setInputFiles({name:'source.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});await p.locator('#migrationReview').click();await p.waitForFunction(()=>!document.getElementById('migrationCommit').disabled);await p.evaluate(()=>document.getElementById('migrationCommit').onclick());await p.waitForFunction(()=>cloudController.getStatus().phase==='LOAD_ERROR');
+ assert.equal(f.getSaved().revision,'1');assert.equal(await p.evaluate(()=>cloudReady),false);assert.equal(await p.locator('#fNotes').isDisabled(),true);
+ assert.match(await p.locator('#cloudStatus').textContent(),/migration.*acknowledged|Migration acknowledged/);
+ assert.equal(await p.evaluate(()=>sessionStorage.getItem('gymbro-migration-parity-v1-'+cloudController.getSnapshot().ownerId)),'pending');
+});

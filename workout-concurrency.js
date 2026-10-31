@@ -24,7 +24,7 @@ const WorkoutConcurrency = (() => {
     if (!revision(initial.revision) || initial.protocolVersion !== 1 || initial.ownerId !== ownerId)
       throw Error("A verified protocol-1 load handle is required.");
     let committed = clone(initial), phase = "READY", alive = true, generation = 0, refreshSequence = 0, activity = 0;
-    let packet = null, operation = null, awaiting = false;
+    let packet = null, operation = null, awaiting = false, diagnostic = null;
     const key = `gymbro-request-recovery-v1-${ownerId}`;
     const state = () => committed.document ? clone(committed.document) : null;
     const result = (code, extra = {}) => ({ ok: ["OK","REPLAY","NO_CHANGE"].includes(code), code,
@@ -56,7 +56,7 @@ const WorkoutConcurrency = (() => {
       if (awaiting) return result("PENDING");
       if (!operation || (!resolving && !packet)) return result(phase);
       const currentGeneration = generation;
-      awaiting = true; phase = "PENDING";activity++;
+      awaiting = true; phase = "PENDING"; diagnostic = null;activity++;
       let response, acknowledged = false;
       try {
         response = resolving ? await repository.resolve(operation) : await repository.submit(packet);
@@ -64,6 +64,7 @@ const WorkoutConcurrency = (() => {
         if (!["OK","REPLAY","NO_CHANGE","CANCELLED","CONFLICT","REQUEST_CONFLICT","VALIDATION_ERROR","AUTHORIZATION_ERROR"].includes(response.code)) throw Error("response");
         if (response.code === "REQUEST_CONFLICT") { phase = "REQUEST_CONFLICT"; return result("REQUEST_CONFLICT"); }
         if (["OK","REPLAY","NO_CHANGE","CANCELLED"].includes(response.code)) adopt(response.saved);
+        diagnostic = response.diagnostic ?? null;
         acknowledged = true;
         // Clear only an acknowledged terminal operation. Failure to clear leaves
         // the recovery marker and request frozen so a reload remains safe.
@@ -72,8 +73,9 @@ const WorkoutConcurrency = (() => {
         packet = null; operation = null;
         return result(response.code, { ...response.result, operationRevision: response.operationRevision,
           revision: committed.revision, changes: response.code === "OK" ? response.result?.changes ?? [] : [] });
-      } catch {
+      } catch (error) {
         if (!alive || currentGeneration !== generation) return result("DISPOSED");
+        diagnostic = OperationalDiagnostics.classify(error);
         phase = acknowledged ? "RECOVERY_PENDING" : "OUTCOME_UNKNOWN";
         return result(phase);
       } finally { awaiting = false; }
@@ -82,11 +84,11 @@ const WorkoutConcurrency = (() => {
       getWorkoutState: state,
       getSnapshot: () => clone(committed),
       getStatus: () => ({ phase, revision: committed.revision, canRetry: !!packet && !awaiting,
-        canResolve: !!operation && !awaiting, operation: clone(operation), message: messages[phase] ?? "" }),
+        canResolve: !!operation && !awaiting, operation: clone(operation), diagnostic, message: messages[phase] ?? "" }),
       async execute(name, ...args) {
         if (!alive) return result("DISPOSED");
         if (phase !== "READY") return result(phase);
-        phase = "PENDING";activity++;
+        phase = "PENDING";diagnostic = null;activity++;
         const currentGeneration = generation;
         const base = clone(committed);
         try {
@@ -102,7 +104,7 @@ const WorkoutConcurrency = (() => {
                 if (!alive || currentGeneration !== generation) return result("DISPOSED");
                 if (replay.candidate || replay.result.code !== prepared.result.code) { phase="CONFLICT";return result("CONFLICT"); }
                 phase="READY";return { ...replay.result,state:state() };
-              } catch { phase="LOAD_ERROR";return result("LOAD_ERROR"); }
+              } catch (error) { diagnostic=OperationalDiagnostics.classify(error);phase="LOAD_ERROR";return result("LOAD_ERROR"); }
             }
             phase = "READY"; return { ...prepared.result, state: state() };
           }
@@ -125,12 +127,12 @@ const WorkoutConcurrency = (() => {
           if (sequence !== refreshSequence) return result("NO_CHANGE");
           const accepted=adopt(loaded);
           if (accepted && currentActivity===activity && phase===priorPhase && !operation && !awaiting &&
-            !["PENDING","RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) phase = "READY";
+            !["PENDING","RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) {phase = "READY";diagnostic=null;}
           return result("NO_CHANGE", { revision: committed.revision });
-        } catch {
+        } catch (error) {
           if (!alive || currentGeneration !== generation) return result("DISPOSED");
           if(sequence!==refreshSequence || currentActivity!==activity || phase!==priorPhase) return result("NO_CHANGE");
-          if (!operation && !awaiting && !["PENDING","RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) phase = "LOAD_ERROR";
+          if (!operation && !awaiting && !["PENDING","RECOVERY_ERROR","RECOVERY_BLOCKED"].includes(phase)) {phase = "LOAD_ERROR";diagnostic=OperationalDiagnostics.classify(error);}
           return result("LOAD_ERROR");
         }
       },

@@ -1,7 +1,7 @@
 // #41 opt-in cloud lifecycle. No startup store access or automatic migration.
 const WorkoutLifecycle = (() => {
   const clone = x => structuredClone(x);
-  const check = (ok, message) => { if (!ok) throw Error(message); };
+  const check = (ok, message) => { if (!ok) throw OperationalDiagnostics.failure(/Unsupported|version|format/i.test(message)?'COMPATIBILITY':'VALIDATION',message,true); };
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   const rowsOf = (value, owner) => WorkoutRepository.project(value.document,owner,value.bodyweightIds,value.signatureSchemes);
   function validatePayload(value, owner) {
@@ -21,7 +21,7 @@ const WorkoutLifecycle = (() => {
   }
   async function parse(text, owner, {catalog,createBodyweightId=()=>crypto.randomUUID()} = {}) {
     check(uuid.test(owner),'Authenticated destination owner required.');
-    const file=JSON.parse(text);
+    let file;try{file=JSON.parse(text);}catch{throw OperationalDiagnostics.failure('VALIDATION','Could not read JSON. Select a valid complete backup.',true);}
     if (isObject(file) && (file.format==='gymbro-cloud-backup' ||
       (!Array.isArray(file.sets) && (Object.hasOwn(file,'format') || Object.hasOwn(file,'formatVersion'))))) {
       check(file.format==='gymbro-cloud-backup' && file.formatVersion===1,'Unsupported cloud backup format. Keep the original file.');
@@ -105,19 +105,21 @@ const WorkoutLifecycle = (() => {
     check(uuid.test(ownerId),'Verified owner required.');
     async function rpc(name,args={}) {
       const reply=await client.rpc(name,args);
-      if(reply.error) {const e=Error('Cloud lifecycle operation was rejected.');e.code=reply.error.code;throw e;}
+      if(reply.error) {throw OperationalDiagnostics.transport(reply.error,reply.status);}
       check(reply.data,'Cloud acknowledgement missing.');return reply.data;
     }
     function decode(raw) {
+      try {
       check(raw?.ownerId===ownerId && raw.protocolVersion===1 && WorkoutConcurrency.revision(raw.revision) &&
         /^[0-9a-f]{64}$/.test(raw.fingerprint??'') && ['healthy','unreadable','uninitialized'].includes(raw.status),'Invalid authoritative lifecycle snapshot.');
       if(raw.status==='healthy') return {...raw,initialized:true,...WorkoutRepository.assemble(raw.rows,ownerId)};
       return {...raw,initialized:false};
+      } catch { throw OperationalDiagnostics.failure('COMPATIBILITY','Invalid authoritative lifecycle snapshot.'); }
     }
     async function transmit(name,args,operation,packet) {
       let reply;
       try {reply=await rpc(name,args);} catch(e) {
-        if(/^(?:22|23|42|P0001)/.test(e.code??'')) return {code:e.code==='42501'?'AUTHORIZATION_ERROR':'VALIDATION_ERROR'};
+        if(/^(?:22|23|42|P0001)/.test(e.code??'')) return {code:e.code==='42501'?'AUTHORIZATION_ERROR':'VALIDATION_ERROR',diagnostic:OperationalDiagnostics.classify(e)};
         throw e;
       }
       check(sameSessionData(reply.operation,operation),'Wrong lifecycle acknowledgement.');

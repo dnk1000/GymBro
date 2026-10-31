@@ -18,7 +18,7 @@
       // The allowlist admits only operator-created empty/marked synthetic owners.
       if(initial.status==='healthy'&&initial.document.data.extension?.lifecycleFixture!==config.fixtureTag)throw Error('Unexpected fixture contents.');
       const controller=WorkoutLifecycle.createController({initial,repository,recoveryStorage:sessionStorage});
-      panel=WorkoutLifecyclePanel.mount(el('lifecycle'),{controller,environment:'GymBro-Staging Preview — synthetic data',ownerId:user.id});
+      panel=WorkoutLifecyclePanel.mount(el('lifecycle'),{controller,environment:'GymBro-Staging Preview — synthetic data',ownerId:user.id,config});
       message('Synthetic staging account connected.');
     }catch(e){if(generation===epoch)message('Synthetic session could not be verified. No lifecycle operation is enabled.');}
   }

@@ -161,14 +161,14 @@ const WorkoutRepository = (() => {
     async function rpc(name, args) {
       const result = await client.rpc(name, args);
       if (result.error) {
-        const error = Error("Database operation was rejected.");
-        error.code = result.error.code;
+        const error = OperationalDiagnostics.transport(result.error,result.status);
         throw error;
       }
       check(result.data, "Database operation was not acknowledged.");
       return result.data;
     }
     function snapshot(value) {
+      try {
       check(value?.protocolVersion === 1 && value.ownerId === ownerId && WorkoutConcurrency.revision(value.revision), "Invalid protocol snapshot.");
       const rows = value.rows;
       if (rows.workout_state?.length === 0) {
@@ -176,6 +176,7 @@ const WorkoutRepository = (() => {
         return { initialized:false, protocolVersion:1, ownerId, revision:value.revision };
       }
       return { initialized:true, protocolVersion:1, ownerId, revision:value.revision, ...assemble(rows,ownerId) };
+      } catch { throw OperationalDiagnostics.failure('COMPATIBILITY','Invalid protocol snapshot.'); }
     }
     function prepare(before, after, context) {
       check(WorkoutConcurrency.revision(before?.revision ?? "0"), "Loaded revision required.");
@@ -192,7 +193,7 @@ const WorkoutRepository = (() => {
       try { response = await rpc(name,args); }
       catch(error) {
         if (/^(?:22|23|42|P0001)/.test(error.code ?? ""))
-          return {code:error.code==="42501" ? "AUTHORIZATION_ERROR" : "VALIDATION_ERROR"};
+          return {code:error.code==="42501" ? "AUTHORIZATION_ERROR" : "VALIDATION_ERROR",diagnostic:OperationalDiagnostics.classify(error)};
         throw error;
       }
       check(JSON.stringify(response.operation)===JSON.stringify(operation), "Wrong request acknowledgement.");

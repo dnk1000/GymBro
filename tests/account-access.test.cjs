@@ -105,7 +105,7 @@ test('failed sign-out is not reported as success and failed access check clears 
   const options={}; const f=await fixture(t,options); await signIn(f);
   await f.page.locator('#accountCheck').click(); await f.page.waitForFunction(()=>document.getElementById('accountCheckResult').textContent !== '');
   options.checkError=true; await f.page.locator('#accountCheck').click();
-  await f.page.waitForFunction(()=>document.getElementById('accountStatus').textContent.startsWith('Account request failed'));
+  await f.page.waitForFunction(()=>document.getElementById('accountStatus').textContent.includes('not authorized'));
   assert.equal(await f.page.locator('#accountCheckResult').textContent(),'');
   options.logoutError=true; await f.page.locator('#accountSignOut').click();
   await f.page.waitForFunction(()=>document.getElementById('accountStatus').textContent.includes('revocation could not be confirmed'));

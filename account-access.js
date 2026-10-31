@@ -6,6 +6,7 @@
   const callbackError = /(?:^#|&)error=/.test(location.hash);
   const callbackSession = /(?:^#|&)access_token=/.test(location.hash);
   let client, config, initializing, busy = false, user = null, generation = 0, refreshPending = false;
+  const support=OperationalDiagnostics.mount(card,{operation:'account',mode:typeof cloudMode!=='undefined'&&cloudMode?'cloud':'local'});
 
   async function timedFetch(url, options = {}) {
     const controller = new AbortController();
@@ -14,6 +15,7 @@
     else options.signal?.addEventListener("abort", abort, { once: true });
     const timer = setTimeout(abort, 15000);
     try { return await fetch(url, { ...options, signal: controller.signal }); }
+    catch(error) { if(controller.signal.aborted)throw OperationalDiagnostics.failure("TIMEOUT","Account request timed out.");throw error; }
     finally { clearTimeout(timer); options.signal?.removeEventListener("abort", abort); }
   }
   function controls() {
@@ -31,24 +33,25 @@
   }
   async function verifiedUser() {
     const { data, error } = await client.auth.getUser();
-    if (error) throw error;
-    if (!data.user?.id || data.user.is_anonymous || !data.user.email) throw Error("identity");
+    if (error) {window.dispatchEvent(new Event("gymbro-account-unavailable"));throw OperationalDiagnostics.transport(error);}
+    if (!data.user?.id || data.user.is_anonymous || !data.user.email) {window.dispatchEvent(new Event("gymbro-account-unavailable"));throw OperationalDiagnostics.failure("AUTH","Identity could not be verified.");}
     return data.user;
   }
   async function restore() {
     const { data, error } = await client.auth.getSession();
-    if (error) throw error;
+    if (error) {window.dispatchEvent(new Event("gymbro-account-unavailable"));throw error;}
     if (!data.session) { invalidate(); return; }
     const revision = generation;
     const next = await verifiedUser();
     if (revision === generation) { user = next; window.dispatchEvent(new CustomEvent("gymbro-account",{detail:{user,client,config}})); }
   }
   function message(error) {
-    if (error.code === "logout_unconfirmed")
+    const code = (()=>{try{return Object.getOwnPropertyDescriptor(error,"code")?.value;}catch{return null;}})();
+    if (code === "logout_unconfirmed")
       return "Signed out locally, but server session revocation could not be confirmed. Check your connection and request a fresh link before using this account again.";
-    if (error.status === 429 || /rate_limit/.test(error.code || ""))
+    if (OperationalDiagnostics.classify(error) === "RATE_LIMIT")
       return "Too many requests. Wait before requesting another sign-in link.";
-    return "Account request failed. Check your connection and try again. Your workouts are unchanged.";
+    return support.update({error,config});
   }
   async function run(action) {
     if (busy || !client) return;
@@ -78,9 +81,10 @@
       const response = await timedFetch("/api/account-config", { cache: "no-store" });
       if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) return;
       config = await response.json();
+      support.update({config});
       if (!config.enabled) return;
       card.hidden = false;
-      if (!config.configured) { status.textContent = "Account access is not configured. " + config.message; return; }
+      if (!config.configured) { status.textContent = support.update({config,error:OperationalDiagnostics.failure("CONFIGURATION","Account configuration unavailable.")}); return; }
       el("accountEnvironment").textContent = `Preview accounts · ${config.projectRef} · separate from Production`;
       if (!window.supabase?.createClient) await new Promise((resolve, reject) => {
         const script = document.createElement("script");
@@ -108,7 +112,7 @@
       await run(async () => {
         await restore(); status.textContent = restoredMessage();
       });
-    } catch { status.textContent = "Account access could not load. Reopen Data to retry. Workouts remain available."; }
+    } catch (error) { status.textContent = "Account access could not load. Reopen Data to retry. "+support.update({error,config}); }
     finally { initializing = !!client; }
   }
   el("accountRequest").addEventListener("click", () => {

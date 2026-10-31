@@ -62,7 +62,7 @@ test('emergency cannot be requested for healthy data or via network failure',asy
   const text=JSON.stringify(f.lifecycle.backup(f.handle));
   assert.equal((await controller.execute('restoreCompleteBackup',{text,confirmed:true,emergencyConfirmed:true,rawOffered:true})).code,'VALIDATION_ERROR');assert.equal(calls,0);
   const broken=f.lifecycle.createRepository({ownerId:f.owner,client:{rpc:async()=>({error:{code:'network'}})}});
-  await assert.rejects(broken.load(),/rejected/);
+  await assert.rejects(broken.load(),/Cloud operation could not be verified/);
 });
 test('local cleanup requires accepted cutover, exact raw backup, unchanged bytes and explicit separate confirmation',async()=>{
   const f=await setup(),s=storage();s.setItem('daveGymTrackerV1','{corrupt future raw');s.setItem('auth','retained');

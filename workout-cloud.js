@@ -49,7 +49,7 @@ const WorkoutCloud = (() => {
       return WorkoutRepository.prepareAction(working,name,args,{createId:()=>crypto.randomUUID()});
     }
     controller=WorkoutConcurrency.create({initial,repository,recoveryStorage,prepare});
-    const call=async(method,...args)=>{const pending=controller[method](...args);onChange(facade);const result=await pending;onChange(facade,result);return result;};
+    const call=async(method,...args)=>{const operation=method==='execute'?({initializeMigration:'migration',restoreCompleteBackup:'restore',mergeHistoryBackup:'merge'}[args[0]]??'save'):method==='refresh'?'refresh':'resolution';const pending=controller[method](...args);onChange(facade,undefined,operation);const result=await pending;onChange(facade,result,operation);return result;};
     const facade=Object.freeze({...controller,execute:(...args)=>call('execute',...args),refresh:()=>call('refresh'),retry:()=>call('retry'),resolve:()=>call('resolve')});
     return facade;
   }

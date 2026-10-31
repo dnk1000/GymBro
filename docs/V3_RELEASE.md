@@ -1,3 +1,23 @@
+# Issue #42 diagnostic-authority clarification
+
+Release status: **preparation**
+
+Application version: `3.14.1-20261031T124231Z`
+
+Data schema: `8`
+
+Preserves remote clarification 804ba9a: retain drafts/controllers only across matching verified owner, backend/project/environment and controller generation. Diagnostic action labels use authoritative flags. Same approved #42 scope and 3.14.x mapping; actual verification and pending gates: PR #81. No Production acceptance or cutover.
+
+# Issue #42 operational diagnostics and recovery
+
+Release status: **preparation**
+
+Application version: `3.14.0-20261031T123431Z`
+
+Data schema: `8`
+
+Owner-approved design `0925f8a` and 3.14.0/#42 mapping. Safe support summaries and deliberate account/cloud recovery reuse the existing protocol. No schema, migration, telemetry, Production acceptance or cutover. Actual verification and pending gates: [PR #81](https://github.com/dnk1000/GymBro/pull/81).
+
 # Issue #28 export and cloud presentation correction
 
 Release status: **preparation**

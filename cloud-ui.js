@@ -27,42 +27,55 @@ function renderCloudExerciseInput() {
     <fieldset id="migrationControls" disabled><legend>Deliberate synthetic migration</legend><input id="migrationFile" type="file" accept="application/json" aria-label="Synthetic migration fixture">
     <button id="migrationReview">Validate and review synthetic fixture</button><pre id="migrationSummary" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
     <button id="migrationCommit" disabled>Confirm synthetic migration</button><button id="migrationReport" disabled>Download comparison report</button></fieldset><div id="cloudLifecycle"></div>`;
-  const el=id=>document.getElementById(id);let account=null,epoch=0,panel=null,review=null,report=null,config=null,shownRevision=null;
+  const el=id=>document.getElementById(id);let account=null,epoch=0,panel=null,review=null,report=null,config=null,shownRevision=null,accountBlocked=false,accountContext=null,controllerEpoch=null;
   const say=text=>el('cloudStatus').textContent=text;
-  function publish(controller,result){
+  const support=OperationalDiagnostics.mount(host);
+  function diagnose(error,operation='initial load') {say(support.update({error,operation,config,status:cloudController?.getStatus(),handle:cloudController?.getSnapshot()}));}
+  function publish(controller,result,operation='initial load'){
     if(controller!==cloudController)return;
     const h=controller.getSnapshot(),s=controller.getStatus();panel?.update(result);
     if(result?.ok && result.changes?.includes('workoutData')){noteDrafts.clear();selectedNoteOccurrence=null;clearForm();clearInbox();}
     let parityBlocked=true;try{parityBlocked=sessionStorage.getItem(`gymbro-migration-parity-v1-${h.ownerId}`)!==null;}catch{say('Request recovery metadata is unavailable; saving is paused.');}
-    cloudReady=h.status==='healthy'&&!parityBlocked;
+    cloudReady=h.status==='healthy'&&!parityBlocked&&!accountBlocked;
     if(cloudReady && shownRevision!==h.revision){db=WorkoutRepository.presentation(h.document);shownRevision=h.revision;renderAll();}
     for(const f of fields)f.disabled=!cloudReady||s.phase!=='READY';
-    el('migrationControls').disabled=s.phase!=='READY';el('migrationCommit').disabled=!review||s.phase!=='READY';
-    el('cloudRetry').disabled=!s.canRetry;el('cloudResolve').disabled=!s.canResolve;
-    say(parityBlocked&&h.status==='healthy'?'Migration verification or recovery metadata is pending; editing is blocked.':s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
+    el('migrationControls').disabled=accountBlocked||s.phase!=='READY';el('migrationCommit').disabled=accountBlocked||!review||s.phase!=='READY';
+    el('cloudRetry').disabled=accountBlocked||!s.canRetry;el('cloudResolve').disabled=accountBlocked||!s.canResolve;
+    el('cloudLifecycle').querySelectorAll('fieldset[data-controls]').forEach(f=>f.disabled=accountBlocked);
+    const diagnosticMessage=support.update({operation,config,status:{...s,code:result?.code},handle:h,parity:parityBlocked&&h.status==='healthy'});
+    say(s.diagnostic || s.phase==='LOAD_ERROR' || h.status!=='healthy' ? diagnosticMessage : parityBlocked&&h.status==='healthy'?'Migration verification or recovery metadata is pending; editing is blocked.':s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
   }
   function invalidate(){
-    epoch++;panel?.dispose();panel=null;cloudController?.dispose();cloudController=null;cloudReady=false;
+    epoch++;controllerEpoch=null;panel?.dispose();panel=null;cloudController?.dispose();cloudController=null;cloudReady=false;
     db=emptyData();noteDrafts.clear();selectedNoteOccurrence=null;selectedExercise='';selectedTemplateId=null;
     clearForm();clearInbox();expandedHistoryGroups.clear();for(const f of fields){f.disabled=true;f.hidden=true;}
-    shownRevision=null;review=report=null;el('migrationSummary').textContent='';el('cloudLifecycle').replaceChildren();el('migrationControls').disabled=true;
+    support.update({operation:'account'});el('migrationFile').value='';shownRevision=null;review=report=null;el('migrationSummary').textContent='';el('cloudLifecycle').replaceChildren();el('migrationControls').disabled=true;
     el('migrationCommit').disabled=el('cloudRetry').disabled=el('cloudResolve').disabled=true;
   }
-  invalidate();window.addEventListener('gymbro-account',event=>{const next=event.detail,unchanged=account&&next&&account.user.id===next.user.id&&account.client===next.client&&account.config.projectRef===next.config.projectRef;account=next;if(unchanged)return;invalidate();say(account?'Account verified. Connect synthetic cloud workouts.':'Sign in to connect cloud workouts.');});
+  invalidate();window.addEventListener('gymbro-account',event=>{
+    const next=event.detail,context=next?{owner:next.user.id,client:next.client,project:next.config.projectRef,url:next.config.url,environment:next.config.environment}:null;
+    const unchanged=context&&accountContext&&Object.keys(context).every(key=>context[key]===accountContext[key])&&(!cloudController||controllerEpoch===epoch);
+    account=next;accountContext=context;accountBlocked=false;if(unchanged){if(cloudController)publish(cloudController);return;}
+    invalidate();say(account?'Account verified. Connect synthetic cloud workouts.':'Sign in to connect cloud workouts.');
+  });
+  window.addEventListener('gymbro-account-unavailable',()=>{accountBlocked=true;cloudReady=false;for(const f of fields)f.disabled=true;el('migrationControls').disabled=true;el('cloudLifecycle').querySelectorAll('fieldset[data-controls]').forEach(f=>f.disabled=true);el('cloudRetry').disabled=el('cloudResolve').disabled=true;diagnose(OperationalDiagnostics.failure('AUTH','Verify account access again.'),'account');});
   el('cloudConnect').onclick=async()=>{
-    invalidate();const generation=epoch;
+    if(accountBlocked){diagnose(OperationalDiagnostics.failure('AUTH','Verify account access again.'),'account');return;}
+    if(cloudController&&controllerEpoch===epoch){await cloudController.refresh();return;}
+    const generation=++epoch;
     try{
       const response=await fetch('/api/workout-config',{cache:'no-store'});config=await response.json();
-      if(!response.ok||!config.enabled||!config.configured||!config.syntheticOnly||!account||account.config.projectRef!==config.projectRef)throw Error('Synthetic Preview capability is disabled, unconfigured or signed out.');
+      if(!response.ok||!config.enabled||!config.configured||!config.syntheticOnly||!account||account.config.projectRef!==config.projectRef)throw OperationalDiagnostics.failure(!account?'AUTH':'CONFIGURATION','Synthetic Preview capability unavailable.');
       const verified=await account.client.auth.getUser();
-      if(verified.error||verified.data.user?.is_anonymous||verified.data.user?.id!==account.user.id||!config.allowedOwners.includes(account.user.id))throw Error('Dedicated staging test owner required.');
+      if(verified.error)throw OperationalDiagnostics.transport(verified.error);
+      if(verified.data.user?.is_anonymous||verified.data.user?.id!==account.user.id||!config.allowedOwners.includes(account.user.id))throw OperationalDiagnostics.failure('DENIED','Dedicated staging test owner required.');
       const ownerId=account.user.id,repository=WorkoutLifecycle.createRepository({client:account.client,ownerId}),initial=await repository.load();
       if(generation!==epoch)return;
-      if(initial.status==='healthy'&&initial.document.data.extension?.previewMigrationFixture!==config.fixtureTag)throw Error('Unexpected destination contents.');
+      if(initial.status==='healthy'&&initial.document.data.extension?.previewMigrationFixture!==config.fixtureTag)throw OperationalDiagnostics.failure('CONFIGURATION','Unexpected destination contents.');
       cloudController=WorkoutCloud.create({client:account.client,ownerId,initial,recoveryStorage:sessionStorage,fixtureTag:config.fixtureTag,onChange:publish});
-      panel=WorkoutLifecyclePanel.mount(el('cloudLifecycle'),{controller:cloudController,environment:'GymBro-Staging — synthetic fixtures only',ownerId,cutoverAccepted:false});
+      controllerEpoch=generation;panel=WorkoutLifecyclePanel.mount(el('cloudLifecycle'),{controller:cloudController,environment:'GymBro-Staging — synthetic fixtures only',ownerId,config,cutoverAccepted:false});
       for(const f of fields)f.hidden=false;publish(cloudController);
-    }catch(error){if(generation===epoch)say(error.message);}
+    }catch(error){if(generation===epoch)diagnose(error);}
   };
   for(const [id,method]of[['cloudRefresh','refresh'],['cloudRetry','retry'],['cloudResolve','resolve']])el(id).onclick=async()=>{
     if(!cloudController)return;const op=cloudController.getStatus().operation,result=await cloudController[method]();
@@ -72,19 +85,19 @@ function renderCloudExerciseInput() {
   el('migrationReview').onclick=async()=>{
     const generation=epoch,controller=cloudController;review=null;el('migrationCommit').disabled=true;
     try{
-      const file=el('migrationFile').files[0];if(!file||!controller)throw Error('Connect a test account and select its synthetic fixture.');
+      const file=el('migrationFile').files[0];if(!file||!controller)throw OperationalDiagnostics.failure('VALIDATION','Connect and select a synthetic fixture.');
       const text=await file.text(),candidate=await WorkoutMigration.prepareSource(text,controller.getSnapshot().ownerId);
-      if(candidate.document.data.extension?.previewMigrationFixture!==config.fixtureTag)throw Error('Personal or untagged data is disabled. Select only the configured synthetic fixture.');
+      if(candidate.document.data.extension?.previewMigrationFixture!==config.fixtureTag)throw OperationalDiagnostics.failure('VALIDATION','Configured synthetic fixtures only.');
       if(generation!==epoch)return;
       review={text,candidate,revision:controller.getSnapshot().revision};const d=candidate.document.data;
       el('migrationSummary').textContent=`Synthetic file: ${file.name}\nSchema ${candidate.sourceSchema}; exporting build ${candidate.sourceBuild??'not recorded'}\nSHA-256 ${candidate.byteDigest}\n${d.sets.length} sets; ${d.sessions.length} sessions; ${d.bodyweights.length} bodyweights; ${candidate.document.catalog.exercises.length} exercises. Active: ${d.activeSessionId??'none'}.\nExact labels stay separate. All notes/metadata are retained.\nDestination ${controller.getSnapshot().ownerId}; staging only. Populated differences reject.`;
       el('migrationCommit').disabled=controller.getStatus().phase!=='READY';
-    }catch(error){say(error.message);}
+    }catch(error){diagnose(error,'migration');}
   };
   el('migrationCommit').onclick=async()=>{
     const selected=review,controller=cloudController,generation=epoch;
     try{
-      if(!selected||!controller||selected.revision!==controller.getSnapshot().revision)throw Error('Review the current source and destination first.');
+      if(!selected||!controller||selected.revision!==controller.getSnapshot().revision)throw OperationalDiagnostics.failure('VALIDATION','Review the current source and destination first.');
       if(!confirm(`Initialize SYNTHETIC migration on GymBro-Staging for ${controller.getSnapshot().ownerId}? Only an empty destination may change; an exact full candidate is a no-op.`))return;
       const marker='gymbro-migration-parity-v1-'+controller.getSnapshot().ownerId;
       const hadMarker=sessionStorage.getItem(marker)!==null;sessionStorage.setItem(marker,'pending');
@@ -93,10 +106,10 @@ function renderCloudExerciseInput() {
       if(!result.ok){if(!hadMarker && ['VALIDATION_ERROR','CONFLICT','CANCELLED'].includes(result.code))sessionStorage.removeItem(marker);publish(controller,result);return;}
       // Fence dependent editing until fresh all-field comparison succeeds.
       const key=`gymbro-migration-parity-v1-${controller.getSnapshot().ownerId}`;sessionStorage.setItem(key,'pending');publish(controller);
-      if(!(await controller.refresh()).ok)throw Error('Migration acknowledged; fresh readback verification is pending. Editing is blocked.');
+      if(!(await controller.refresh()).ok)throw OperationalDiagnostics.failure('PARITY','Migration acknowledged; verification pending.');
       report={...WorkoutMigration.compare(selected.candidate,controller.getSnapshot(),controller.getSnapshot().ownerId),sourceDigest:selected.candidate.sourceDigest,byteDigest:selected.candidate.byteDigest,appVersion:APP_VERSION.version};
       el('migrationReport').disabled=false;
-      if(!report.pass)throw Error('Migration committed, but parity failed. Preserve fixture/source and destination exports. Editing is blocked.');
+      if(!report.pass)throw OperationalDiagnostics.failure('PARITY','Migration committed; parity failed.');
       sessionStorage.removeItem(key);publish(controller);say(`Migration verified: all ${report.tables.length} tables match canonical content and relationships. Revision ${report.revision}.`);
     }catch(error){say(error.message);}
   };
