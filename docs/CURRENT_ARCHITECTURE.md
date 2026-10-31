@@ -68,6 +68,8 @@ Notes should preserve scope rather than collapsing all free text into one concep
 
 ## Persistence transition rules
 
+Issue #84's approved [Phase 1 rehearsal contract](V3_CUTOVER_READINESS_PROPOSAL.md) adds a distinct default-off capability on an explicitly approved immutable Vercel deployment, exact Git SHA/build, owners/actions/source and expiry. Existing staging guards and normal local authority remain. Every rehearsal cloud request rechecks the recorded operational approval against platform deployment metadata; aliases/mismatches/unavailable approval refuse access without reseeding or local fallback. Read-only inspection tooling does not apply Production schema. Implementation/verification and required live-operation approvals: [PR #87](https://github.com/dnk1000/GymBro/pull/87). This is not a cutover or accepted Production readiness claim.
+
 Until controlled cutover, the deployed V2 localStorage database remains authoritative for real workouts.
 
 V3 migration work must:

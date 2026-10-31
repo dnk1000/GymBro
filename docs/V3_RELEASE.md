@@ -1,3 +1,13 @@
+# Issue #84 Production readiness rehearsal candidate
+
+Release status: **preparation**
+
+Application version: `3.15.0-20261031T192000Z`
+
+Data schema: `8`
+
+Approved design at `1f54d09`, #84 alone and scoped PATCH authority. Adds a distinct default-off immutable-deployment/SHA/build-pinned rehearsal boundary and read-only schema inspection tooling. Normal Production workout authority/local persistence are unchanged; no operational approval record or Production capability is activated. No new migration. Actual verification, negative evidence and pending live-operation/personal gates: [PR #87](https://github.com/dnk1000/GymBro/pull/87). This is not an accepted release or cutover.
+
 # Issue #42 diagnostic-authority clarification
 
 Release status: **preparation**

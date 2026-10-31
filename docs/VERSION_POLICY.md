@@ -88,3 +88,4 @@ The owner subsequently approved **scoped PATCH increments** required for fixes s
 
 
 The owner approved **3.14.0 for #42 alone** on October 31, 2026 by approving the exact [operational recovery design](V3_OPERATIONAL_RECOVERY_PROPOSAL.md) at `0925f8a` and continuing implementation. This is a candidate mapping, not merge, Production, personal migration or acceptance approval.
+The owner approved **3.15.0 for #84 alone and necessary scoped PATCH fixes** on October 31, 2026 by approving the revised [Phase 1 design](V3_CUTOVER_READINESS_PROPOSAL.md) at `1f54d09255232f54ba2dad3a0b33e252e757eb53` and requesting implementation. This does not authorize live Production operations, personal migration, acceptance, merge or Phase 2/3.
