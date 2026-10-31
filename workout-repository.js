@@ -307,9 +307,8 @@ const WorkoutRepository = (() => {
   }
   function presentation(document) {
     const dto=clone(document.data);dto.version=8;
-    dto.exerciseLibrary=Object.fromEntries(document.catalog.exercises.map(e=>[e.id,{primary:e.primary,secondary:clone(e.secondary),pattern:e.pattern,type:e.type,status:e.state}]));
+    dto.exerciseLibrary=Object.fromEntries(document.catalog.exercises.map(e=>[e.id,{primary:e.primary,secondary:clone(e.secondary),pattern:e.pattern,type:e.type,status:typeof e.metadata.status==="string"?e.metadata.status:e.state}]));
     references(dto).forEach(([r,k])=>{r[k]=r[k].exerciseId;});
-    for(const a of document.catalog.aliases) if(Object.hasOwn(dto.preferences,a.label) && !Object.hasOwn(dto.preferences,a.exerciseId)) dto.preferences[a.exerciseId]=dto.preferences[a.label];
     return dto;
   }
   return Object.freeze({ prepareAction,presentation,MODEL_VERSION:1, PROTOCOL_VERSION:1, tables:Object.freeze(tables), project, assemble, create, createActions });

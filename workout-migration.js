@@ -29,10 +29,10 @@ const WorkoutMigration = (() => {
   function compare(candidate,saved,ownerId) {
     const expected=WorkoutRepository.project(candidate.document,ownerId,candidate.bodyweightIds,candidate.signatureSchemes);
     const actual=saved.document ? WorkoutRepository.project(saved.document,ownerId,saved.bodyweightIds,saved.signatureSchemes) : saved.rows;
-    const tables=Object.keys(expected).map(table=>({table,expected:expected[table].length,actual:actual?.[table]?.length??null,
+    const tables=Object.keys(expected).map(table=>({table,fields:[...new Set(expected[table].flatMap(row=>Object.keys(row)))].sort(),expected:expected[table].length,actual:actual?.[table]?.length??null,
       pass:!!actual?.[table] && WorkoutLifecycle.equalRows({[table]:expected[table]},{[table]:actual[table]})}));
     return {format:'gymbro-migration-comparison',comparisonVersion:1,modelVersion:1,identityVersion:1,workoutVersion:8,
-      protocolVersion:1,revision:saved.revision,pass:tables.every(t=>t.pass),tables};
+      protocolVersion:1,revision:saved.revision,method:'Complete canonical row equality: ownership, typed fields, presence/extension metadata, source positions and relationship keys; database row order is ignored.',transformations:candidate.kind==='legacy'?['Supported source normalized conservatively to workout schema 8; original raw file retained.','Exact exercise labels projected to stable canonical IDs with originalLabel provenance; no fuzzy merge.','Missing bodyweight keys allocated by the approved source-digest/ordinal UUIDv8 rule; identical rows stay distinct.','Guided signature bytes preserved with explicit interpretation metadata.']:['Canonical cloud identity, bodyweight keys and signature schemes preserved.'],pass:tables.every(t=>t.pass),tables};
   }
   async function prepareAction(base,name,args) {
     check(name==='initializeMigration' && args[0]?.confirmed===true,'Confirm migration first.');

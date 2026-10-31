@@ -86,6 +86,12 @@ let db = cloudMode ? emptyData() : load();
 let cloudController = null;
 let cloudReady = false;
 function exerciseName(id) { return cloudController?.getWorkoutState()?.catalog.exercises.find(e=>e.id===id)?.displayName ?? id; }
+function exercisePreference(id) {
+  if(!cloudMode)return hasOwn(db.preferences,id)?db.preferences[id]:null;
+  const doc=cloudController?.getWorkoutState();if(!doc)return null;
+  const matches=doc.catalog.aliases.filter(a=>a.exerciseId===id&&hasOwn(doc.data.preferences,a.label)).sort((a,b)=>a.label<b.label?-1:a.label>b.label?1:0);
+  return matches.length===1?doc.data.preferences[matches[0].label]:matches.map(a=>a.label+': '+doc.data.preferences[a.label]).join('\n');
+}
 function exerciseInput() { return cloudMode && fExercise.value==='__new__' ? document.getElementById('newExerciseLabel').value.trim() : fExercise.value.trim(); }
 let editingSetId = null;
 let selectedExercise = "Seated Row";
@@ -385,7 +391,7 @@ function allExercises() {
   return unique([
     ...db.sets.map((s) => s.exercise),
     ...Object.keys(db.exerciseLibrary || {}),
-  ]).sort();
+  ]).sort((a,b)=>exerciseName(a).localeCompare(exerciseName(b)));
 }
 function renderDatalist() {
   if (cloudMode) { renderCloudExerciseInput(); return; }
@@ -638,9 +644,7 @@ function renderToday() {
         .map((slot) => {
           const meta = db.exerciseLibrary?.[slot.exercise] || {};
           const last = latestSet(slot.exercise);
-          const pref = hasOwn(db.preferences, slot.exercise)
-            ? db.preferences[slot.exercise]
-            : null;
+          const pref = exercisePreference(slot.exercise);
           return `<div class="item role-${slot.role}"><div class="split"><div><strong>${esc(exerciseName(slot.exercise))} <span class="pill">${slot.role}</span></strong><div class="sub">${esc(meta.primary || "Uncategorized")} • ${esc(meta.pattern || "")}</div>${last ? `<div class="sub">Last: ${fmt(last.weight)} ${esc(last.unit)} × ${fmt(last.reps)} on ${last.date}</div>` : ""}${pref ? `<div class="sub">${esc(pref)}</div>` : ""}</div><button class="btn small" onclick="loadExerciseToForm(${jsArg(slot.exercise)})">Log</button></div></div>`;
         })
         .join("")
@@ -790,7 +794,7 @@ function showExercise(ex) {
   // Latest history is independent of eligibility for load-based rankings.
   const latest = r.filter((s) => s.weight != null && s.reps != null).at(-1);
   const pain = r.filter((s) => s.pain > 0);
-  const pref = hasOwn(db.preferences, ex) ? db.preferences[ex] : null;
+  const pref = exercisePreference(ex);
   const meta = db.exerciseLibrary?.[ex] || {};
   exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px"><strong>Existing exercise preference</strong><div class="note-text">${esc(pref)}</div></div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${exerciseSessionCount(r)}</strong></div></div></div>`;
   exerciseDetail.insertAdjacentHTML("beforeend", exerciseScopedNotes(ex));
@@ -822,7 +826,7 @@ function renderInboxDraft() {
   const warnings = [];
   inboxDraft.sets.forEach((s, i) => {
     if (!s.include) return;
-    if (s.exercise && !hasOwn(db.exerciseLibrary, s.exercise))
+    if (s.exercise && !hasOwn(db.exerciseLibrary, s.exercise) && !(cloudMode && ExerciseIdentity.resolveLabel(cloudController.getWorkoutState().catalog,s.exercise)))
       warnings.push(
         `Set ${i + 1}: unknown exercise will be added as Uncategorized.`,
       );

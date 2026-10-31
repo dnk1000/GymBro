@@ -1,3 +1,7 @@
+## 3.13.1 — Preview compatibility corrections
+
+Preserve preference labels/legacy catalog status in cloud presentation; clear obsolete drafts after acknowledged replacement, fail closed on verification metadata failure and wrap narrow Data summaries.
+
 ## 3.13.0 — Preview migration candidate
 
 Dedicated empty-target migration initialization and guarded synthetic Preview integration through the established identity, repository, retry and lifecycle contracts. Personal migration and Production remain gated. Verification: PR #80.

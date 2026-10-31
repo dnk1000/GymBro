@@ -37,7 +37,7 @@ const WorkoutCloud = (() => {
         const label=input.exercise;let id=ExerciseIdentity.resolveLabel(catalog(),label);
         if(!id && allowNew) {
           const temporary={exerciseLibrary:{}};ensureExercise(temporary,label);const meta=temporary.exerciseLibrary[label];
-          working.document.catalog=ExerciseIdentity.createExercise(catalog(),{displayName:label,provenance:name==='commitImport'?'import-created':'user-created',...meta});
+          working.document.catalog=ExerciseIdentity.createExercise(catalog(),{displayName:label,provenance:name==='commitImport'?'import-created':'user-created',metadata:meta,...meta});
           id=ExerciseIdentity.resolveLabel(catalog(),label);
           working.document.legacyExerciseLibrary[label]=structuredClone(meta);
         }

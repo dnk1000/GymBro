@@ -8,7 +8,7 @@ function renderCloudExerciseInput() {
 (() => {
   const data=document.getElementById('data'),host=document.createElement('div');
   host.className='card';host.id='previewCloud';data.prepend(host);
-  if(!cloudMode){host.innerHTML='<h2>Preview cloud workouts</h2><p>Opening cloud mode never uploads local history.</p><a href="?storage=cloud">Open staging cloud workouts</a>';return;}
+  if(!cloudMode){host.hidden=true;fetch('/api/workout-config',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(c=>{if(c?.enabled&&c.configured)host.hidden=false;}).catch(()=>{});host.innerHTML='<h2>Preview cloud workouts</h2><p>Opening cloud mode never uploads local history.</p><a href="?storage=cloud">Open staging cloud workouts</a>';return;}
   for(const child of [...data.children])if(child!==host&&child.id!=='accountAccess')child.hidden=true;
   document.getElementById('storageNotice').hidden=true;
   document.querySelector('[data-view="data"]').click();
@@ -32,12 +32,14 @@ function renderCloudExerciseInput() {
   function publish(controller,result){
     if(controller!==cloudController)return;
     const h=controller.getSnapshot(),s=controller.getStatus();panel?.update(result);
-    cloudReady=h.status==='healthy'&&!sessionStorage.getItem(`gymbro-migration-parity-v1-${h.ownerId}`);
+    if(result?.ok && result.changes?.includes('workoutData')){noteDrafts.clear();selectedNoteOccurrence=null;clearForm();clearInbox();}
+    let parityBlocked=true;try{parityBlocked=sessionStorage.getItem(`gymbro-migration-parity-v1-${h.ownerId}`)!==null;}catch{say('Request recovery metadata is unavailable; saving is paused.');}
+    cloudReady=h.status==='healthy'&&!parityBlocked;
     if(cloudReady && shownRevision!==h.revision){db=WorkoutRepository.presentation(h.document);shownRevision=h.revision;renderAll();}
     for(const f of fields)f.disabled=!cloudReady||s.phase!=='READY';
     el('migrationControls').disabled=s.phase!=='READY';el('migrationCommit').disabled=!review||s.phase!=='READY';
     el('cloudRetry').disabled=!s.canRetry;el('cloudResolve').disabled=!s.canResolve;
-    say(s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
+    say(parityBlocked&&h.status==='healthy'?'Migration verification or recovery metadata is pending; editing is blocked.':s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
   }
   function invalidate(){
     epoch++;panel?.dispose();panel=null;cloudController?.dispose();cloudController=null;cloudReady=false;

@@ -68,10 +68,56 @@ for(const width of [320,390,1280])test('normal seven-view cloud app migrates, pr
   await page.locator('[data-view="data"]').click();await page.locator('#cloudRetry').click();await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('REPLAY'));
   assert.equal(f.getSaved().revision,'2');assert.equal(f.getSaved().rows.sets.length,original.sets.length+1);
   assert.equal(f.getSaved().rows.sets.at(-1).notes,'  exact draft\n');
+  if(width===390){
+    await page.locator('[data-view="workout"]').click();
+    await page.locator('#bwDate').fill('2026-10-28');await page.locator('#bwValue').fill('201');await page.evaluate(()=>addBodyweight());
+    assert.equal(f.getSaved().rows.bodyweights.at(-1).value,201);
+    await page.locator('#sessionNote').fill('session context');await page.evaluate(()=>saveNoteEditor('sessionNote'));
+    assert.equal(f.getSaved().rows.session_notes[0].text,'session context');
+    await page.locator('[data-view="program"]').click();await page.evaluate(async()=>{await toggleShort('push',0);await cycleRole('push',0);});
+    assert.equal(f.getSaved().rows.snapshot_slots[0].role,original.snapshot_slots[0].role,'template edit cannot rewrite historical snapshot');
+    await page.locator('[data-view="exercises"]').click();await page.evaluate(id=>showExercise(id),id);await page.locator('#setupNote').fill('durable setup');await page.evaluate(()=>saveNoteEditor('setupNote'));
+    assert(f.getSaved().rows.exercise_setup_notes.some(n=>n.text==='durable setup'));
+    await page.locator('[data-view="workout"]').click();await page.evaluate(()=>logCurrentExercise());await page.locator('#fWeight').fill('12');await page.locator('#fReps').fill('8');await page.locator('#saveSetBtn').click();await page.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+    const last=f.getSaved().rows.sets.at(-1);assert.equal(last.session_id,f.sessionId);assert.equal(last.plan_slot_id,'slot-1');
+    await page.evaluate(id=>editSet(id),last.set_id);await page.locator('#fNotes').fill('corrected set');await page.locator('#saveSetBtn').click();await page.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+    assert.equal(f.getSaved().rows.sets.at(-1).notes,'corrected set');await page.evaluate(id=>deleteSet(id),last.set_id);
+    assert(!f.getSaved().rows.sets.some(s=>s.set_id===last.set_id));
+    assert(f.getSaved().rows.guided_requests.some(r=>r.set_id===last.set_id),'deleted guided request retains original request identity as a tombstone');
+    await page.locator('[data-view="inbox"]').click();await page.locator('#inboxRaw').fill(JSON.stringify({schema:'gym-tracker-chatgpt-v1',importId:'synthetic-inbox',date:'2026-10-28',exercises:[{exercise:'New synthetic import label',sets:[{weight:0,unit:'bodyweight',reps:7,notes:'exact import'}]}]}));
+    await page.evaluate(()=>parseInbox());await page.evaluate(()=>commitInbox());
+    assert.equal(f.getSaved().rows.imports.at(-1).import_id,'synthetic-inbox');
+    const count=f.getSaved().rows.sets.length;await page.evaluate(()=>parseInbox());await page.evaluate(()=>commitInbox());assert.equal(f.getSaved().rows.sets.length,count);
+    await page.locator('[data-view="data"]').click();
+  }
   const download=page.waitForEvent('download');await page.locator('#cloudLifecycle [data-export]').click();const exported=await download;
   assert.equal(exported.suggestedFilename(),'gymbro-cloud-backup.json');
+  if(width===390){
+    const chunks=[];for await(const chunk of await exported.createReadStream())chunks.push(chunk);const aText=Buffer.concat(chunks).toString(),a=JSON.parse(aText),b=structuredClone(a);
+    b.payload.document.data.sets[0].notes='restored exact note';
+    await page.locator('#cloudLifecycle [data-incoming]').setInputFiles({name:'synthetic-B.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(b))});
+    await page.locator('#cloudLifecycle [data-review]').click();await page.waitForFunction(()=>!document.querySelector('#cloudLifecycle [data-commit]').disabled);
+    await page.locator('#cloudLifecycle [data-safety]').setInputFiles({name:'saved-A.json',mimeType:'application/json',buffer:Buffer.from(aText)});await page.locator('#cloudLifecycle [data-verify]').click();
+    await page.waitForFunction(()=>document.querySelector('#cloudLifecycle [data-status]').textContent.includes('verified'));
+    await page.evaluate(()=>noteDrafts.set('obsolete',{text:'draft retained until acknowledgement'}));
+    await page.locator('#cloudLifecycle [data-commit]').click();await page.waitForFunction(()=>cloudController.getStatus().phase==='READY'&&noteDrafts.size===0);
+    assert(f.lifecycle.equalRows(f.getSaved().rows,f.repository.project(b.payload.document,f.owner,b.payload.bodyweightIds,b.payload.signatureSchemes)),'complete restored canonical content and relationship equality');
+    const incoming=structuredClone(b),row=incoming.payload.document.data.sets.find(s=>s.sessionId==null);incoming.payload.document.data.sets.push({...row,id:'synthetic-history-addition'});
+    incoming.payload.document.data.preferences.notImported='incoming setting must not replace current';incoming.payload.document.data.program.activeDuration=30;
+    await page.locator('#cloudLifecycle [data-mode]').selectOption('merge');await page.locator('#cloudLifecycle [data-incoming]').setInputFiles({name:'synthetic-merge.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(incoming))});
+    await page.locator('#cloudLifecycle [data-review]').click();await page.waitForFunction(()=>!document.querySelector('#cloudLifecycle [data-commit]').disabled);await page.locator('#cloudLifecycle [data-commit]').click();
+    await page.waitForFunction(()=>cloudController.getStatus().phase==='READY'&&db.sets.some(s=>s.id==='synthetic-history-addition'));
+    assert.deepEqual(f.repository.assemble(f.getSaved().rows,f.owner).document.data.preferences,b.payload.document.data.preferences);
+    assert.deepEqual(plain(f.repository.assemble(f.getSaved().rows,f.owner).document.data.program),b.payload.document.data.program);
+    const count=f.getSaved().rows.sets.length;await page.locator('#cloudLifecycle [data-review]').click();await page.locator('#cloudLifecycle [data-commit]').click();await page.waitForFunction(()=>cloudController.getStatus().phase==='READY');assert.equal(f.getSaved().rows.sets.length,count);
+    const other=await open(t,f,390);other.on('dialog',d=>d.accept());
+    await page.evaluate(async id=>{await workoutActions.logSet({date:'2026-10-28',exercise:id,weight:0,reps:8,sessionId:null});},id);
+    const winner=plain(f.getSaved().rows);await other.locator('[data-view="workout"]').click();await other.locator('#fExercise').selectOption(id);await other.locator('#fDate').fill('2026-10-28');await other.locator('#fWeight').fill('0');await other.locator('#fReps').fill('9');await other.locator('#fNotes').fill('stale draft');
+    await other.locator('#saveSetBtn').click();await other.waitForFunction(()=>cloudController.getStatus().phase==='CONFLICT');assert.equal(await other.locator('#fNotes').inputValue(),'stale draft');assert.deepEqual(f.getSaved().rows,winner);
+    await other.locator('[data-view="data"]').click();await other.locator('#cloudRefresh').click();await other.waitForFunction(()=>cloudController.getStatus().phase==='READY');assert.equal(await other.locator('#fNotes').inputValue(),'stale draft');assert.deepEqual(f.getSaved().rows,winner);
+  }
   assert.deepEqual(await page.evaluate(()=>[window.workoutReads,window.workoutWrites]),[0,0]);
-  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,8).map(e=>({tag:e.tagName,id:e.id,cls:e.className,right:e.getBoundingClientRect().right})))));
   await page.reload();await page.evaluate(({owner,ref})=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{user:{id:owner},config:{projectRef:ref},client:{auth:{getUser:async()=>({data:{user:{id:owner,is_anonymous:false}}})},rpc:async(name,args)=>fetch('/synthetic-rpc',{method:'POST',body:JSON.stringify({name,args})}).then(r=>r.json())}}})),{owner:f.owner,ref});
   await page.locator('#cloudConnect').click();await page.waitForFunction(()=>cloudReady);assert.equal(await page.evaluate(()=>db.activeSessionId),f.sessionId);
   assert.deepEqual(await page.evaluate(()=>[window.workoutReads,window.workoutWrites]),[0,0]);

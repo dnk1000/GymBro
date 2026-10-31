@@ -1,3 +1,13 @@
+# Issue #28 compatibility follow-up
+
+Release status: **preparation**
+
+Application version: `3.13.1-20261031T022844Z`
+
+Data schema: `8`
+
+Owner explicitly approved the 3.13.1 PATCH and bounded two-account staging setup/cleanup. Preserve labelled preferences/legacy metadata, synchronize lifecycle presentation and clear obsolete drafts after acknowledged replacement. Canonical technical report: PR #80. Personal migration, M0/#27 readiness and Production remain gated.
+
 # Issue #28 Preview migration candidate
 
 Release status: **preparation**
