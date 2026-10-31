@@ -1,6 +1,6 @@
 # V3 Preview migration and parity proposal — issue #28
 
-Status: **proposed; approval required before dependent implementation**. Prepared October 30, 2026 from accepted `main` **ef9b381d96e6b4bb3171f04116353facea83e92d**, after #41 / PR #79 merged. This document covers [issue #28](https://github.com/dnk1000/GymBro/issues/28) only. It does not start #29 or authorize merge, Production operations, personal-data access or migration testing before existing gates are satisfied.
+Status: **approved at `477f31e474888350b7eb9389dcf7c943c33155f6`**. The owner approved implementation and **3.13.0 for #28 alone**. The owner separately authorized **synthetic/disposable tests only**, a scoped amendment permitting technical migration verification while M0/#27 and personal-copy migration/acceptance remain unresolved. Historical preparation wording below is retained. Prepared October 30, 2026 from accepted `main` **ef9b381d96e6b4bb3171f04116353facea83e92d**, after #41 / PR #79 merged. This document covers [issue #28](https://github.com/dnk1000/GymBro/issues/28) only. It does not start #29 or authorize merge, Production operations, personal-data access or migration testing before existing gates are satisfied.
 
 ## Authority and decisions requested
 

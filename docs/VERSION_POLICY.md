@@ -79,3 +79,5 @@ The user approved **3.9.0 for #36 alone** on October 30, 2026 in its implementat
 The user approved **3.10.0 for #22 alone** on October 30, 2026, following #36 in a separate PR from accepted main. No acceptance, merge or Production approval.
 
 On October 30, 2026 the user approved **3.11.0 for #36/PR #69** after #22/PR #70 merged as 3.10.1. This supersedes #36's prior 3.9.x mapping for subsequent builds; historical builds/evidence remain intact. No merge, Production or device acceptance approval.
+
+The owner approved **3.13.0 for #28 alone** against amended proposal `477f31e474888350b7eb9389dcf7c943c33155f6`. This is a candidate mapping; it does not authorize Production, personal migration, cutover or merge.

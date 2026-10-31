@@ -104,7 +104,7 @@ const WorkoutLifecyclePanel = (() => {
       if(!confirm('Delete only this browser\'s inactive local recovery copy? Cloud workouts and the account are unaffected.'))return;
       cleanup.remove({confirmed:true,oldTabsClosed:el('tabs').checked});say('This browser local recovery copy was deleted. Cloud workouts and account are unaffected.');
     });
-    paint();return Object.freeze({dispose(){live=false;sequence++;cleanup.dispose();controller.dispose();host.querySelectorAll('input,select,button').forEach(e=>e.disabled=true);}});
+    paint();return Object.freeze({update:paint,dispose(){live=false;sequence++;cleanup.dispose();controller.dispose();host.querySelectorAll('input,select,button').forEach(e=>e.disabled=true);}});
   }
   return Object.freeze({mount});
 })();

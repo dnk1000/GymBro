@@ -25,6 +25,7 @@
   function invalidate() {
     generation++;
     user = null;
+    window.dispatchEvent(new CustomEvent("gymbro-account",{detail:null}));
     el("accountCheckResult").textContent = "";
     controls();
   }
@@ -40,7 +41,7 @@
     if (!data.session) { invalidate(); return; }
     const revision = generation;
     const next = await verifiedUser();
-    if (revision === generation) user = next;
+    if (revision === generation) { user = next; window.dispatchEvent(new CustomEvent("gymbro-account",{detail:{user,client,config}})); }
   }
   function message(error) {
     if (error.code === "logout_unconfirmed")

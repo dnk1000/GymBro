@@ -16,7 +16,7 @@ const WorkoutConcurrency = (() => {
     DISPOSED: "This account view is no longer active.",
   });
   const revision = value => typeof value === "string" && /^(0|[1-9][0-9]*)$/.test(value);
-  const actions = Object.freeze(["initialize","logSet","editSet","deleteSet","logBodyweight","selectPlan","clearPlan","toggleSlotShort","cycleSlotRole","addSlot","removeSlot","createSession","completeSession","attachSetToSession","startGuidedSession","enableGuidance","selectGuidedSlot","moveGuidedSlot","setGuidedSlotStatus","substituteGuidedExercise","logGuidedSet","finishGuidedSession","saveScopedNote","commitImport","restoreCompleteBackup","mergeHistoryBackup"]);
+  const actions = Object.freeze(["initializeMigration","initialize","logSet","editSet","deleteSet","logBodyweight","selectPlan","clearPlan","toggleSlotShort","cycleSlotRole","addSlot","removeSlot","createSession","completeSession","attachSetToSession","startGuidedSession","enableGuidance","selectGuidedSlot","moveGuidedSlot","setGuidedSlotStatus","substituteGuidedExercise","logGuidedSet","finishGuidedSession","saveScopedNote","commitImport","restoreCompleteBackup","mergeHistoryBackup"]);
   const validOperation = op => Array.isArray(op) && actions.includes(op[0]) &&
     op.length === (op[0] === "logGuidedSet" ? 3 : 2) && op.every(v=>typeof v === "string" && v.length > 0);
   function create({ initial, repository, prepare, ownerId = repository.ownerId,

@@ -1,3 +1,7 @@
+## 3.13.0 — Preview migration candidate
+
+Dedicated empty-target migration initialization and guarded synthetic Preview integration through the established identity, repository, retry and lifecycle contracts. Personal migration and Production remain gated. Verification: PR #80.
+
 ## Documentation integration — #71 / PR #78
 
 Add the canonical BRAND_AND_UI authority and approved directional reference while preserving accepted main's shared-system/app-shell runtime. No new app build. The earlier 3.11.3 candidate was Preview-only before PR #76 merged; current runtime metadata remains main's 3.11.2.

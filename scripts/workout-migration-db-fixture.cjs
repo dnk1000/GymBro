@@ -1,0 +1,40 @@
+// Synthetic full-source migration packets. Every test rolls back its Auth/data.
+const fs=require('node:fs'),path=require('node:path');
+const {setup}=require('../tests/lifecycle-fixture.cjs');
+const {literal}=require('./workout-concurrency-db-fixture.cjs');
+async function buildSql(){
+  const f=await setup();f.get(fs.readFileSync(path.join(__dirname,'..','workout-migration.js'),'utf8'));
+  const candidate=await f.get('WorkoutMigration').prepareSource(JSON.stringify(f.source),f.owner);
+  const rows=f.repository.project(candidate.document,f.owner,candidate.bodyweightIds,candidate.signatureSchemes);
+  const empty={...f.handle,revision:'0',status:'uninitialized',rows:Object.fromEntries(Object.keys(rows).map(k=>[k,[]]))};
+  const packet=f.lifecycle.createRepository({ownerId:f.owner,client:{}}).prepare(empty,candidate,{action:'initializeMigration',operation:['initializeMigration','synthetic-source'],result:{}});
+  return `begin;create extension if not exists pgtap with schema extensions;set local search_path=public,extensions;select no_plan();
+insert into auth.users(id) values('${f.owner}');
+create temporary table migration_packet(packet jsonb);grant select,update on migration_packet to authenticated;
+insert into migration_packet values(${literal(packet)});
+set local role authenticated;
+select set_config('request.jwt.claim.sub','${f.owner}',true);select set_config('request.jwt.claims','{"sub":"${f.owner}","is_anonymous":false}',true);
+update migration_packet set packet=jsonb_set(packet,'{fingerprint}',public.gymbro_lifecycle_snapshot()->'fingerprint');
+select ok(not has_function_privilege('authenticated','public.gymbro_operation_valid(jsonb)','EXECUTE'),'internal operation validator remains private');
+select is(public.gymbro_migration_initialize((select packet from migration_packet))->>'code','OK','dedicated initialization succeeds for empty owner');
+select is(public.gymbro_workout_normalize(public.gymbro_lifecycle_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(rows)}),'every canonical row and relationship equals frozen candidate');
+select is(public.gymbro_lifecycle_snapshot()->>'revision','1','one revision committed');
+select is(public.gymbro_migration_initialize((select packet from migration_packet))->>'code','REPLAY','identical lost-ack retry replays');
+select is(public.gymbro_lifecycle_snapshot()->>'revision','1','replay cannot increment');
+select is(public.gymbro_migration_initialize(jsonb_set((select packet from migration_packet),'{next,sets,0,notes}','"changed"'))->>'code','REQUEST_CONFLICT','altered packet identity rejected');
+select is(public.gymbro_migration_initialize(jsonb_set((select packet from migration_packet),'{operation}','["initializeMigration","stale"]'))->>'code','CONFLICT','concurrent or stale initialization cannot overwrite');
+update migration_packet set packet=packet||jsonb_build_object('expectedRevision','1','base',public.gymbro_lifecycle_snapshot()->'rows','fingerprint',public.gymbro_lifecycle_snapshot()->'fingerprint','status','healthy','operation','["initializeMigration","nonempty"]'::jsonb);
+select throws_ok($q$select public.gymbro_migration_initialize((select packet from migration_packet))$q$,'23514',null,'even a fresh populated base cannot be replaced by initialization');
+select is(public.gymbro_workout_normalize(public.gymbro_lifecycle_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(rows)}),'nonempty rejection preserves complete existing data');
+select is(public.gymbro_lifecycle_resolve('["initializeMigration","cancelled"]')->>'code','CANCELLED','existing resolver fences migration');
+select is(public.gymbro_migration_initialize(jsonb_set((select packet from migration_packet),'{operation}','["initializeMigration","cancelled"]'))->>'code','CANCELLED','late initializer cannot cross cancellation');
+select is((select count(*)::int from public.gymbro_mutation_receipts where status='committed'),1,'one initialization receipt only');
+select throws_ok($q$delete from public.gymbro_sets$q$,'42501',null,'browser direct deletion remains denied');
+select throws_ok($q$select public.gymbro_workout_commit(null,null)$q$,'42501',null,'unchecked helper remains private');
+select ok(not pg_has_role('authenticated','gymbro_lifecycle_writer','MEMBER'),'browser cannot assume privileged role');
+select ok(not has_schema_privilege('gymbro_lifecycle_writer','public','CREATE'),'writer retains no schema creation');
+select ok(not has_table_privilege('gymbro_lifecycle_writer','public.gymbro_mutation_receipts','DELETE'),'receipt history cannot be deleted');
+reset role;select * from finish();rollback;`;
+}
+if(require.main===module)buildSql().then(sql=>{fs.mkdirSync(path.join(__dirname,'..','test-results'),{recursive:true});fs.writeFileSync(path.join(__dirname,'..','test-results','workout-migration.test.sql'),sql);console.log('Generated synthetic migration SQL');}).catch(e=>{console.error(e);process.exitCode=1;});
+module.exports={buildSql};

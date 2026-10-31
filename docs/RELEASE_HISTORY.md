@@ -1,3 +1,7 @@
+# Pending #28 candidate
+
+`3.13.0-20261031T003411Z`, schema 8, relational model 1/protocol 1. Preview-only candidate, not an accepted shipped release. See PR #80 for exact revision and verification.
+
 # GymBro release history
 
 ## Cloud lifecycle candidate — not accepted

@@ -1,3 +1,13 @@
+# Issue #28 Preview migration candidate
+
+Release status: **preparation**
+
+Application version: `3.13.0-20261031T003411Z`
+
+Data schema: `8`
+
+Owner-approved design: `477f31e474888350b7eb9389dcf7c943c33155f6`; 3.13.0 for #28 alone. Synthetic/disposable tests explicitly authorized. Personal migration, M0/#27 readiness, physical Safari and Production cutover remain unresolved. Canonical verification/AC report: PR #80. No acceptance, merge or Production deployment claimed.
+
 # Cloud data lifecycle candidate — #41
 
 Application version: `3.12.7-20261030T184803Z`

@@ -120,3 +120,7 @@ Issue #40 adds an opt-in checked [concurrency/retry boundary](V3_CONCURRENCY.md)
 ## Current visual design authority
 
 [BRAND_AND_UI.md](BRAND_AND_UI.md) is the canonical Heritage Utility design authority for shared presentation and future UI issues. It implements product intent without changing domain, storage or workflow contracts. Its committed design board is directional, not pixel-perfect.
+
+## Issue #28 Preview integration candidate
+
+The approved [migration design](V3_PREVIEW_MIGRATION_PROPOSAL.md) integrates the existing seven-view app with canonical repository actions and one shared concurrency/lifecycle controller in explicit `?storage=cloud` mode. The server capability defaults off, rejects Production and admits configured synthetic staging owners/sources only. Dedicated `initializeMigration` requires an empty aggregate/catalog under the existing owner lock; exact canonical reruns are no-ops. Normal local operation remains authoritative for real workouts; no cutover, local retirement or cloud-to-local fallback. Personal migration and M0/#27 readiness remain gated. Actual verification and pending evidence are in [PR #80](https://github.com/dnk1000/GymBro/pull/80).
