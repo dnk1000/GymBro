@@ -12,11 +12,11 @@ async function main(){
   const state=validate(JSON.parse(fs.readFileSync(path.join(root,'.env.issue28-fixtures.json'),'utf8'))),config=JSON.parse(await read('/api/workout-config'));
   assert(config.enabled&&config.configured&&config.syntheticOnly);assert.equal(config.fixtureTag,state.tag);assert.deepEqual(config.allowedOwners,state.accounts.map(a=>a.id));
   const f=await setup();for(const file of ['workout-migration.js'])f.get(fs.readFileSync(path.join(root,file),'utf8'));
-  const clients=[],sessions=[],repos=[],cache=new Map(),checks=[],errors=[],faults=[];
+  const clients=[],repos=[],cache=new Map(),checks=[],errors=[],faults=[];
   for(const account of state.accounts){
     const client=sdk().createClient(config.url,config.publishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const signed=await client.auth.signInWithPassword({email:account.email,password:account.password});assert(!signed.error);assert.equal(signed.data.user.id,account.id);assert.equal(signed.data.user.is_anonymous,false);
-    clients.push(client);sessions.push(signed.data.session);repos.push(f.lifecycle.createRepository({client,ownerId:account.id}));
+    clients.push(client);repos.push(f.lifecycle.createRepository({client,ownerId:account.id}));
   }
   for(const file of ['index.html','app-version.js','app.js','guided-ui.js','cloud-ui.js','account-access.js','workout-cloud.js','workout-migration.js','workout-repository.js','workout-lifecycle.js','workout-lifecycle-panel.js','storage.js']){
     const body=await read('/'+file);let comparable=body.toString().replaceAll('\r\n','\n');
@@ -30,13 +30,16 @@ async function main(){
   function check(name){checks.push(name);fs.writeFileSync(path.join(root,'test-results/issue28-signed-progress.json'),JSON.stringify({sha,checks},null,2));console.log(name+' PASS');}
   let loseFor=null;
   async function open(width,index=0){
+    const account=state.accounts[index],login=sdk().createClient(config.url,config.publishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});clients.push(login);
+    const signed=await login.auth.signInWithPassword({email:account.email,password:account.password});assert(!signed.error);assert.equal(signed.data.user.id,account.id);const session=signed.data.session;
+
     const context=await browser.newContext({viewport:{width,height:844}});contexts.push(context);const page=await context.newPage();
     await context.addInitScript(({session,key})=>{
       localStorage.setItem(key,JSON.stringify(session));window.workoutReads=0;window.workoutWrites=0;
       const get=Storage.prototype.getItem,set=Storage.prototype.setItem;
       Storage.prototype.getItem=function(k){if(k==='daveGymTrackerV1')window.workoutReads++;return get.call(this,k);};
       Storage.prototype.setItem=function(k,v){if(k==='daveGymTrackerV1')window.workoutWrites++;return set.call(this,k,v);};
-    },{session:sessions[index],key:'gymbro-account-auth-'+config.projectRef});
+    },{session,key:'gymbro-account-auth-'+config.projectRef});
     page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{
       if(!['warning','error'].includes(m.type()))return;
       if(faults.some(x=>x.page===page&&m.location().url===x.url)&&/net::ERR_FAILED/.test(m.text()))return;
@@ -61,14 +64,16 @@ async function main(){
     await page.locator('#cloudConnect').click();await page.waitForFunction(()=>!!cloudController);return page;
   }
   try{
-    const initial=await repos[0].load();assert.equal(initial.status,'uninitialized');
+    const initial=await repos[0].load();assert(['uninitialized','healthy'].includes(initial.status));
     f.source.extension.previewMigrationFixture=state.tag;const source=JSON.stringify(f.source),candidate=await f.get('WorkoutMigration').prepareSource(source,state.accounts[0].id);
+    if(initial.status==='healthy')assert(f.get('WorkoutMigration').compare(candidate,initial,state.accounts[0].id).pass,'Existing fixture must exactly match the selected canonical source; no automatic reset.');
+    const expectedInitialRevision=initial.status==='uninitialized'?String(BigInt(initial.revision)+1n):initial.revision;
     const page=await open(1280);
     await upload(page,'#migrationFile','synthetic-complete-source.json',source);await page.locator('#migrationReview').click();await page.waitForFunction(()=>!document.getElementById('migrationCommit').disabled);
     await page.locator('#migrationCommit').click();await status(page,'Migration verified');
-    let saved=await repos[0].load();assert(f.get('WorkoutMigration').compare(candidate,saved,state.accounts[0].id).pass);assert.equal(saved.revision,'1');
+    let saved=await repos[0].load();assert(f.get('WorkoutMigration').compare(candidate,saved,state.accounts[0].id).pass);assert.equal(saved.revision,expectedInitialRevision);
     const reportDownload=page.waitForEvent('download');await page.locator('#migrationReport').click();const report=JSON.parse(await downloadText(await reportDownload));assert(report.pass&&report.tables.length===16);
-    await page.locator('#migrationReview').click();await page.locator('#migrationCommit').click();await status(page,'Migration verified');assert.equal((await repos[0].load()).revision,'1');
+    await page.locator('#migrationReview').click();await page.locator('#migrationCommit').click();await status(page,'Migration verified');assert.equal((await repos[0].load()).revision,expectedInitialRevision);
     check('complete actual SQL migration/readback and exact canonical rerun no-op');
     for(const view of ['dashboard','program','workout','history','inbox','exercises','data'])await page.locator('[data-view="'+view+'"]').click();
     await page.locator('[data-view="workout"]').click();await page.locator('#bwDate').fill('2026-10-28');await page.locator('#bwValue').fill('201');await page.evaluate(()=>addBodyweight());
@@ -104,6 +109,12 @@ async function main(){
     assert(f.lifecycle.equalRows((await repos[0].load()).rows,winner.rows));await other.locator('[data-view="data"]').click();await other.locator('#cloudRefresh').click();await ready(other);assert.equal(await other.locator('#fNotes').inputValue(),'signed stale draft');
     check('independent signed same-owner context rejects stale write, retains draft and refreshes without retry');
     await page.locator('#cloudRefresh').click();await ready(page);const backupEvent=page.waitForEvent('download');await page.locator('#cloudLifecycle [data-export]').click();const text=await downloadText(await backupEvent),backup=JSON.parse(text);
+    for(const [kind,name]of [['legacy','gymbro-legacy-compatibility.json'],['csv','gymbro-sets.csv']]){
+      const event=page.waitForEvent('download');await page.locator('#cloudLifecycle [data-'+kind+']').click();const file=await event,value=await downloadText(file);assert.equal(file.suggestedFilename(),name);
+      if(kind==='legacy'){const parsed=JSON.parse(value),source=f.identity.restoreV2Source((await repos[0].load()).document);for(const field of ['sets','sessions','bodyweights','program','exerciseLibrary','preferences','noteScopes','imports'])assert.deepEqual(JSON.parse(JSON.stringify(parsed[field])),JSON.parse(JSON.stringify(source[field])));}
+      else {assert(value.startsWith('date,exercise,weight,unit,reps'));assert(value.includes('Bench Press'));}
+    }
+    check('cloud-authority legacy complete JSON and sets-only CSV preserve their accepted compatibility contracts');
     const restored=structuredClone(backup);restored.payload.document.data.sets[0].notes='signed whole restore';
     await upload(page,'#cloudLifecycle [data-incoming]','synthetic-restore.json',JSON.stringify(restored));await page.locator('#cloudLifecycle [data-review]').click();await page.waitForFunction(()=>!document.querySelector('#cloudLifecycle [data-commit]').disabled);
     await upload(page,'#cloudLifecycle [data-safety]','verified-current.json',text);await page.locator('#cloudLifecycle [data-verify]').click();await page.waitForFunction(()=>document.querySelector('#cloudLifecycle [data-status]').textContent.includes('verified'));
