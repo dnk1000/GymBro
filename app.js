@@ -967,7 +967,7 @@ function renderProgram() {
     .sort()
     .map(
       ([g, xs]) =>
-        `<tr><td><strong>${esc(g)}</strong></td><td>${xs.map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}</td></tr>`,
+        `<tr><td><strong>${esc(g)}</strong></td><td>${xs.map((x) => `<span class="muscle-tag">${esc(exerciseName(x))}</span>`).join("")}</td></tr>`,
     )
     .join("")}</tbody></table>`;
 }
@@ -1055,7 +1055,7 @@ async function exportCSV() {
     "complete",
   ];
   const rows = [h.join(",")].concat(
-    db.sets.map((s) =>
+    exportState.sets.map((s) =>
       h.map((k) => `"${csvText(s[k]).replace(/"/g, '""')}"`).join(","),
     ),
   );

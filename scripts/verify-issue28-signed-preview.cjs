@@ -75,20 +75,29 @@ async function main(){
     const reportDownload=page.waitForEvent('download');await page.locator('#migrationReport').click();const report=JSON.parse(await downloadText(await reportDownload));assert(report.pass&&report.tables.length===16);
     await page.locator('#migrationReview').click();await page.locator('#migrationCommit').click();await status(page,'Migration verified');assert.equal((await repos[0].load()).revision,expectedInitialRevision);
     check('complete actual SQL migration/readback and exact canonical rerun no-op');
+    assert.equal(await page.locator('#importFile').isVisible(),false,'local restore controls stay hidden despite grid CSS');
     for(const view of ['dashboard','program','workout','history','inbox','exercises','data'])await page.locator('[data-view="'+view+'"]').click();
+    const taxonomy=await page.locator('#taxonomySummary').textContent();assert(taxonomy.includes('Bench Press'));assert(!taxonomy.includes(candidate.document.catalog.exercises[0].id));
     await page.locator('[data-view="workout"]').click();await page.locator('#bwDate').fill('2026-10-28');await page.locator('#bwValue').fill('201');await page.evaluate(()=>addBodyweight());
     await page.locator('#sessionNote').fill('signed session note');await page.evaluate(()=>saveNoteEditor('sessionNote'));
-    await page.locator('[data-view="program"]').click();await page.evaluate(async()=>{await toggleShort('push',0);await cycleRole('push',0);});
+    await page.locator('#occurrenceNote').fill('signed planned occurrence');await page.evaluate(()=>saveNoteEditor('occurrenceNote'));
+    const manualTarget=await page.locator('#noteOccurrence option').evaluateAll(options=>options.find(o=>JSON.parse(o.value).planSlotId===null).value);await page.locator('#noteOccurrence').selectOption(manualTarget);await page.locator('#occurrenceNote').fill('signed manual occurrence');await page.evaluate(()=>saveNoteEditor('occurrenceNote'));
+    await page.locator('[data-view="exercises"]').click();await page.evaluate(id=>showExercise(id),candidate.document.catalog.exercises[0].id);await page.locator('#setupNote').fill('signed durable setup');await page.evaluate(()=>saveNoteEditor('setupNote'));
+    saved=await repos[0].load();assert(saved.document.data.noteScopes.exerciseSession.some(n=>n.text==='signed planned occurrence'&&n.planSlotId));assert(saved.document.data.noteScopes.exerciseSession.some(n=>n.text==='signed manual occurrence'&&n.planSlotId===null));assert(saved.document.data.noteScopes.exercise.some(n=>n.text==='signed durable setup'));assert.deepEqual(saved.document.data.preferences,candidate.document.data.preferences);
+    await page.locator('[data-view="program"]').click();await page.evaluate(async()=>{await toggleShort('push',0);await cycleRole('push',0);editTemplate('push');});
+    const slotCount=(await repos[0].load()).document.data.program.templates.find(t=>t.id==='push').slots.length;await page.locator('#addEx_push').fill('Signed synthetic program exercise');await page.evaluate(()=>addSlot('push'));
+    saved=await repos[0].load();const added=saved.document.data.program.templates.find(t=>t.id==='push').slots.at(-1);assert.equal(f.identity.resolveLabel(saved.document.catalog,'Signed synthetic program exercise'),added.exercise.exerciseId);
+    await page.evaluate(index=>removeSlot('push',index),slotCount);assert.equal((await repos[0].load()).document.data.program.templates.find(t=>t.id==='push').slots.length,slotCount);
     saved=await repos[0].load();assert.equal(saved.document.data.sessions[0].planSnapshot.slots[0].role,candidate.document.data.sessions[0].planSnapshot.slots[0].role);
     await page.locator('[data-view="workout"]').click();await page.evaluate(()=>logCurrentExercise());await page.locator('#fWeight').fill('12');await page.locator('#fReps').fill('8');await page.locator('#saveSetBtn').click();await ready(page);
     saved=await repos[0].load();const last=saved.document.data.sets.at(-1);assert.equal(last.sessionId,f.sessionId);assert.equal(last.planSlotId,'slot-1');
     await page.evaluate(id=>editSet(id),last.id);await page.locator('#fNotes').fill('signed correction');await page.locator('#saveSetBtn').click();await ready(page);
     assert.equal((await repos[0].load()).document.data.sets.at(-1).notes,'signed correction');await page.evaluate(id=>deleteSet(id),last.id);
     saved=await repos[0].load();assert(!saved.document.data.sets.some(s=>s.id===last.id));assert(saved.document.data.sessions[0].guided.requests.some(r=>r.setId===last.id));
-    await page.locator('[data-view="inbox"]').click();await page.locator('#inboxRaw').fill(JSON.stringify({schema:'gym-tracker-chatgpt-v1',importId:'signed-preview-import',date:'2026-10-28',exercises:[{exercise:'Signed synthetic import label',sets:[{weight:0,unit:'bodyweight',reps:7,notes:'exact signed import'}]}]}));
-    await page.evaluate(()=>parseInbox());await page.evaluate(()=>commitInbox());saved=await repos[0].load();assert(saved.document.data.imports.some(i=>i.importId==='signed-preview-import'));
+    await page.locator('[data-view="inbox"]').click();await page.locator('#inboxRaw').fill(JSON.stringify({schema:'gym-tracker-chatgpt-v1',importId:'signed-preview-import',date:'2026-10-28',exercises:[{exercise:'Signed synthetic import label',sets:[{weight:0,unit:'bodyweight',reps:7,notes:'exact signed import'}]},{exercise:'Excluded synthetic label',sets:[{weight:1,unit:'lb',reps:5}]}]}));
+    await page.evaluate(()=>parseInbox());await page.evaluate(()=>updateDraft(1,'include',false));await page.evaluate(()=>commitInbox());saved=await repos[0].load();assert(saved.document.data.imports.some(i=>i.importId==='signed-preview-import'&&i.setCount===1));assert.equal(f.identity.resolveLabel(saved.document.catalog,'Excluded synthetic label'),null);
     const count=saved.document.data.sets.length;await page.evaluate(()=>parseInbox());await page.evaluate(()=>commitInbox());assert.equal((await repos[0].load()).document.data.sets.length,count);
-    check('seven-view normal app: bodyweight, scoped notes, template/snapshot intent, guided log/correction/deletion, canonical import/repeat');
+    check('seven-view normal app: bodyweight, all note scopes, template/catalog add/remove and immutable snapshot intent, guided log/correction/deletion, canonical import/exclusion/repeat');
     for(const width of [1280,390,320]){
       const p=width===1280?page:await open(width);await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());
       const before=await repos[0].load(),id=before.document.catalog.exercises[0].id;
@@ -114,7 +123,8 @@ async function main(){
       if(kind==='legacy'){const parsed=JSON.parse(value),source=f.identity.restoreV2Source((await repos[0].load()).document);for(const field of ['sets','sessions','bodyweights','program','exerciseLibrary','preferences','noteScopes','imports'])assert.deepEqual(JSON.parse(JSON.stringify(parsed[field])),JSON.parse(JSON.stringify(source[field])));}
       else {assert(value.startsWith('date,exercise,weight,unit,reps'));assert(value.includes('Bench Press'));}
     }
-    check('cloud-authority legacy complete JSON and sets-only CSV preserve their accepted compatibility contracts');
+    const directCSVEvent=page.waitForEvent('download');await page.evaluate(()=>exportCSV());const directCSV=await downloadText(await directCSVEvent);assert(directCSV.includes('Bench Press'));for(const exercise of (await repos[0].load()).document.catalog.exercises)assert(!directCSV.includes(exercise.id));
+    check('cloud-authority legacy complete JSON and both sets-only CSV paths preserve accepted labels and compatibility');
     const restored=structuredClone(backup);restored.payload.document.data.sets[0].notes='signed whole restore';
     await upload(page,'#cloudLifecycle [data-incoming]','synthetic-restore.json',JSON.stringify(restored));await page.locator('#cloudLifecycle [data-review]').click();await page.waitForFunction(()=>!document.querySelector('#cloudLifecycle [data-commit]').disabled);
     await upload(page,'#cloudLifecycle [data-safety]','verified-current.json',text);await page.locator('#cloudLifecycle [data-verify]').click();await page.waitForFunction(()=>document.querySelector('#cloudLifecycle [data-status]').textContent.includes('verified'));

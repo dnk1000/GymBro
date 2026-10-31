@@ -9,7 +9,7 @@ function renderCloudExerciseInput() {
   const data=document.getElementById('data'),host=document.createElement('div');
   host.className='card';host.id='previewCloud';data.prepend(host);
   if(!cloudMode){host.hidden=true;fetch('/api/workout-config',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(c=>{if(c?.enabled&&c.configured)host.hidden=false;}).catch(()=>{});host.innerHTML='<h2>Preview cloud workouts</h2><p>Opening cloud mode never uploads local history.</p><a href="?storage=cloud">Open staging cloud workouts</a>';return;}
-  for(const child of [...data.children])if(child!==host&&child.id!=='accountAccess')child.hidden=true;
+  for(const child of [...data.children])if(child!==host&&child.id!=='accountAccess'){child.hidden=true;child.style.display='none';}
   document.getElementById('storageNotice').hidden=true;
   document.querySelector('[data-view="data"]').click();
   const fields=[];

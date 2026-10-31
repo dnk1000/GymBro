@@ -1,3 +1,7 @@
+# Pending #28 export/presentation correction
+
+`3.13.4-20261031T031548Z`, schema 8. Preview candidate only; [PR #80](https://github.com/dnk1000/GymBro/pull/80) owns exact revision and actual verification. No Production acceptance or cutover.
+
 # Pending #28 same-account refresh correction
 
 `3.13.3-20261031T030318Z`, schema 8. Candidate only; actual results/revision in PR #80. No Production acceptance or cutover.

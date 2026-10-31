@@ -1,3 +1,13 @@
+# Issue #28 export and cloud presentation correction
+
+Release status: **preparation**
+
+Application version: `3.13.4-20261031T031548Z`
+
+Data schema: `8`
+
+Legacy CSV uses reconstructed original exercise labels; program taxonomy shows canonical display labels. Explicitly hide local restore controls overridden by grid CSS in cloud mode. Scoped PATCH approval covers these #28 compatibility fixes. Exact verification and unresolved personal/M0/#27 gates: [PR #80](https://github.com/dnk1000/GymBro/pull/80). No Production acceptance or cutover.
+
 # Issue #28 verified-account refresh correction
 
 Release status: **preparation**

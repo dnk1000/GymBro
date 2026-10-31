@@ -95,6 +95,8 @@ for(const width of [320,390,1280])test('normal seven-view cloud app migrates, pr
   const download=page.waitForEvent('download');await page.locator('#cloudLifecycle [data-export]').click();const exported=await download;
   assert.equal(exported.suggestedFilename(),'gymbro-cloud-backup.json');
   if(width===390){
+    const csvEvent=page.waitForEvent('download');await page.evaluate(()=>exportCSV());const csvDownload=await csvEvent,csvParts=[];for await(const part of await csvDownload.createReadStream())csvParts.push(part);const csv=Buffer.concat(csvParts).toString();
+    assert.deepEqual({namedExercise:csv.includes('Bench Press'),canonicalIdLeaked:csv.includes(f.getSaved().rows.exercises[0].exercise_id),legacyRestoreVisible:await page.locator('#importFile').isVisible(),catalogLabelVisible:(await page.locator('#taxonomySummary').textContent()).includes('Bench Press'),catalogIdLeaked:(await page.locator('#taxonomySummary').textContent()).includes(f.getSaved().rows.exercises[0].exercise_id)},{namedExercise:true,canonicalIdLeaked:false,legacyRestoreVisible:false,catalogLabelVisible:true,catalogIdLeaked:false});
     const chunks=[];for await(const chunk of await exported.createReadStream())chunks.push(chunk);const aText=Buffer.concat(chunks).toString(),a=JSON.parse(aText),b=structuredClone(a);
     b.payload.document.data.sets[0].notes='restored exact note';
     await page.locator('#cloudLifecycle [data-incoming]').setInputFiles({name:'synthetic-B.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(b))});

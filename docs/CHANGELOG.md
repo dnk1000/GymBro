@@ -1,3 +1,7 @@
+## 3.13.4 — Preserve cloud export and display labels
+
+Use source exercise labels in the existing CSV handler and display names in program taxonomy. Hide local restore controls explicitly in cloud mode so grid CSS cannot expose them.
+
 ## 3.13.3 — Preserve same-owner cloud view
 
 Keep controller/drafts during verified same-account refresh; continue invalidating on sign-out/identity changes.
