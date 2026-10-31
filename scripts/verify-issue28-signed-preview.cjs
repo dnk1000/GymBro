@@ -102,8 +102,8 @@ async function main(){
       check('real commit/lost acknowledgement/exact retry, retained draft and zero local workout access at '+width+'px');
     }
     const other=await open(390),current=await repos[0].load(),id=current.document.catalog.exercises[0].id;
-    await page.locator('#cloudRefresh').click();await ready(page);
-    await page.evaluate(async id=>workoutActions.logSet({date:'2026-10-28',exercise:id,weight:0,reps:8,sessionId:null}),id);
+    await page.locator('#cloudRefresh').click();await page.waitForFunction(revision=>cloudController.getStatus().revision===revision,current.revision);
+    const winning=await page.evaluate(async id=>workoutActions.logSet({date:'2026-10-28',exercise:id,weight:0,reps:8,sessionId:null}),id);assert(winning.ok,winning.code);
     const winner=await repos[0].load();await other.locator('[data-view="workout"]').click();await other.locator('#fExercise').selectOption(id);await other.locator('#fDate').fill('2026-10-28');await other.locator('#fWeight').fill('0');await other.locator('#fReps').fill('9');await other.locator('#fNotes').fill('signed stale draft');
     await other.locator('#saveSetBtn').click();await other.waitForFunction(()=>cloudController.getStatus().phase==='CONFLICT');assert.equal(await other.locator('#fNotes').inputValue(),'signed stale draft');
     assert(f.lifecycle.equalRows((await repos[0].load()).rows,winner.rows));await other.locator('[data-view="data"]').click();await other.locator('#cloudRefresh').click();await ready(other);assert.equal(await other.locator('#fNotes').inputValue(),'signed stale draft');
