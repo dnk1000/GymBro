@@ -67,7 +67,7 @@ const OperationalDiagnostics = (() => {
       classification: ['CONFLICT','REQUEST_CONFLICT','PENDING','OUTCOME_UNKNOWN','AUTHORIZATION_ERROR','VALIDATION_ERROR'].includes(phase)?phase:phase.startsWith('RECOVERY_')?'RECOVERY':status.code==='VALIDATION_ERROR'?'VALIDATION_ERROR':parity?'PARITY':['uninitialized','unreadable'].includes(handle.status)?'RECOVERY':cause, cause, phase,
       acknowledgement:phase==='OUTCOME_UNKNOWN'?'unknown':phase==='PENDING'?'pending':phase==='RECOVERY_PENDING'?'confirmed; recovery cleanup pending':'no new save claimed',
       actions: [status.canRetry?'Retry same request':null,status.canResolve?'Check result / cancel unresolved request':null,
-        ['READY','CONFLICT','LOAD_ERROR','AUTHORIZATION_ERROR'].includes(phase)?'Refresh saved data':null].filter(Boolean),
+        status.canRefresh===true?'Refresh saved data':null].filter(Boolean),
     };
     return {message,summary};
   }

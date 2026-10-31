@@ -1,3 +1,7 @@
+## 3.14.1 — Preserve #42 diagnostic-authority clarification
+
+Explicit backend/environment/generation matching before retaining private drafts; diagnostic action labels remain descriptive. Same #42 scope, pending Preview verification and human acceptance in PR #81.
+
 ## 3.14.0 — Operational diagnostics and recoverable errors (#42)
 
 Safe environment/version/operation support summaries; clearer read/auth/conflict/unknown-write recovery; same-account reconnect retains drafts. No telemetry, offline queue or persistence-format change. Preview candidate; acceptance evidence is in PR #81.

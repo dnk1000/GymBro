@@ -167,3 +167,10 @@ test('diagnostics: same-account reconnect preserves pending packet, exact drafts
  assert.match(await p.locator('#cloudStatus').textContent(),/fresh sign-in link/);f.rpc=rpc;await p.locator('#cloudRefresh').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='READY');
  await p.evaluate(()=>window.dispatchEvent(new CustomEvent('gymbro-account',{detail:null})));assert.equal(await p.locator('#fNotes').inputValue(),'');assert.equal(await p.evaluate(()=>cloudController),null);
 });
+
+test('diagnostics: changed backend environment invalidates same-owner/client drafts and controller',async t=>{
+ const f=await fixture(),p=await open(t,f,390);
+ await p.locator('#migrationFile').setInputFiles({name:'private-source.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});
+ await p.evaluate(()=>{window.originalCloudController=cloudController;fNotes.value='private draft';const previous=window.lastVerifiedAccount;window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{...previous,config:{...previous.config,environment:'changed'}}}));});
+ assert.equal(await p.evaluate(()=>cloudController),null);assert.equal(await p.evaluate(()=>originalCloudController.getStatus().phase),'DISPOSED');assert.equal(await p.locator('#fNotes').inputValue(),'');assert.equal(await p.locator('#migrationFile').evaluate(e=>e.files.length),0);
+});

@@ -27,7 +27,7 @@ function renderCloudExerciseInput() {
     <fieldset id="migrationControls" disabled><legend>Deliberate synthetic migration</legend><input id="migrationFile" type="file" accept="application/json" aria-label="Synthetic migration fixture">
     <button id="migrationReview">Validate and review synthetic fixture</button><pre id="migrationSummary" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
     <button id="migrationCommit" disabled>Confirm synthetic migration</button><button id="migrationReport" disabled>Download comparison report</button></fieldset><div id="cloudLifecycle"></div>`;
-  const el=id=>document.getElementById(id);let account=null,epoch=0,panel=null,review=null,report=null,config=null,shownRevision=null,accountBlocked=false;
+  const el=id=>document.getElementById(id);let account=null,epoch=0,panel=null,review=null,report=null,config=null,shownRevision=null,accountBlocked=false,accountContext=null,controllerEpoch=null;
   const say=text=>el('cloudStatus').textContent=text;
   const support=OperationalDiagnostics.mount(host);
   function diagnose(error,operation='initial load') {say(support.update({error,operation,config,status:cloudController?.getStatus(),handle:cloudController?.getSnapshot()}));}
@@ -46,17 +46,22 @@ function renderCloudExerciseInput() {
     say(s.diagnostic || s.phase==='LOAD_ERROR' || h.status!=='healthy' ? diagnosticMessage : parityBlocked&&h.status==='healthy'?'Migration verification or recovery metadata is pending; editing is blocked.':s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
   }
   function invalidate(){
-    epoch++;panel?.dispose();panel=null;cloudController?.dispose();cloudController=null;cloudReady=false;
+    epoch++;controllerEpoch=null;panel?.dispose();panel=null;cloudController?.dispose();cloudController=null;cloudReady=false;
     db=emptyData();noteDrafts.clear();selectedNoteOccurrence=null;selectedExercise='';selectedTemplateId=null;
     clearForm();clearInbox();expandedHistoryGroups.clear();for(const f of fields){f.disabled=true;f.hidden=true;}
     support.update({operation:'account'});el('migrationFile').value='';shownRevision=null;review=report=null;el('migrationSummary').textContent='';el('cloudLifecycle').replaceChildren();el('migrationControls').disabled=true;
     el('migrationCommit').disabled=el('cloudRetry').disabled=el('cloudResolve').disabled=true;
   }
-  invalidate();window.addEventListener('gymbro-account',event=>{const next=event.detail,unchanged=account&&next&&account.user.id===next.user.id&&account.client===next.client&&account.config.projectRef===next.config.projectRef;account=next;accountBlocked=false;if(unchanged){if(cloudController)publish(cloudController);return;}invalidate();say(account?'Account verified. Connect synthetic cloud workouts.':'Sign in to connect cloud workouts.');});
+  invalidate();window.addEventListener('gymbro-account',event=>{
+    const next=event.detail,context=next?{owner:next.user.id,client:next.client,project:next.config.projectRef,url:next.config.url,environment:next.config.environment}:null;
+    const unchanged=context&&accountContext&&Object.keys(context).every(key=>context[key]===accountContext[key])&&(!cloudController||controllerEpoch===epoch);
+    account=next;accountContext=context;accountBlocked=false;if(unchanged){if(cloudController)publish(cloudController);return;}
+    invalidate();say(account?'Account verified. Connect synthetic cloud workouts.':'Sign in to connect cloud workouts.');
+  });
   window.addEventListener('gymbro-account-unavailable',()=>{accountBlocked=true;cloudReady=false;for(const f of fields)f.disabled=true;el('migrationControls').disabled=true;el('cloudLifecycle').querySelectorAll('fieldset[data-controls]').forEach(f=>f.disabled=true);el('cloudRetry').disabled=el('cloudResolve').disabled=true;diagnose(OperationalDiagnostics.failure('AUTH','Verify account access again.'),'account');});
   el('cloudConnect').onclick=async()=>{
     if(accountBlocked){diagnose(OperationalDiagnostics.failure('AUTH','Verify account access again.'),'account');return;}
-    if(cloudController){await cloudController.refresh();return;}
+    if(cloudController&&controllerEpoch===epoch){await cloudController.refresh();return;}
     const generation=++epoch;
     try{
       const response=await fetch('/api/workout-config',{cache:'no-store'});config=await response.json();
@@ -68,7 +73,7 @@ function renderCloudExerciseInput() {
       if(generation!==epoch)return;
       if(initial.status==='healthy'&&initial.document.data.extension?.previewMigrationFixture!==config.fixtureTag)throw OperationalDiagnostics.failure('CONFIGURATION','Unexpected destination contents.');
       cloudController=WorkoutCloud.create({client:account.client,ownerId,initial,recoveryStorage:sessionStorage,fixtureTag:config.fixtureTag,onChange:publish});
-      panel=WorkoutLifecyclePanel.mount(el('cloudLifecycle'),{controller:cloudController,environment:'GymBro-Staging — synthetic fixtures only',ownerId,config,cutoverAccepted:false});
+      controllerEpoch=generation;panel=WorkoutLifecyclePanel.mount(el('cloudLifecycle'),{controller:cloudController,environment:'GymBro-Staging — synthetic fixtures only',ownerId,config,cutoverAccepted:false});
       for(const f of fields)f.hidden=false;publish(cloudController);
     }catch(error){if(generation===epoch)diagnose(error);}
   };

@@ -1,3 +1,13 @@
+# Issue #42 diagnostic-authority clarification
+
+Release status: **preparation**
+
+Application version: `3.14.1-20261031T124231Z`
+
+Data schema: `8`
+
+Preserves remote clarification 804ba9a: retain drafts/controllers only across matching verified owner, backend/project/environment and controller generation. Diagnostic action labels use authoritative flags. Same approved #42 scope and 3.14.x mapping; actual verification and pending gates: PR #81. No Production acceptance or cutover.
+
 # Issue #42 operational diagnostics and recovery
 
 Release status: **preparation**

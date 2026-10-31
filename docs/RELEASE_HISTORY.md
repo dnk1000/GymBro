@@ -1,3 +1,7 @@
+# Pending #42 clarification candidate
+
+`3.14.1-20261031T124231Z`, schema 8. Candidate only; PR #81 records verification and pending approval/acceptance. No Production acceptance or cutover.
+
 # Pending #42 operational recovery candidate
 
 `3.14.0-20261031T123431Z`, schema 8. Candidate only; exact source and verification are recorded in [PR #81](https://github.com/dnk1000/GymBro/pull/81). No accepted Production release or cutover.
