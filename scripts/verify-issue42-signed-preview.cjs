@@ -56,11 +56,12 @@ async function main(){
     return page;
   }
   try{
-    const first=await repos[0].load();assert.equal(first.status,'uninitialized','dedicated synthetic owner must be empty');
+    const first=await repos[0].load();assert(['uninitialized','healthy'].includes(first.status),'qualified fixture state required');
     f.source.extension.previewMigrationFixture=state.tag;const text=JSON.stringify(f.source),candidate=await f.get('WorkoutMigration').prepareSource(text,state.accounts[0].id);
-    const page=await open(1280);await page.locator('#migrationFile').setInputFiles({name:'synthetic-diagnostics.json',mimeType:'application/json',buffer:Buffer.from(text)});
-    await page.locator('#migrationReview').click();await page.waitForFunction(()=>!document.getElementById('migrationCommit').disabled);await page.locator('#migrationCommit').click();await ready(page);
-    assert(f.repository.equalRows((await repos[0].load()).rows,f.repository.project(candidate.document,state.accounts[0].id,candidate.bodyweightIds,candidate.signatureSchemes)));
+    if(first.status==='healthy')assert(f.lifecycle.equalRows(first.rows,f.repository.project(candidate.document,state.accounts[0].id,candidate.bodyweightIds,candidate.signatureSchemes)),'resume requires exact initialized synthetic source');
+    const page=await open(1280);if(first.status==='uninitialized'){await page.locator('#migrationFile').setInputFiles({name:'synthetic-diagnostics.json',mimeType:'application/json',buffer:Buffer.from(text)});
+    await page.locator('#migrationReview').click();await page.waitForFunction(()=>!document.getElementById('migrationCommit').disabled);await page.locator('#migrationCommit').click();await ready(page);}
+    assert(f.lifecycle.equalRows((await repos[0].load()).rows,f.repository.project(candidate.document,state.accounts[0].id,candidate.bodyweightIds,candidate.signatureSchemes)));
     check('signed synthetic setup verified by complete row/relationship equality');
     for(const width of [1280,390,320]){
       const p=await open(width,0,'database');assert.equal(await p.evaluate(()=>cloudController),null);assert.equal(await p.locator('#workout fieldset').evaluate(e=>e.hidden&&e.disabled),true);
@@ -69,20 +70,20 @@ async function main(){
       await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());await p.locator('#fExercise').selectOption(id);await p.locator('#fDate').fill('2026-10-31');await p.locator('#fWeight').fill('0');await p.locator('#fReps').fill('7');await p.locator('#fNotes').fill('  retained private draft\n');
       await p.locator('[data-view="data"]').click();for(const fault of ['offline','database','auth','compatibility']){
         faults.set(p,fault);await p.locator('#cloudRefresh').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='LOAD_ERROR');
-        assert.equal(await p.locator('#fNotes').inputValue(),'  retained private draft\n');assert(f.repository.equalRows((await repos[0].load()).rows,before.rows));
+        assert.equal(await p.locator('#fNotes').inputValue(),'  retained private draft\n');assert(f.lifecycle.equalRows((await repos[0].load()).rows,before.rows));
         const summary=await p.locator('#previewCloud > details pre').textContent();assert(!summary.includes('NEVER_EMIT_SECRET'));assert(!summary.includes('private draft'));assert(!summary.includes(state.accounts[0].id));
         faults.set(p,null);await p.locator('#cloudRefresh').click();await ready(p);
       }
       faults.set(p,'lost');await p.locator('[data-view="workout"]').click();await p.locator('#saveSetBtn').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');
-      const committed=await repos[0].load(),original=packets.get(p).at(-1);assert(f.repository.equalRows(committed.rows,original.next));assert.equal(BigInt(committed.revision),BigInt(before.revision)+1n);
+      const committed=await repos[0].load(),original=packets.get(p).at(-1);assert(f.lifecycle.equalRows(committed.rows,original.next));assert.equal(BigInt(committed.revision),BigInt(before.revision)+1n);
       await p.locator('[data-view="data"]').click();await p.locator('#cloudConnect').click();assert.equal(await p.locator('#fNotes').inputValue(),'  retained private draft\n');assert.equal(await p.evaluate(()=>cloudController.getStatus().phase),'OUTCOME_UNKNOWN');
-      await p.locator('#cloudRetry').click();await ready(p);assert.deepEqual(packets.get(p).at(-1),original);assert.equal((await repos[0].load()).revision,committed.revision);assert(f.repository.equalRows((await repos[0].load()).rows,committed.rows));
+      await p.locator('#cloudRetry').click();await ready(p);assert.deepEqual(packets.get(p).at(-1),original);assert.equal((await repos[0].load()).revision,committed.revision);assert(f.lifecycle.equalRows((await repos[0].load()).rows,committed.rows));
       await p.locator('#previewCloud > details').evaluate(e=>e.open=true);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(await p.evaluate(()=>[workoutReads,workoutWrites]),[0,0]);
       await p.screenshot({path:path.join(root,'test-results','issue42-signed-'+width+'.png'),fullPage:true});check('initial-load, four refresh faults and real committed lost-ack exact retry at '+width+'px');
     }
     const other=await open(390),latest=await repos[0].load();await page.locator('#cloudRefresh').click();await page.waitForFunction(r=>cloudController.getStatus().phase==='READY'&&cloudController.getStatus().revision===r,latest.revision);
     await page.evaluate(id=>workoutActions.logSet({date:'2026-10-31',exercise:id,weight:0,reps:8,sessionId:null}),latest.document.catalog.exercises[0].id);
-    const winner=await repos[0].load();const stale=await other.evaluate(id=>workoutActions.logSet({date:'2026-10-31',exercise:id,weight:0,reps:9,sessionId:null}),latest.document.catalog.exercises[0].id);assert.equal(stale.code,'CONFLICT');assert(f.repository.equalRows((await repos[0].load()).rows,winner.rows));
+    const winner=await repos[0].load();const stale=await other.evaluate(id=>workoutActions.logSet({date:'2026-10-31',exercise:id,weight:0,reps:9,sessionId:null}),latest.document.catalog.exercises[0].id);assert.equal(stale.code,'CONFLICT');assert(f.lifecycle.equalRows((await repos[0].load()).rows,winner.rows));
     await other.locator('#cloudRefresh').click();await ready(other);check('two independent signed contexts reject stale write and deliberately refresh');
     faults.set(other,'account');await other.locator('#accountRefresh').click();await other.waitForFunction(()=>!cloudReady);assert.match(await other.locator('#cloudStatus').textContent(),/account session/);
     faults.set(other,null);await other.locator('#accountRefresh').click();await ready(other);check('failed signed account verification pauses controls and explicit reauthentication recovers');
@@ -91,4 +92,4 @@ async function main(){
     fs.writeFileSync(path.join(root,'test-results','issue42-signed-preview.json'),JSON.stringify({sha,preview,project:config.projectRef,appVersion:f.get('APP_VERSION.version'),browser:browser.version(),checks,expectedInjectedFailures:expectedFailures.length,unexpectedErrors:errors},null,2));
   } finally {for(const c of contexts)await c.close();await browser.close();for(const c of clients)await c.auth.signOut({scope:'local'});}
 }
-if(require.main===module)main().catch(()=>{console.error('Signed #42 Preview verification failed; private response and credentials withheld. No success claimed.');process.exitCode=1;});
+if(require.main===module)main().catch(error=>{const line=/verify-issue42-signed-preview\.cjs:(\d+):/.exec(error.stack??'')?.[1]??'unknown';console.error('Signed #42 Preview verification failed at harness line '+line+'; private response and credentials withheld. No success claimed.');process.exitCode=1;});
