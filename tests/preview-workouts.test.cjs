@@ -174,3 +174,12 @@ test('diagnostics: changed backend environment invalidates same-owner/client dra
  await p.evaluate(()=>{window.originalCloudController=cloudController;fNotes.value='private draft';const previous=window.lastVerifiedAccount;window.dispatchEvent(new CustomEvent('gymbro-account',{detail:{...previous,config:{...previous.config,environment:'changed'}}}));});
  assert.equal(await p.evaluate(()=>cloudController),null);assert.equal(await p.evaluate(()=>originalCloudController.getStatus().phase),'DISPOSED');assert.equal(await p.locator('#fNotes').inputValue(),'');assert.equal(await p.locator('#migrationFile').evaluate(e=>e.files.length),0);
 });
+
+test('diagnostics: acknowledged migration with failed readback stays blocked and distinct from an unsaved request',async t=>{
+ const f=await fixture(),rpc=f.rpc;let failReadback=false;
+ f.rpc=async(name,args)=>{if(name==='gymbro_lifecycle_snapshot'&&failReadback)return {status:503,error:{code:'57P01'}};const result=await rpc(name,args);if(name==='gymbro_migration_initialize')failReadback=true;return result;};
+ const p=await open(t,f,390);p.on('dialog',d=>d.accept());await p.locator('#migrationFile').setInputFiles({name:'source.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});await p.locator('#migrationReview').click();await p.waitForFunction(()=>!document.getElementById('migrationCommit').disabled);await p.evaluate(()=>document.getElementById('migrationCommit').onclick());await p.waitForFunction(()=>cloudController.getStatus().phase==='LOAD_ERROR');
+ assert.equal(f.getSaved().revision,'1');assert.equal(await p.evaluate(()=>cloudReady),false);assert.equal(await p.locator('#fNotes').isDisabled(),true);
+ assert.match(await p.locator('#cloudStatus').textContent(),/migration.*acknowledged|Migration acknowledged/);
+ assert.equal(await p.evaluate(()=>sessionStorage.getItem('gymbro-migration-parity-v1-'+cloudController.getSnapshot().ownerId)),'pending');
+});
