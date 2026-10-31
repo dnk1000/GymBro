@@ -1,5 +1,5 @@
 const KEY = "daveGymTrackerV1";
-const {
+let {
   fDate,
   fExercise,
   fWeight,
@@ -80,7 +80,19 @@ const {
     "importFile",
   ].map((id) => [id, document.getElementById(id)]),
 );
-let db = load();
+const cloudMode = new URLSearchParams(location.search).get('storage') === 'cloud';
+// Cloud mode is selected before any legacy storage read or adapter construction.
+let db = cloudMode ? emptyData() : load();
+let cloudController = null;
+let cloudReady = false;
+function exerciseName(id) { return cloudController?.getWorkoutState()?.catalog.exercises.find(e=>e.id===id)?.displayName ?? id; }
+function exercisePreference(id) {
+  if(!cloudMode)return hasOwn(db.preferences,id)?db.preferences[id]:null;
+  const doc=cloudController?.getWorkoutState();if(!doc)return null;
+  const matches=doc.catalog.aliases.filter(a=>a.exerciseId===id&&hasOwn(doc.data.preferences,a.label)).sort((a,b)=>a.label<b.label?-1:a.label>b.label?1:0);
+  return matches.length===1?doc.data.preferences[matches[0].label]:matches.map(a=>a.label+': '+doc.data.preferences[a.label]).join('\n');
+}
+function exerciseInput() { return cloudMode && fExercise.value==='__new__' ? document.getElementById('newExerciseLabel').value.trim() : fExercise.value.trim(); }
 let editingSetId = null;
 let selectedExercise = "Seated Row";
 let selectedTemplateId = null;
@@ -91,7 +103,7 @@ const expandedHistoryGroups = new Set();
 // committed text across unrelated renders; it never follows a substitution.
 const noteDrafts = new Map();
 let selectedNoteOccurrence = null;
-const workoutActions = createWorkoutActions({
+const localActions = cloudMode ? createWorkoutActions({getState:()=>db,prepareOnly:true,createId:newId}) : createWorkoutActions({
   getState: () => db,
   setState: (next) => {
     db = next;
@@ -99,6 +111,14 @@ const workoutActions = createWorkoutActions({
   persist: (next) => persistData(next),
   createId: newId,
 });
+const workoutActions = new Proxy(localActions, {get(target,name) {
+  if (!cloudMode) return target[name];
+  if (['getWorkoutState','getActiveSession','getGuidedWorkoutState'].includes(name)) return target[name];
+  return async (...args) => {
+    if (!cloudController || !cloudReady) return {ok:false,code:'LOAD_ERROR',errors:['Connect and verify Preview cloud data first.']};
+    return cloudController.execute(name,...args);
+  };
+}});
 function getWorkoutState() {
   return workoutActions.getWorkoutState();
 }
@@ -128,10 +148,10 @@ function rememberNoteDraft(el) {
   noteDrafts.set(key, { text: el.value, expectedText: previous?.expectedText ?? scopedNote(db, JSON.parse(key)) });
   document.getElementById(el.id + "Status").textContent = "Unsaved";
 }
-function saveNoteEditor(id) {
+async function saveNoteEditor(id) {
   const el = document.getElementById(id), key = el.dataset.noteTarget;
   if (!noteDrafts.has(key)) rememberNoteDraft(el);
-  const result = workoutActions.saveScopedNote({ ...JSON.parse(key), ...noteDrafts.get(key) });
+  const result = await workoutActions.saveScopedNote({ ...JSON.parse(key), ...noteDrafts.get(key) });
   if (!result.ok) { applyActionResult(result); return; }
   noteDrafts.delete(key);
   applyActionResult(result);
@@ -144,7 +164,7 @@ function noteText(label, text) {
 function noteOccurrenceLabel(note) {
   const session = db.sessions.find((row) => row.id === note.sessionId);
   const index = session?.planSnapshot?.slots.findIndex((slot) => slot.id === note.planSlotId);
-  return `${note.exercise}${note.planSlotId ? ` · planned exercise ${(index ?? -1) + 1}` : " · manual / unplanned"}`;
+  return `${exerciseName(note.exercise)}${note.planSlotId ? ` · planned exercise ${(index ?? -1) + 1}` : " · manual / unplanned"}`;
 }
 function renderScopedWorkoutNotes() {
   const root = document.getElementById("workoutNotes"), session = workoutActions.getActiveSession();
@@ -240,10 +260,10 @@ document.querySelectorAll(".tab").forEach(
     }),
 );
 
-function addSet() {
+async function addSet() {
   const input = {
     date: fDate.value,
-    exercise: fExercise.value.trim(),
+    exercise: exerciseInput(),
     weight: numeric(fWeight.value),
     unit: fUnit.value,
     reps: numeric(fReps.value),
@@ -257,7 +277,7 @@ function addSet() {
   if (guidedFormContext && !editingSetId) {
     if (guidedFormContext.committed) return;
     const context = guidedFormContext;
-    const result = workoutActions.logGuidedSet({
+    const result = await workoutActions.logGuidedSet({
       ...input,
       sessionId: context.sessionId,
       planSlotId: context.planSlotId,
@@ -274,8 +294,8 @@ function addSet() {
     return;
   }
   const result = editingSetId
-    ? workoutActions.editSet(editingSetId, input)
-    : workoutActions.logSet(input);
+    ? await workoutActions.editSet(editingSetId, input)
+    : await workoutActions.logSet(input);
   if (applyActionResult(result)) clearForm(false);
 }
 function clearForm(clearEx = true) {
@@ -286,6 +306,7 @@ function clearForm(clearEx = true) {
   fWeight.placeholder = "90";
   fDate.readOnly = false;
   fExercise.readOnly = false;
+  if(cloudMode)fExercise.disabled=false;
   document.getElementById("incompleteEditNotice").hidden = true;
   document.getElementById("fApproximate").checked = false;
   document.getElementById("setFormTitle").textContent = "Log a set";
@@ -338,16 +359,16 @@ function markEditedSetComplete() {
   message.textContent =
     "Marked complete in this form. Save changes to update the record; nothing has been saved yet.";
 }
-function addBodyweight() {
-  const result = workoutActions.logBodyweight({
+async function addBodyweight() {
+  const result = await workoutActions.logBodyweight({
     date: bwDate.value,
     value: numeric(bwValue.value),
   });
   if (applyActionResult(result)) bwValue.value = "";
 }
-function deleteSet(id) {
+async function deleteSet(id) {
   if (!confirm("Delete this set?")) return;
-  if (applyActionResult(workoutActions.deleteSet(id)) && editingSetId === id)
+  if (applyActionResult(await workoutActions.deleteSet(id)) && editingSetId === id)
     clearForm();
 }
 function renderAll() {
@@ -370,9 +391,10 @@ function allExercises() {
   return unique([
     ...db.sets.map((s) => s.exercise),
     ...Object.keys(db.exerciseLibrary || {}),
-  ]).sort();
+  ]).sort((a,b)=>exerciseName(a).localeCompare(exerciseName(b)));
 }
 function renderDatalist() {
+  if (cloudMode) { renderCloudExerciseInput(); return; }
   exerciseList.innerHTML = allExercises()
     .map((x) => `<option value="${esc(x)}">`)
     .join("");
@@ -494,7 +516,7 @@ function renderDashboard() {
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((x) => ({ v: x.value, label: x.date.slice(5) }));
   lineChart(weightChart, bw, (v) => v.toFixed(0) + " lb");
-  const perf = bestByDate("Seated Row").map((x) => ({
+  const perf = bestByDate(cloudMode ? cloudController?.getWorkoutState()?.catalog.aliases.find(a=>a.label==="Seated Row")?.exerciseId : "Seated Row").map((x) => ({
     v: x.v,
     label: x.label,
   }));
@@ -533,7 +555,7 @@ function renderGains() {
       .slice(0, 5)
       .map(
         (g) =>
-          `<div class="item"><div class="split"><strong>${esc(g.ex)}</strong><span class="pill ${g.pct >= 0 ? "good" : "warn"}">${g.pct >= 0 ? "+" : ""}${g.pct.toFixed(0)}% set work</span></div><div class="sub">${g.first.date}: ${fmt(g.first.weight)} ${g.first.unit} × ${fmt(g.first.reps)} → ${g.last.date}: ${fmt(g.last.weight)} ${g.last.unit} × ${fmt(g.last.reps)}</div></div>`,
+          `<div class="item"><div class="split"><strong>${esc(exerciseName(g.ex))}</strong><span class="pill ${g.pct >= 0 ? "good" : "warn"}">${g.pct >= 0 ? "+" : ""}${g.pct.toFixed(0)}% set work</span></div><div class="sub">${g.first.date}: ${fmt(g.first.weight)} ${g.first.unit} × ${fmt(g.first.reps)} → ${g.last.date}: ${fmt(g.last.weight)} ${g.last.unit} × ${fmt(g.last.reps)}</div></div>`,
       )
       .join("") || '<div class="sub">More sessions needed.</div>';
 }
@@ -593,14 +615,14 @@ function loadExerciseToForm(ex) {
   document.querySelector('[data-view=\"workout\"]').click();
   fReps.focus();
 }
-function startTemplate(id, duration = 60) {
+async function startTemplate(id, duration = 60) {
   if (
-    applyActionResult(workoutActions.selectPlan({ templateId: id, duration }))
+    applyActionResult(await workoutActions.selectPlan({ templateId: id, duration }))
   )
     document.querySelector('[data-view="workout"]').click();
 }
-function clearActivePlan() {
-  applyActionResult(workoutActions.clearPlan());
+async function clearActivePlan() {
+  applyActionResult(await workoutActions.clearPlan());
 }
 function renderToday() {
   const d = fDate.value || today();
@@ -622,10 +644,8 @@ function renderToday() {
         .map((slot) => {
           const meta = db.exerciseLibrary?.[slot.exercise] || {};
           const last = latestSet(slot.exercise);
-          const pref = hasOwn(db.preferences, slot.exercise)
-            ? db.preferences[slot.exercise]
-            : null;
-          return `<div class="item role-${slot.role}"><div class="split"><div><strong>${esc(slot.exercise)} <span class="pill">${slot.role}</span></strong><div class="sub">${esc(meta.primary || "Uncategorized")} • ${esc(meta.pattern || "")}</div>${last ? `<div class="sub">Last: ${fmt(last.weight)} ${esc(last.unit)} × ${fmt(last.reps)} on ${last.date}</div>` : ""}${pref ? `<div class="sub">${esc(pref)}</div>` : ""}</div><button class="btn small" onclick="loadExerciseToForm(${jsArg(slot.exercise)})">Log</button></div></div>`;
+          const pref = exercisePreference(slot.exercise);
+          return `<div class="item role-${slot.role}"><div class="split"><div><strong>${esc(exerciseName(slot.exercise))} <span class="pill">${slot.role}</span></strong><div class="sub">${esc(meta.primary || "Uncategorized")} • ${esc(meta.pattern || "")}</div>${last ? `<div class="sub">Last: ${fmt(last.weight)} ${esc(last.unit)} × ${fmt(last.reps)} on ${last.date}</div>` : ""}${pref ? `<div class="sub">${esc(pref)}</div>` : ""}</div><button class="btn small" onclick="loadExerciseToForm(${jsArg(slot.exercise)})">Log</button></div></div>`;
         })
         .join("")
     : '<div class="sub">Choose a workout from the Program tab to load your regular exercises here.</div>';
@@ -633,14 +653,14 @@ function renderToday() {
     ? rows
         .map(
           (s) =>
-            `<div class="item"><div class="split"><div><strong>${esc(s.exercise)}</strong><div class="sub">${fmt(s.weight)} ${esc(s.unit)} × ${fmt(s.reps)} ${s.rpe != null ? "• RPE " + s.rpe : ""}${s.rir != null ? " • " + s.rir + " RIR" : ""}${s.pain ? " • pain " + s.pain + "/10 " + esc(s.painArea) : ""}</div>${s.notes ? `<div class="sub">${esc(s.notes)}</div>` : ""}</div><div class="plan-actions"><button class="btn small secondary" onclick="editSet(${jsArg(s.id)})">Edit</button><button class="btn small danger" onclick="deleteSet(${jsArg(s.id)})">Delete</button></div></div></div>`,
+            `<div class="item"><div class="split"><div><strong>${esc(exerciseName(s.exercise))}</strong><div class="sub">${fmt(s.weight)} ${esc(s.unit)} × ${fmt(s.reps)} ${s.rpe != null ? "• RPE " + s.rpe : ""}${s.rir != null ? " • " + s.rir + " RIR" : ""}${s.pain ? " • pain " + s.pain + "/10 " + esc(s.painArea) : ""}</div>${s.notes ? `<div class="sub">${esc(s.notes)}</div>` : ""}</div><div class="plan-actions"><button class="btn small secondary" onclick="editSet(${jsArg(s.id)})">Edit</button><button class="btn small danger" onclick="deleteSet(${jsArg(s.id)})">Delete</button></div></div></div>`,
         )
         .join("")
     : `<div class="sub">No sets logged for ${d}.</div>`;
 }
 
 function historySetTable(group, rows = group.sets) {
-  return `<table class="history-sets"><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td data-label="Date">${s.date}</td><td class="history-set-exercise" data-label="Exercise / order"><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : group.sets.indexOf(s) + 1}.</span> ${esc(s.exercise)}</td><td data-label="Load">${fmt(s.weight)} ${esc(s.unit)}</td><td data-label="Reps">${fmt(s.reps)}</td><td data-label="Effort">${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td data-label="Pain">${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td class="history-set-notes"><span class="history-desktop-notes">${esc(s.notes || "—")}</span><details class="set-record"><summary>Record details / notes</summary><p class="history-mobile-notes">Set notes: ${esc(s.notes || "—")}</p><pre>${esc(JSON.stringify(s, null, 2))}</pre></details></td><td class="history-set-source" data-label="Source"><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td class="history-set-controls"><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
+  return `<table class="history-sets"><thead><tr><th>Date</th><th>Exercise / order</th><th>Load</th><th>Reps</th><th>Effort</th><th>Pain</th><th>Set notes</th><th>Source</th><th>Actions</th></tr></thead><tbody>${rows.map((s, index) => `<tr data-set-id="${esc(s.id)}"><td data-label="Date">${s.date}</td><td class="history-set-exercise" data-label="Exercise / order"><span class="sub">${group.kind === "session" ? group.session.setIds.indexOf(s.id) + 1 : group.sets.indexOf(s) + 1}.</span> ${esc(exerciseName(s.exercise))}</td><td data-label="Load">${fmt(s.weight)} ${esc(s.unit)}</td><td data-label="Reps">${fmt(s.reps)}</td><td data-label="Effort">${[s.rpe != null ? "RPE " + s.rpe : null, s.rir != null ? s.rir + " RIR" : null].filter(Boolean).join(" · ") || "—"}</td><td data-label="Pain">${s.pain != null ? `${s.pain}/10 ${esc(s.painArea || "")}` : esc(s.painArea || "—")}</td><td class="history-set-notes"><span class="history-desktop-notes">${esc(s.notes || "—")}</span><details class="set-record"><summary>Record details / notes</summary><p class="history-mobile-notes">Set notes: ${esc(s.notes || "—")}</p><pre>${esc(JSON.stringify(cloudMode ? cloudController.getWorkoutState().data.sets.find(row=>row.id===s.id) : s, null, 2))}</pre></details></td><td class="history-set-source" data-label="Source"><span class="pill ${s.complete ? "" : "warn"}">${esc(s.source)}${s.complete ? "" : " • incomplete"}</span></td><td class="history-set-controls"><span class="history-actions"><button class="btn secondary icon-button" aria-label="Edit" title="Edit set" onclick="editSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12H4v-5L16 3Z M13 6l5 5" /></svg></button><button class="btn danger icon-button" aria-label="Delete" title="Delete set" onclick="deleteSet(${jsArg(s.id)})"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7" /></svg></button></span></td></tr>`).join("")}</tbody></table>`;
 }
 function rememberHistoryExpansion() {
   historyTable.querySelectorAll("[data-history-key]").forEach((el) => {
@@ -661,8 +681,8 @@ function historyExerciseDisclosures(group, key) {
       `${fmt(set.weight)} ${esc(set.unit)} × ${fmt(set.reps)}${set.complete === false ? " (incomplete)" : ""}`,
     ).join(" · ");
     return `<details class="history-exercise" data-history-key="${esc(runKey)}" ${expandedHistoryGroups.has(runKey) ? "open" : ""}>
-      <summary class="history-summary history-exercise-summary"><strong>${esc(run.exercise)}</strong><span class="sub history-counts">${run.sets.length} ${run.sets.length === 1 ? "set" : "sets"} · ${performance}${run.sets.length > 3 ? ` · +${run.sets.length - 3} more` : ""}</span></summary>
-      <div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(run.exercise)} set details">${historySetTable(group, run.sets)}</div>
+      <summary class="history-summary history-exercise-summary"><strong>${esc(exerciseName(run.exercise))}</strong><span class="sub history-counts">${run.sets.length} ${run.sets.length === 1 ? "set" : "sets"} · ${performance}${run.sets.length > 3 ? ` · +${run.sets.length - 3} more` : ""}</span></summary>
+      <div class="history-set-scroll" tabindex="0" role="region" aria-label="${esc(group.date)} ${esc(exerciseName(run.exercise))} set details">${historySetTable(group, run.sets)}</div>
     </details>`;
   }).join("");
 }
@@ -685,7 +705,7 @@ function renderHistoryFilterOptions(state) {
       '<option value="' + esc(value) + '">' + esc(label) + '</option>').join('');
     el.value = selected;
   };
-  fill('historyExercise', unique(state.sets.map(set => set.exercise)).sort().map(name => [name, name]), 'All exercises');
+  fill('historyExercise', unique(state.sets.map(set => set.exercise)).sort().map(name => [name, exerciseName(name)]), 'All exercises');
   const names = unique(state.sessions.map(session => session.planSnapshot?.name || 'Unplanned workout')).sort();
   fill('historyWorkout', [...names.map(name => ['session:' + name, name]), ['legacy', 'Legacy / sessionless']], 'All workouts / sessions');
 }
@@ -721,11 +741,11 @@ function renderHistory() {
       <summary class="history-summary">
         ${heading}
         <span class="sub history-counts">${countText} · ${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"}${setFiltered ? " shown" : ""}</span>
-        <span class="history-exercise-preview"><span>${exercises.length ? exercises.slice(0, 2).map(esc).join(" · ") : "No sets logged in this session."}</span>${exercises.length > 2 ? `<span class="history-more">· +${exercises.length - 2}</span>` : ""}</span>
+        <span class="history-exercise-preview"><span>${exercises.length ? exercises.slice(0, 2).map(x=>esc(exerciseName(x))).join(" · ") : "No sets logged in this session."}</span>${exercises.length > 2 ? `<span class="history-more">· +${exercises.length - 2}</span>` : ""}</span>
       </summary>
       <div class="history-details">
       ${session ? `<div class="history-badges"><span class="pill">${session.duration}-minute mode</span><span class="pill">${esc(session.status)}</span><span class="pill">Explicit session</span></div>` : ""}
-      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(session.planSnapshot.slots[i].exercise)}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(slot.actualExercise)}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul></details>` : ""}
+      ${session?.guided ? `<details class="guided-history"><summary>Guided exercise status</summary><ul>${session.guided.slots.map((slot, i) => `<li>${esc(exerciseName(session.planSnapshot.slots[i].exercise))}${slot.actualExercise !== session.planSnapshot.slots[i].exercise ? ` → current selection: ${esc(exerciseName(slot.actualExercise))}` : ""} · ${esc(slot.status)}</li>`).join("")}</ul></details>` : ""}
       ${session ? historyScopedNotes(session) : ""}
       ${group.sets.length ? `${historyExerciseDisclosures(group, key)}` : ""}
       </div></details>
@@ -748,7 +768,7 @@ function renderExercises() {
         .filter((s) => s.exercise === ex)
         .sort((a, b) => b.date.localeCompare(a.date));
       const m = db.exerciseLibrary?.[ex] || {};
-      return `<tr class="exercise-row" onclick="showExercise(${jsArg(ex)})"><td>${esc(ex)}</td><td>${esc(m.primary || "Uncategorized")}</td><td>${esc(m.status || "")}</td><td>${r.length}</td><td>${exerciseSessionCount(r)}</td><td>${r[0]?.date || "—"}</td></tr>`;
+      return `<tr class="exercise-row" onclick="showExercise(${jsArg(ex)})"><td>${esc(exerciseName(ex))}</td><td>${esc(m.primary || "Uncategorized")}</td><td>${esc(m.status || "")}</td><td>${r.length}</td><td>${exerciseSessionCount(r)}</td><td>${r[0]?.date || "—"}</td></tr>`;
     })
     .join(
       "",
@@ -763,7 +783,7 @@ function renderExercises() {
 }
 function showExercise(ex) {
   selectedExercise = ex;
-  exerciseDetailTitle.textContent = ex;
+  exerciseDetailTitle.textContent = exerciseName(ex);
   const r = db.sets
     .filter((s) => s.exercise === ex)
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -774,7 +794,7 @@ function showExercise(ex) {
   // Latest history is independent of eligibility for load-based rankings.
   const latest = r.filter((s) => s.weight != null && s.reps != null).at(-1);
   const pain = r.filter((s) => s.pain > 0);
-  const pref = hasOwn(db.preferences, ex) ? db.preferences[ex] : null;
+  const pref = exercisePreference(ex);
   const meta = db.exerciseLibrary?.[ex] || {};
   exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px"><strong>Existing exercise preference</strong><div class="note-text">${esc(pref)}</div></div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${exerciseSessionCount(r)}</strong></div></div></div>`;
   exerciseDetail.insertAdjacentHTML("beforeend", exerciseScopedNotes(ex));
@@ -806,7 +826,7 @@ function renderInboxDraft() {
   const warnings = [];
   inboxDraft.sets.forEach((s, i) => {
     if (!s.include) return;
-    if (s.exercise && !hasOwn(db.exerciseLibrary, s.exercise))
+    if (s.exercise && !hasOwn(db.exerciseLibrary, s.exercise) && !(cloudMode && ExerciseIdentity.resolveLabel(cloudController.getWorkoutState().catalog,s.exercise)))
       warnings.push(
         `Set ${i + 1}: unknown exercise will be added as Uncategorized.`,
       );
@@ -836,9 +856,9 @@ function renderInboxDraft() {
   commitInboxBtn.disabled = dup || issues.length > 0;
   inboxReview.querySelectorAll("label.label").forEach(explainAcronyms);
 }
-function commitInbox() {
+async function commitInbox() {
   if (!inboxDraft) return;
-  const result = workoutActions.commitImport(inboxDraft);
+  const result = await workoutActions.commitImport(inboxDraft);
   if (!applyActionResult(result)) return;
   clearInbox(false);
   inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${result.count} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
@@ -947,7 +967,7 @@ function renderProgram() {
     .sort()
     .map(
       ([g, xs]) =>
-        `<tr><td><strong>${esc(g)}</strong></td><td>${xs.map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}</td></tr>`,
+        `<tr><td><strong>${esc(g)}</strong></td><td>${xs.map((x) => `<span class="muscle-tag">${esc(exerciseName(x))}</span>`).join("")}</td></tr>`,
     )
     .join("")}</tbody></table>`;
 }
@@ -964,26 +984,26 @@ function editTemplate(id) {
   templateEditor.innerHTML = `<div class="sub">${esc(t.focus)} • ${esc(t.intensity)}</div><div class="list" style="margin-top:10px">${t.slots
     .map((s, i) => {
       const m = db.exerciseLibrary?.[s.exercise] || {};
-      return `<div class="item role-${s.role}"><div class="split"><div><strong>${esc(s.exercise)}</strong><div class="sub">${roleLabel(s.role)} • ${s.short ? "30-min core • " : ""}${esc(m.primary || "Uncategorized")} • ${esc(m.pattern || "")}</div></div><div class="plan-actions"><button class="btn small secondary" onclick="toggleShort(${jsArg(id)},${i})">30m</button><button class="btn small secondary" onclick="cycleRole(${jsArg(id)},${i})">Role</button><button class="btn small danger" onclick="removeSlot(${jsArg(id)},${i})">Remove</button></div></div></div>`;
+      return `<div class="item role-${s.role}"><div class="split"><div><strong>${esc(exerciseName(s.exercise))}</strong><div class="sub">${roleLabel(s.role)} • ${s.short ? "30-min core • " : ""}${esc(m.primary || "Uncategorized")} • ${esc(m.pattern || "")}</div></div><div class="plan-actions"><button class="btn small secondary" onclick="toggleShort(${jsArg(id)},${i})">30m</button><button class="btn small secondary" onclick="cycleRole(${jsArg(id)},${i})">Role</button><button class="btn small danger" onclick="removeSlot(${jsArg(id)},${i})">Remove</button></div></div></div>`;
     })
     .join(
       "",
     )}</div><div style="margin-top:12px"><div class="label">Add exercise</div><div class="formgrid"><div class="span3"><input id="addEx_${esc(id)}" list="exerciseList" placeholder="Exercise"></div><div class="span2"><select id="addRole_${esc(id)}"><option value="accessory">Accessory</option><option value="core">Core</option><option value="substitute">Substitute</option></select></div><div><button onclick="addSlot(${jsArg(id)})">Add</button></div></div></div>`;
 }
-function toggleShort(id, i) {
+async function toggleShort(id, i) {
   applyActionResult(
-    workoutActions.toggleSlotShort({ templateId: id, index: i }),
+    await workoutActions.toggleSlotShort({ templateId: id, index: i }),
   );
 }
-function cycleRole(id, i) {
-  applyActionResult(workoutActions.cycleSlotRole({ templateId: id, index: i }));
+async function cycleRole(id, i) {
+  applyActionResult(await workoutActions.cycleSlotRole({ templateId: id, index: i }));
 }
-function removeSlot(id, i) {
-  applyActionResult(workoutActions.removeSlot({ templateId: id, index: i }));
+async function removeSlot(id, i) {
+  applyActionResult(await workoutActions.removeSlot({ templateId: id, index: i }));
 }
-function addSlot(id) {
+async function addSlot(id) {
   applyActionResult(
-    workoutActions.addSlot({
+    await workoutActions.addSlot({
       templateId: id,
       exercise: document.getElementById("addEx_" + id).value.trim(),
       role: document.getElementById("addRole_" + id).value,
@@ -1000,7 +1020,8 @@ function download(name, type, text) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function exportJSON() {
+async function exportJSON() {
+  if (cloudMode) { if (!cloudController || !(await cloudController.refresh()).ok) return; download("gymbro-cloud-backup.json","application/json",JSON.stringify(WorkoutLifecycle.backup(cloudController.getSnapshot()),null,2)); return; }
   download(
     `gymbro-backup-${today()}.json`,
     "application/json",
@@ -1016,7 +1037,9 @@ function csvText(value) {
     ? "'" + text
     : text;
 }
-function exportCSV() {
+async function exportCSV() {
+  if (cloudMode && (!cloudReady || !(await cloudController.refresh()).ok)) return;
+  const exportState=cloudMode?ExerciseIdentity.restoreV2Source(cloudController.getWorkoutState()):db;
   const h = [
     "date",
     "exercise",
@@ -1032,7 +1055,7 @@ function exportCSV() {
     "complete",
   ];
   const rows = [h.join(",")].concat(
-    db.sets.map((s) =>
+    exportState.sets.map((s) =>
       h.map((k) => `"${csvText(s[k]).replace(/"/g, '""')}"`).join(","),
     ),
   );
@@ -1054,6 +1077,7 @@ function backupConfirmation(mode, restored, next, filename) {
   return `${identity}\n\n${contents}\n\n${effect}\n\nExport and verify a complete JSON backup first. Continue?`;
 }
 function importJSON() {
+  if (cloudMode) { alert("Use the separate cloud backup and recovery controls in Data."); return; }
   const file = importFile.files[0];
   if (!file) return;
   const mode = document.getElementById("backupMode").value;
@@ -1094,6 +1118,7 @@ function importJSON() {
   reader.readAsText(file);
 }
 function resetSeed() {
+  if (cloudMode) { alert("Use the separate cloud backup and recovery controls in Data."); return; }
   if (confirm("Restore the original seed and discard local changes?")) {
     const next = migrateData(seed);
     if (save(next)) {
@@ -1107,6 +1132,7 @@ function resetSeed() {
   }
 }
 function clearAll() {
+  if (cloudMode) { alert("Use the separate cloud backup and recovery controls in Data."); return; }
   if (
     confirm(
       "Erase ALL local workout data and restore default program settings?",
@@ -1127,8 +1153,7 @@ function clearAll() {
 
 fDate.addEventListener("change", renderToday);
 setDefaultDates();
-renderAll();
-renderStorageNotice();
+if (!cloudMode) { renderAll(); renderStorageNotice(); }
 // Never write on startup: invalid or future-version data remains recoverable.
 
 // Version metadata is independent of workout state and the persistence schema.
@@ -1139,4 +1164,4 @@ document.getElementById("appVersion").textContent =
 document.getElementById("helpVersion").textContent =
   `GymBro ${APP_VERSION.version}`;
 
-renderBackupOperation();
+if (!cloudMode) renderBackupOperation();

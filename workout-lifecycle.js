@@ -138,8 +138,7 @@ const WorkoutLifecycle = (() => {
       resolve:operation=>transmit('gymbro_lifecycle_resolve',{operation},operation),
     });
   }
-  function createController({initial,repository,...options}) {
-    return WorkoutConcurrency.create({...options,initial,repository,prepare:async(base,name,args)=>{
+  async function prepareAction(base,name,args) {
       check(['restoreCompleteBackup','mergeHistoryBackup'].includes(name),'Unsupported lifecycle action.');
       const input=args[0];check(input?.confirmed===true,'Explicit confirmation required.');
       const incoming=await parse(input.text,base.ownerId,name==='mergeHistoryBackup'?{catalog:base.document?.catalog}:{});
@@ -154,7 +153,10 @@ const WorkoutLifecycle = (() => {
           'Emergency restore requires raw recovery material and separate confirmation.');candidate=incoming;
       }
       return {candidate,result:{ok:true,code:'PREPARED',changes:['workoutData']}};
-    }});
+
+  }
+  function createController({initial,repository,...options}) {
+    return WorkoutConcurrency.create({...options,initial,repository,prepare:prepareAction});
   }
   function localRecovery({storage,cutoverAccepted=false,onChange=()=>{}}) {
     const key='daveGymTrackerV1';let captured=null,verified=false,invalidated=false;
@@ -171,5 +173,5 @@ const WorkoutLifecycle = (() => {
       dispose(){globalThis.removeEventListener?.('storage',changed);captured=null;verified=false;},
     });
   }
-  return Object.freeze({backup,parse,verifySafety,merge,createRepository,createController,localRecovery,validatePayload,equalRows});
+  return Object.freeze({prepareAction,backup,parse,verifySafety,merge,createRepository,createController,localRecovery,validatePayload,equalRows});
 })();

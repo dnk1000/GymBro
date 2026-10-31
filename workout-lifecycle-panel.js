@@ -25,6 +25,8 @@ const WorkoutLifecyclePanel = (() => {
       <button data-local-delete>Delete this browser's local recovery copy</button></fieldset>
       <p>Separate cloud reset is not supported. Account and associated-data deletion are deferred. Sign-out does not delete data. Local cleanup never resets cloud workouts or deletes the account.</p>`;
     const el=name=>host.querySelector(`[data-${name}]`);
+    host.querySelectorAll('fieldset').forEach(field=>field.style.minWidth='0');
+    el('summary').style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';
     el('authority').textContent=`${environment} · Account ${ownerId} · Cloud workout data. Normal GymBro activation follows accepted migration/cutover.`;
     el('local-note').textContent=cutoverAccepted?'Deletes only this browser recovery copy after raw backup verification; cloud data and account are unaffected.':
       'Cleanup is disabled until accepted cutover. Current normal GymBro workouts still use their local store.';
@@ -104,7 +106,7 @@ const WorkoutLifecyclePanel = (() => {
       if(!confirm('Delete only this browser\'s inactive local recovery copy? Cloud workouts and the account are unaffected.'))return;
       cleanup.remove({confirmed:true,oldTabsClosed:el('tabs').checked});say('This browser local recovery copy was deleted. Cloud workouts and account are unaffected.');
     });
-    paint();return Object.freeze({dispose(){live=false;sequence++;cleanup.dispose();controller.dispose();host.querySelectorAll('input,select,button').forEach(e=>e.disabled=true);}});
+    paint();return Object.freeze({update:paint,dispose(){live=false;sequence++;cleanup.dispose();controller.dispose();host.querySelectorAll('input,select,button').forEach(e=>e.disabled=true);}});
   }
   return Object.freeze({mount});
 })();

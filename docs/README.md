@@ -21,6 +21,8 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
+- [V3_PREVIEW_MIGRATION_PROPOSAL.md](V3_PREVIEW_MIGRATION_PROPOSAL.md) — approved #28 deliberate Preview migration, seven-view cloud parity, comparison/retry evidence and readiness gates; design/version approved at 477f31e; personal migration/readiness remain gated. Implementation/verification status: PR #80.
+
 - [V3_DATA_LIFECYCLE_PROPOSAL.md](V3_DATA_LIFECYCLE_PROPOSAL.md) — approved #41 cloud backup/restore, emergency recovery, local cleanup and account/reset boundaries; implementation/verification in PR #79, with normal activation reserved for #28/#29.
 
 - [V3_CONCURRENCY_PROPOSAL.md](V3_CONCURRENCY_PROPOSAL.md) — approved #40 protocol/security/Preview design.

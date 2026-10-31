@@ -1,3 +1,23 @@
+## 3.13.4 — Preserve cloud export and display labels
+
+Use source exercise labels in the existing CSV handler and display names in program taxonomy. Hide local restore controls explicitly in cloud mode so grid CSS cannot expose them.
+
+## 3.13.3 — Preserve same-owner cloud view
+
+Keep controller/drafts during verified same-account refresh; continue invalidating on sign-out/identity changes.
+
+## 3.13.2 — Preview account-entry correction
+
+Register account access before cloud mode selects Data so the existing account restoration starts on first entry.
+
+## 3.13.1 — Preview compatibility corrections
+
+Preserve preference labels/legacy catalog status in cloud presentation; clear obsolete drafts after acknowledged replacement, fail closed on verification metadata failure and wrap narrow Data summaries.
+
+## 3.13.0 — Preview migration candidate
+
+Dedicated empty-target migration initialization and guarded synthetic Preview integration through the established identity, repository, retry and lifecycle contracts. Personal migration and Production remain gated. Verification: PR #80.
+
 ## Documentation integration — #71 / PR #78
 
 Add the canonical BRAND_AND_UI authority and approved directional reference while preserving accepted main's shared-system/app-shell runtime. No new app build. The earlier 3.11.3 candidate was Preview-only before PR #76 merged; current runtime metadata remains main's 3.11.2.

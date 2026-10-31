@@ -1,3 +1,53 @@
+# Issue #28 export and cloud presentation correction
+
+Release status: **preparation**
+
+Application version: `3.13.4-20261031T031548Z`
+
+Data schema: `8`
+
+Legacy CSV uses reconstructed original exercise labels; program taxonomy shows canonical display labels. Explicitly hide local restore controls overridden by grid CSS in cloud mode. Scoped PATCH approval covers these #28 compatibility fixes. Exact verification and unresolved personal/M0/#27 gates: [PR #80](https://github.com/dnk1000/GymBro/pull/80). No Production acceptance or cutover.
+
+# Issue #28 verified-account refresh correction
+
+Release status: **preparation**
+
+Application version: `3.13.3-20261031T030318Z`
+
+Data schema: `8`
+
+A verified refresh of the same owner/project/SDK client retains cloud controller/drafts; sign-out or changed identity still invalidates. Scoped PATCH approval remains in force. Verification and remaining personal/M0/#27 gates: PR #80.
+
+# Issue #28 account-entry correction
+
+Release status: **preparation**
+
+Application version: `3.13.2-20261031T024749Z`
+
+Data schema: `8`
+
+The signed normal-app test exposed Data selection before account-handler registration. Load account access before cloud entry; authentication/persistence contracts remain unchanged. The owner explicitly approved scoped PATCH increments for fixes within #28. Actual verification: PR #80. Personal readiness and Production remain gated.
+
+# Issue #28 compatibility follow-up
+
+Release status: **preparation**
+
+Application version: `3.13.1-20261031T022844Z`
+
+Data schema: `8`
+
+Owner explicitly approved the 3.13.1 PATCH and bounded two-account staging setup/cleanup. Preserve labelled preferences/legacy metadata, synchronize lifecycle presentation and clear obsolete drafts after acknowledged replacement. Canonical technical report: PR #80. Personal migration, M0/#27 readiness and Production remain gated.
+
+# Issue #28 Preview migration candidate
+
+Release status: **preparation**
+
+Application version: `3.13.0-20261031T003411Z`
+
+Data schema: `8`
+
+Owner-approved design: `477f31e474888350b7eb9389dcf7c943c33155f6`; 3.13.0 for #28 alone. Synthetic/disposable tests explicitly authorized. Personal migration, M0/#27 readiness, physical Safari and Production cutover remain unresolved. Canonical verification/AC report: PR #80. No acceptance, merge or Production deployment claimed.
+
 # Cloud data lifecycle candidate — #41
 
 Application version: `3.12.7-20261030T184803Z`

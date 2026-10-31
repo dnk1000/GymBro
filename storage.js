@@ -12,6 +12,7 @@ function load() {
   }
 }
 function persistData(next, recovery = false) {
+  if (typeof cloudMode!=="undefined" && cloudMode) return {ok:false,errors:["Cloud mode cannot save to local workout storage."]};
   try {
     if ((storageState.blocked && !recovery) || storageState.stale)
       throw Error("Saving is paused. Resolve the storage notice first.");
@@ -42,6 +43,7 @@ function save(next, recovery = false) {
   return result.ok;
 }
 function renderStorageNotice() {
+  if (typeof cloudMode!=="undefined" && cloudMode) return;
   const notice = document.getElementById("storageNotice");
   notice.hidden = !storageState.message;
   document.getElementById("storageMessage").textContent = storageState.message;
@@ -56,6 +58,7 @@ function downloadStoredData() {
   download("gymbro-original-data.json", "application/json", storageState.raw);
 }
 function recoverStorage() {
+  if (typeof cloudMode!=="undefined" && cloudMode) return;
   if (
     !confirm(
       "Replace the unreadable saved data with an empty workout history? Download the original first.",
@@ -70,6 +73,7 @@ function recoverStorage() {
   }
 }
 window.addEventListener("storage", (event) => {
+  if (typeof cloudMode!=="undefined" && cloudMode) return;
   if (
     event.storageArea === localStorage &&
     (event.key === KEY || event.key === null)
@@ -84,6 +88,7 @@ window.addEventListener("storage", (event) => {
 // Safari may restore a suspended page without delivering a storage event.
 // Recheck on return, but never reload/adopt data or save transient inputs here.
 function checkStoredDataOnResume() {
+  if (typeof cloudMode!=="undefined" && cloudMode) return;
   if (
     document.visibilityState !== "visible" ||
     storageState.blocked ||

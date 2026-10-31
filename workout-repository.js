@@ -300,5 +300,16 @@ const WorkoutRepository = (() => {
       return {result,candidate};
     } });
   }
-  return Object.freeze({ MODEL_VERSION:1, PROTOCOL_VERSION:1, tables:Object.freeze(tables), project, assemble, create, createActions });
+  async function prepareAction(initial,name,args,options={}) {
+    let candidate;
+    const preparer=createPreparedActions({...options,initial,repository:{commit:async(_,after)=>{candidate=clone(after);return after;}}});
+    const result=await preparer.execute(name,...args);return {result,candidate};
+  }
+  function presentation(document) {
+    const dto=clone(document.data);dto.version=8;
+    dto.exerciseLibrary=Object.fromEntries(document.catalog.exercises.map(e=>[e.id,{primary:e.primary,secondary:clone(e.secondary),pattern:e.pattern,type:e.type,status:typeof e.metadata.status==="string"?e.metadata.status:e.state}]));
+    references(dto).forEach(([r,k])=>{r[k]=r[k].exerciseId;});
+    return dto;
+  }
+  return Object.freeze({ prepareAction,presentation,MODEL_VERSION:1, PROTOCOL_VERSION:1, tables:Object.freeze(tables), project, assemble, create, createActions });
 })();

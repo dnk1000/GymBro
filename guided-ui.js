@@ -1,6 +1,7 @@
 // Thin DOM adapter. All committed guided state and behavior live in actions.
 let guidedFormContext = null;
 let guidedActionUntil = 0;
+let guidedCommandPending = false;
 function hasUnsavedSetInput() {
   return (
     !!editingSetId ||
@@ -32,11 +33,12 @@ function setGuidedFormContext(state, requestId = newId(), committed = false) {
   fDate.readOnly = true;
   fExercise.value = state.currentExercise.actualExercise;
   fExercise.readOnly = true;
+  if(cloudMode)fExercise.disabled=true;
   document.getElementById("guidedFormNotice").hidden = false;
   document.getElementById("guidedEntryActions").hidden = false;
   document.getElementById("guidedEntryNext").disabled = !state.nextExercise;
   document.getElementById("guidedFormMessage").textContent =
-    `Logging for ${state.session.planSnapshot.name}: ${state.currentExercise.actualExercise}.`;
+    `Logging for ${state.session.planSnapshot.name}: ${exerciseName(state.currentExercise.actualExercise)}.`;
   document.getElementById("setFormTitle").textContent = "Log guided set";
   document.getElementById("saveSetBtn").textContent = "Log guided set";
 }
@@ -53,10 +55,10 @@ function logCurrentExercise() {
   document.getElementById("setFormTitle").scrollIntoView({ block: "start" });
   fWeight.focus({ preventScroll: true });
 }
-function startGuidedWorkout() {
+async function startGuidedWorkout() {
   if (workoutActions.getActiveSession()) return;
   if (!confirmDiscardSetInput()) return;
-  const result = workoutActions.startGuidedSession({
+  const result = await workoutActions.startGuidedSession({
     date: document.getElementById("guidedDate").value,
     templateId: document.getElementById("guidedTemplate").value,
     duration: Number(document.getElementById("guidedDuration").value),
@@ -66,16 +68,16 @@ function startGuidedWorkout() {
     setGuidedFormContext(workoutActions.getGuidedWorkoutState());
   }
 }
-function enableGuidedWorkout() {
+async function enableGuidedWorkout() {
   if (!confirmDiscardSetInput()) return;
   const session = workoutActions.getActiveSession();
-  if (session && applyActionResult(workoutActions.enableGuidance(session.id))) {
+  if (session && applyActionResult(await workoutActions.enableGuidance(session.id))) {
     clearForm();
     setGuidedFormContext(workoutActions.getGuidedWorkoutState());
   }
 }
-function guidedCommand(command, value) {
-  if (Date.now() < guidedActionUntil) return;
+async function guidedCommand(command, value) {
+  if (guidedCommandPending || Date.now() < guidedActionUntil) return;
   if (!confirmDiscardSetInput()) return;
   const state = workoutActions.getGuidedWorkoutState();
   if (!state) return;
@@ -84,15 +86,17 @@ function guidedCommand(command, value) {
     planSlotId: state.currentSlotId,
     expectedRevision: state.revision,
   };
+  guidedCommandPending=true;
+  try {
   let result;
   if (command === "move")
-    result = workoutActions.moveGuidedSlot({ ...input, direction: value });
+    result = await workoutActions.moveGuidedSlot({ ...input, direction: value });
   if (command === "select")
-    result = workoutActions.selectGuidedSlot({ ...input, planSlotId: value });
+    result = await workoutActions.selectGuidedSlot({ ...input, planSlotId: value });
   if (command === "status")
-    result = workoutActions.setGuidedSlotStatus({ ...input, status: value });
+    result = await workoutActions.setGuidedSlotStatus({ ...input, status: value });
   if (command === "substitute")
-    result = workoutActions.substituteGuidedExercise({
+    result = await workoutActions.substituteGuidedExercise({
       ...input,
       exercise: document.getElementById("guidedSubstitute").value,
     });
@@ -105,7 +109,7 @@ function guidedCommand(command, value) {
       )
     )
       return;
-    result = workoutActions.finishGuidedSession({
+    result = await workoutActions.finishGuidedSession({
       ...input,
       allowPending: true,
     });
@@ -116,6 +120,7 @@ function guidedCommand(command, value) {
     const current = workoutActions.getGuidedWorkoutState();
     if (current) setGuidedFormContext(current);
   }
+  } finally { guidedCommandPending=false; }
 }
 function renderGuidedWorkout() {
   const root = document.getElementById("guidedWorkout"),
@@ -138,26 +143,26 @@ function renderGuidedWorkout() {
       )
       .join("") ||
     '<p class="sub">No previous complete, suitable records for this exercise. Nothing is recommended or prefilled.</p>';
-  root.innerHTML = `<h2>${esc(active.planSnapshot.name)}</h2><p class="sub">${esc(active.date)} · ${active.duration}-minute mode · active · ${state.remainingSlots.length} pending</p><label>Current exercise<select id="guidedSlot" onchange="const selected = this.value; this.value = ${jsArg(state.currentSlotId)}; guidedCommand('select', selected)">${state.slots.map((slot, i) => `<option value="${esc(slot.planSlotId)}" ${slot.planSlotId === state.currentSlotId ? "selected" : ""}>${i + 1}. ${esc(slot.actualExercise)} · ${esc(slot.status)}</option>`).join("")}</select></label><h3>${esc(current.actualExercise)}</h3><p class="sub">Planned: ${esc(current.plannedExercise)} · ${esc(current.status)}. Navigation does not mark an exercise done.</p>${db.preferences[current.actualExercise] ? `<p>${esc(db.preferences[current.actualExercise])}</p>` : ""}<details><summary>Previous performance · informational only</summary>${previous}<p class="sub">Units are separate. These are recorded results, not targets or substitute equivalence.</p></details><p>${current.sets.length} sets recorded for this planned slot.</p><ul class="guided-sets">${current.sets.map((set) => `<li>${esc(set.exercise)}: ${fmt(set.weight)} ${esc(set.unit)} × ${fmt(set.reps)}${set.complete ? "" : " · incomplete"}</li>`).join("")}</ul><div class="guided-controls"><button onclick="logCurrentExercise()">Log current exercise</button><button class="btn secondary" onclick="guidedCommand('status','completed')">Done</button><button class="btn secondary" onclick="guidedCommand('status','skipped')">Skip</button><button class="btn secondary" ${state.previousExercise ? "" : "disabled"} onclick="guidedCommand('move','previous')">Previous</button><button class="btn secondary" ${state.nextExercise ? "" : "disabled"} onclick="guidedCommand('move','next')">Next</button></div><div class="guided-substitution"><label>Session-only substitute<select id="guidedSubstitute">${Object.keys(
+  root.innerHTML = `<h2>${esc(active.planSnapshot.name)}</h2><p class="sub">${esc(active.date)} · ${active.duration}-minute mode · active · ${state.remainingSlots.length} pending</p><label>Current exercise<select id="guidedSlot" onchange="const selected = this.value; this.value = ${jsArg(state.currentSlotId)}; guidedCommand('select', selected)">${state.slots.map((slot, i) => `<option value="${esc(slot.planSlotId)}" ${slot.planSlotId === state.currentSlotId ? "selected" : ""}>${i + 1}. ${esc(exerciseName(slot.actualExercise))} · ${esc(slot.status)}</option>`).join("")}</select></label><h3>${esc(exerciseName(current.actualExercise))}</h3><p class="sub">Planned: ${esc(exerciseName(current.plannedExercise))} · ${esc(current.status)}. Navigation does not mark an exercise done.</p>${exercisePreference(current.actualExercise) ? `<p>${esc(exercisePreference(current.actualExercise))}</p>` : ""}<details><summary>Previous performance · informational only</summary>${previous}<p class="sub">Units are separate. These are recorded results, not targets or substitute equivalence.</p></details><p>${current.sets.length} sets recorded for this planned slot.</p><ul class="guided-sets">${current.sets.map((set) => `<li>${esc(exerciseName(set.exercise))}: ${fmt(set.weight)} ${esc(set.unit)} × ${fmt(set.reps)}${set.complete ? "" : " · incomplete"}</li>`).join("")}</ul><div class="guided-controls"><button onclick="logCurrentExercise()">Log current exercise</button><button class="btn secondary" onclick="guidedCommand('status','completed')">Done</button><button class="btn secondary" onclick="guidedCommand('status','skipped')">Skip</button><button class="btn secondary" ${state.previousExercise ? "" : "disabled"} onclick="guidedCommand('move','previous')">Previous</button><button class="btn secondary" ${state.nextExercise ? "" : "disabled"} onclick="guidedCommand('move','next')">Next</button></div><div class="guided-substitution"><label>Session-only substitute<select id="guidedSubstitute">${Object.keys(
     db.exerciseLibrary,
   )
     .sort()
     .map(
       (exercise) =>
-        `<option ${exercise === current.actualExercise ? "selected" : ""}>${esc(exercise)}</option>`,
+        `<option value="${esc(exercise)}" ${exercise === current.actualExercise ? "selected" : ""}>${esc(exerciseName(exercise))}</option>`,
     )
     .join(
       "",
     )}</select></label><button class="btn secondary" onclick="guidedCommand('substitute')">Use substitute</button></div><p class="sub">Substitution changes subsequent sets only. Earlier sets and the saved plan stay unchanged.</p><button class="btn secondary" onclick="guidedCommand('finish')">Finish workout</button>`;
 }
-function finishManualSession() {
+async function finishManualSession() {
   if (
     !confirmDiscardSetInput() ||
     !confirm("Finish this active workout? Saved sets will be retained.")
   )
     return;
   const active = workoutActions.getActiveSession();
-  if (active && applyActionResult(workoutActions.completeSession(active.id)))
+  if (active && applyActionResult(await workoutActions.completeSession(active.id)))
     clearForm();
 }
 // A new intentional form entry gets a new request identity; repeated taps don't.
