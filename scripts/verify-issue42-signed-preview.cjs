@@ -67,13 +67,14 @@ async function main(){
       const p=await open(width,0,'database');assert.equal(await p.evaluate(()=>cloudController),null);assert.equal(await p.locator('#workout fieldset').evaluate(e=>e.hidden&&e.disabled),true);
       const support=JSON.parse(await p.locator('#previewCloud > details pre').textContent());assert.equal(support.classification,'DATABASE');assert.equal(support.environment,'Preview');assert.equal(support.appVersion,f.get('APP_VERSION.version'));
       faults.set(p,null);await p.locator('#cloudConnect').click();await ready(p);const before=await repos[0].load(),id=before.document.catalog.exercises[0].id;
-      await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());await p.locator('#fExercise').selectOption(id);await p.locator('#fDate').fill('2026-10-31');await p.locator('#fWeight').fill('0');await p.locator('#fReps').fill('7');await p.locator('#fNotes').fill('  retained private draft\n');
+      await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());await p.locator('#fExercise').selectOption(id);await p.locator('#fDate').fill('2026-10-28');await p.locator('#fWeight').fill('0');await p.locator('#fReps').fill('7');await p.locator('#fNotes').fill('  retained private draft\n');
       await p.locator('[data-view="data"]').click();for(const fault of ['offline','database','auth','compatibility']){
         faults.set(p,fault);await p.locator('#cloudRefresh').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='LOAD_ERROR');
         assert.equal(await p.locator('#fNotes').inputValue(),'  retained private draft\n');assert(f.lifecycle.equalRows((await repos[0].load()).rows,before.rows));
         const summary=await p.locator('#previewCloud > details pre').textContent();assert(!summary.includes('NEVER_EMIT_SECRET'));assert(!summary.includes('private draft'));assert(!summary.includes(state.accounts[0].id));
         faults.set(p,null);await p.locator('#cloudRefresh').click();await ready(p);
       }
+      check('read/auth/database/compatibility faults recover with retained drafts at '+width+'px');
       faults.set(p,'lost');await p.locator('[data-view="workout"]').click();await p.locator('#saveSetBtn').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');
       const committed=await repos[0].load(),original=packets.get(p).at(-1);assert(f.lifecycle.equalRows(committed.rows,original.next));assert.equal(BigInt(committed.revision),BigInt(before.revision)+1n);
       await p.locator('[data-view="data"]').click();await p.locator('#cloudConnect').click();assert.equal(await p.locator('#fNotes').inputValue(),'  retained private draft\n');assert.equal(await p.evaluate(()=>cloudController.getStatus().phase),'OUTCOME_UNKNOWN');
