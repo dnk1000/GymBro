@@ -61,7 +61,7 @@ async function main(){
     });
     page.on('dialog',d=>d.accept());await page.goto(preview+'/?storage=cloud');
     await page.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');
-    await page.locator('#cloudConnect').click();await page.waitForFunction(()=>!!cloudController);return page;
+    await page.locator('#cloudConnect').click();try{await page.waitForFunction(()=>!!cloudController);}catch(error){const diagnostic=await page.evaluate(()=>({accountStatus:document.getElementById('accountStatus')?.textContent,cloudStatus:document.getElementById('cloudStatus')?.textContent}));fs.writeFileSync(path.join(root,'test-results/issue28-connect-failure.json'),JSON.stringify({width,diagnostic,errors},null,2));throw error;}return page;
   }
   try{
     const initial=await repos[0].load();assert(['uninitialized','healthy'].includes(initial.status));

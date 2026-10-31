@@ -1,3 +1,7 @@
+## 3.13.3 — Preserve same-owner cloud view
+
+Keep controller/drafts during verified same-account refresh; continue invalidating on sign-out/identity changes.
+
 ## 3.13.2 — Preview account-entry correction
 
 Register account access before cloud mode selects Data so the existing account restoration starts on first entry.

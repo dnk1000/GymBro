@@ -48,7 +48,7 @@ function renderCloudExerciseInput() {
     shownRevision=null;review=report=null;el('migrationSummary').textContent='';el('cloudLifecycle').replaceChildren();el('migrationControls').disabled=true;
     el('migrationCommit').disabled=el('cloudRetry').disabled=el('cloudResolve').disabled=true;
   }
-  invalidate();window.addEventListener('gymbro-account',event=>{account=event.detail;invalidate();say(account?'Account verified. Connect synthetic cloud workouts.':'Sign in to connect cloud workouts.');});
+  invalidate();window.addEventListener('gymbro-account',event=>{const next=event.detail,unchanged=account&&next&&account.user.id===next.user.id&&account.client===next.client&&account.config.projectRef===next.config.projectRef;account=next;if(unchanged)return;invalidate();say(account?'Account verified. Connect synthetic cloud workouts.':'Sign in to connect cloud workouts.');});
   el('cloudConnect').onclick=async()=>{
     invalidate();const generation=epoch;
     try{

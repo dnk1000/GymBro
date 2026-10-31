@@ -1,3 +1,13 @@
+# Issue #28 verified-account refresh correction
+
+Release status: **preparation**
+
+Application version: `3.13.3-20261031T030318Z`
+
+Data schema: `8`
+
+A verified refresh of the same owner/project/SDK client retains cloud controller/drafts; sign-out or changed identity still invalidates. Scoped PATCH approval remains in force. Verification and remaining personal/M0/#27 gates: PR #80.
+
 # Issue #28 account-entry correction
 
 Release status: **preparation**
