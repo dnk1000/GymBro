@@ -1,6 +1,6 @@
 # V3 operational diagnostics and recovery proposal — issue #42
 
-Status: **proposed; implementation approval pending**. Prepared October 31, 2026 from accepted `main` **e69642554653d0dfaafa761b4bba1ad9521193a2**, after #28 / PR #80 merged. This is preparation for [issue #42](https://github.com/dnk1000/GymBro/issues/42) only. No runtime change, migration, Production operation or other issue is authorized by this proposal.
+Status: **approved design at `0925f8a13cbcd650fdd4275110944ed7af367b2e`**. On October 31, 2026 the owner approved the design and its 3.14.0/#42 mapping and requested implementation; recorded in issue #42. This supersedes preparation-era pending wording below. Actual implementation/verification and pending gates are recorded in [PR #81](https://github.com/dnk1000/GymBro/pull/81). Prepared October 31, 2026 from accepted `main` **e69642554653d0dfaafa761b4bba1ad9521193a2**, after #28 / PR #80 merged. This is preparation for [issue #42](https://github.com/dnk1000/GymBro/issues/42) only. No runtime change, migration, Production operation or other issue is authorized by this proposal.
 
 ## Authority and decisions requested
 

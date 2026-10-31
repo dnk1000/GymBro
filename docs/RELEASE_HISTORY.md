@@ -1,3 +1,7 @@
+# Pending #42 operational recovery candidate
+
+`3.14.0-20261031T123431Z`, schema 8. Candidate only; exact source and verification are recorded in [PR #81](https://github.com/dnk1000/GymBro/pull/81). No accepted Production release or cutover.
+
 # Pending #28 export/presentation correction
 
 `3.13.4-20261031T031548Z`, schema 8. Preview candidate only; [PR #80](https://github.com/dnk1000/GymBro/pull/80) owns exact revision and actual verification. No Production acceptance or cutover.

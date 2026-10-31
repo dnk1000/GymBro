@@ -69,7 +69,7 @@ test("repository transport uses single RPC loads and acknowledges complete match
   const packet=repo.prepare(null,f,{action:"initialize",args:[],operation:["initialize","fixture"],result:{}});
   assert((await repo.submit(packet)).saved.document);
   assert.deepEqual(calls,["gymbro_workout_snapshot","gymbro_workout_mutate"]);
-  fail=true;await assert.rejects(repo.load(),/rejected/);
+  fail=true;await assert.rejects(repo.load(),/Cloud operation could not be verified/);
   const empty=Object.fromEntries(Object.keys(rows).map(t=>[t,[]]));
   const uninitialized=f.repository.create({ownerId:f.owner,client:{rpc:async()=>({data:snapshot(empty)})}});
   assert.deepEqual(plain(await uninitialized.load()),{initialized:false,protocolVersion:1,ownerId:f.owner,revision:"0"});

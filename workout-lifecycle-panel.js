@@ -1,6 +1,6 @@
 // Reusable Data panel. Host supplies verified authority; sign-in is not cutover.
 const WorkoutLifecyclePanel = (() => {
-  function mount(host,{controller,environment,ownerId,storage=globalThis.localStorage,cutoverAccepted=false,
+  function mount(host,{controller,environment,ownerId,config,storage=globalThis.localStorage,cutoverAccepted=false,
     confirm=message=>globalThis.confirm(message),download=(name,text)=>{
       const url=URL.createObjectURL(new Blob([text],{type:name.endsWith('.csv')?'text/csv':'application/json'}));const a=document.createElement('a');
       a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -14,7 +14,7 @@ const WorkoutLifecyclePanel = (() => {
       <p>Complete restore replaces all cloud workouts, catalog, program, notes, preferences and imports. Account access and local recovery files are retained. History merge keeps current settings, program and existing records.</p>
       <label>Incoming JSON file<input data-incoming type="file" accept="application/json"></label><button data-review>Validate and review file</button>
       <pre data-summary></pre><label>Reopen the current complete cloud recovery file before healthy restore<input data-safety type="file" accept="application/json"></label>
-      <button data-verify>Verify saved recovery backup</button><button data-raw>Download raw cloud diagnostic material</button>
+      <button data-verify>Verify saved recovery backup</button><button data-raw>Download sensitive raw cloud recovery material</button><p>Raw recovery material contains private workout data. Keep it private; use Safe support details for routine troubleshooting.</p>
       <label><input data-emergency type="checkbox"> Emergency recovery: I understand this cloud state is unreadable or uninitialized and has no verified complete recovery backup.</label>
       <button data-commit disabled>Confirm reviewed operation</button><button data-refresh>Refresh saved cloud data</button>
       <button data-retry>Retry same request</button><button data-resolve>Check result / cancel unresolved request</button>
@@ -32,24 +32,29 @@ const WorkoutLifecyclePanel = (() => {
       'Cleanup is disabled until accepted cutover. Current normal GymBro workouts still use their local store.';
     for(const n of ['local-export','local-file','local-delete','tabs']) el(n).disabled=!cutoverAccepted;
     const say=text=>{if(live)el('status').textContent=text;};
+    const support=OperationalDiagnostics.mount(host,{config});
+    let category='restore';
     function paint(result) {
       if(!live)return;const state=controller.getStatus(),handle=controller.getSnapshot();
       el('commit').disabled=state.phase!=='READY'||!review;
       for(const n of ['export','legacy','csv'])el(n).disabled=state.phase!=='READY'||handle.status!=='healthy';
       el('retry').disabled=!state.canRetry;el('resolve').disabled=!state.canResolve;
-      if(state.message)say(state.message);
+      const diagnosticMessage=support.update({operation:category,status:{...state,code:result?.code},handle});
+      if(state.diagnostic)say(diagnosticMessage);
+      else if(state.message)say(state.message);
       else if(handle.status!=='healthy')say(`Cloud state is ${handle.status}. This is not an empty valid backup. Download raw diagnostic material before separately confirmed emergency restore.`);
       else if(result)say(result.ok?`Cloud request ${result.code}. Revision ${state.revision}.`:result.errors?.join(' ')||result.code);
       else say(handle.status==='healthy'?`Cloud data loaded. Revision ${state.revision}.`:
         `Cloud state is ${handle.status}. This is not an empty valid backup. Download raw diagnostic material before separately confirmed emergency restore.`);
     }
-    async function run(method,...args) {const pending=controller[method](...args);paint();const result=await pending;paint(result);return result;}
-    async function guard(action) {try{await action();}catch(e){say(e.message);} }
+    async function run(method,...args) {category=method==='execute'?(args[0]==='mergeHistoryBackup'?'merge':'restore'):method==='refresh'?'refresh':'resolution';const pending=controller[method](...args);paint();const result=await pending;paint(result);return result;}
+    async function guard(action) {try{await action();}catch(error){if(live)say(support.update({error,operation:category,status:controller.getStatus(),handle:controller.getSnapshot()}));} }
     function resetReview(){sequence++;review=null;safety=null;rawOffered=false;el('summary').textContent='';paint();}
     el('mode').onchange=resetReview;el('incoming').onchange=resetReview;
     el('review').onclick=()=>guard(async()=>{
+      category=el('mode').value==='merge'?'merge':'restore';
       const id=++sequence,file=el('incoming').files[0],mode=el('mode').value,base=controller.getSnapshot();
-      if(!file)throw Error('Select an incoming backup.');
+      if(!file)throw OperationalDiagnostics.failure('VALIDATION','Select an incoming backup.',true);
       const text=await file.text();if(!live||id!==sequence)return;
       const incoming=await WorkoutLifecycle.parse(text,ownerId,mode==='merge'?{catalog:base.document?.catalog}:{});
       const candidate=mode==='merge'?WorkoutLifecycle.merge(base,incoming,ownerId):incoming;
@@ -62,17 +67,18 @@ const WorkoutLifecyclePanel = (() => {
       paint();say('File validated. Review the operation and recovery requirements before confirming.');
     });
     el('verify').onclick=()=>guard(async()=>{
-      const id=sequence,file=el('safety').files[0];if(!file)throw Error('Select the saved complete cloud recovery file.');
+      const id=sequence,file=el('safety').files[0];if(!file)throw OperationalDiagnostics.failure('VALIDATION','Select the saved complete cloud recovery file.',true);
       const text=await file.text();if(!live||id!==sequence)return;safety=WorkoutLifecycle.verifySafety(text,controller.getSnapshot());say('Saved recovery file verified for the current account/revision.');
     });
     el('export').onclick=()=>guard(async()=>{
+      category='export';
       const result=await run('refresh');if(!live||!result.ok)return;
       const file=WorkoutLifecycle.backup(controller.getSnapshot());download('gymbro-cloud-backup.json',JSON.stringify(file,null,2));
       say(`Cloud snapshot exported at revision ${file.source.revision}. Save and reopen the file to verify recovery before restore.`);
     });
     for(const kind of ['legacy','csv'])el(kind).onclick=()=>guard(async()=>{
       const result=await run('refresh');if(!live||!result.ok)return;
-      const handle=controller.getSnapshot();if(handle.status!=='healthy')throw Error('A healthy cloud snapshot is required.');
+      const handle=controller.getSnapshot();if(handle.status!=='healthy')throw OperationalDiagnostics.failure('VALIDATION','A healthy cloud snapshot is required.',true);
       const source=ExerciseIdentity.restoreV2Source(handle.document);
       if(kind==='legacy')download('gymbro-legacy-compatibility.json',JSON.stringify(createCompleteBackup(source),null,2));
       else {const fields=['date','exercise','weight','unit','reps','rpe','rir','pain','painArea','notes','source','complete'];
@@ -81,16 +87,16 @@ const WorkoutLifecyclePanel = (() => {
       say('Compatibility export saved. Complete cloud JSON is the full recovery format; CSV is sets-only.');
     });
     el('raw').onclick=()=>guard(async()=>{
-      const handle=controller.getSnapshot();if(handle.status==='healthy')throw Error('Use complete cloud backup for healthy data.');
+      const handle=controller.getSnapshot();if(handle.status==='healthy')throw OperationalDiagnostics.failure('VALIDATION','Use complete cloud backup for healthy data.',true);
       download('gymbro-raw-cloud-diagnostics.json',JSON.stringify({format:'gymbro-raw-diagnostics',...handle},null,2));rawOffered=true;
       say('Raw diagnostic material offered for download. This is not a validated complete GymBro backup.');
     });
     el('commit').onclick=()=>guard(async()=>{
       const h=controller.getSnapshot();
-      if(!review||review.fingerprint!==h.fingerprint||review.revision!==h.revision)throw Error('Cloud state changed. Review the file again.');
+      if(!review||review.fingerprint!==h.fingerprint||review.revision!==h.revision)throw OperationalDiagnostics.failure('VALIDATION','Cloud state changed. Review the file again.',true);
       const emergency=h.status!=='healthy'&&review.mode==='restore';
-      if(emergency && (!rawOffered||!el('emergency').checked))throw Error('Download raw diagnostic material and acknowledge emergency recovery first.');
-      if(!emergency&&review.mode==='restore'&&!safety)throw Error('Verify the saved complete cloud recovery file first.');
+      if(emergency && (!rawOffered||!el('emergency').checked))throw OperationalDiagnostics.failure('VALIDATION','Download raw diagnostic material and acknowledge emergency recovery first.',true);
+      if(!emergency&&review.mode==='restore'&&!safety)throw OperationalDiagnostics.failure('VALIDATION','Verify the saved complete cloud recovery file first.',true);
       const wording=emergency?'EMERGENCY RESTORE: the current cloud state could not be validated and cannot be proven recoverable as a complete backup. Replace all cloud workout data?':
         review.mode==='restore'?'COMPLETE RESTORE: replace all cloud workout history, catalog, program, notes, preferences and imports?':'MERGE HISTORY: add compatible history while preserving current program/settings and existing records?';
       if(!confirm(`${environment}\nAccount ${ownerId}\n${wording}\nAccount access and local recovery files are retained.`))return;
@@ -101,7 +107,7 @@ const WorkoutLifecyclePanel = (() => {
     for(const method of ['refresh','retry','resolve'])el(method).onclick=()=>guard(async()=>{if(method==='refresh'){review=null;safety=null;rawOffered=false;}await run(method);});
     el('local-export').onclick=()=>guard(async()=>{download('gymbro-original-local-recovery.json',cleanup.capture());say('Original local bytes offered for download. Reopen that file before cleanup.');});
     el('local-delete').onclick=()=>guard(async()=>{
-      const file=el('local-file').files[0];if(!file)throw Error('Select the saved raw local recovery file.');
+      const file=el('local-file').files[0];if(!file)throw OperationalDiagnostics.failure('VALIDATION','Select the saved raw local recovery file.',true);
       const text=await file.text();if(!live)return;cleanup.verify(text);
       if(!confirm('Delete only this browser\'s inactive local recovery copy? Cloud workouts and the account are unaffected.'))return;
       cleanup.remove({confirmed:true,oldTabsClosed:el('tabs').checked});say('This browser local recovery copy was deleted. Cloud workouts and account are unaffected.');
