@@ -1,6 +1,6 @@
 // One #40 controller owns ordinary actions, migration and #41 lifecycle state.
 const WorkoutCloud = (() => {
-  function create({client,ownerId,initial,recoveryStorage,fixtureTag,onChange=()=>{}}) {
+  function create({client,ownerId,initial,recoveryStorage,fixtureTag,sourceGuard,onChange=()=>{}}) {
     const domain=WorkoutRepository.create({client,ownerId});
     // The lifecycle decoder includes raw-state qualification and all recovery keys.
     const transport={rpc:(name,args)=>client.rpc(name==='gymbro_lifecycle_mutate' && args.packet.action==='initializeMigration'?
@@ -23,6 +23,7 @@ const WorkoutCloud = (() => {
     let controller;
     async function prepare(base,name,args) {
       if(['initializeMigration','restoreCompleteBackup','mergeHistoryBackup'].includes(name)) {
+        if(sourceGuard)await sourceGuard(args[0].text);
         if(fixtureTag){const incoming=await WorkoutLifecycle.parse(args[0].text,ownerId);if(incoming.document.data.extension?.previewMigrationFixture!==fixtureTag)throw Error('Configured synthetic fixtures only.');}
         return name==='initializeMigration'?WorkoutMigration.prepareAction(base,name,args):WorkoutLifecycle.prepareAction(base,name,args);
       }

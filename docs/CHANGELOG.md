@@ -250,3 +250,7 @@ Issue #27: Preview email-link sign-in, sign-out and recovery; database-enforced 
 ## 3.12.7 — cloud lifecycle candidate (#41)
 
 Adds an opt-in staging cloud backup/restore/merge boundary and recovery controls. Same-account complete JSON preserves canonical and relational recovery metadata; confirmed replacement retains transport receipts/revisions. Separate local recovery cleanup cannot reset cloud data. Cloud reset/account deletion remain deferred. Normal workouts remain local until approved migration/cutover. Actual evidence: PR #79.
+## 3.15.0 — Production readiness rehearsal candidate (#84)
+
+- Add an explicit default-off Production rehearsal capability bound to an approved immutable deployment URL, full Git SHA/build, owner/source/operation scope and expiry. Branch aliases and mismatches refuse access; normal Production workouts remain local.
+- Reuse existing cloud actions, canonical migration, failure/retry and lifecycle controls; add read-only Production metadata/manifest tooling. No schema migration, Production activation or authority switch. Actual evidence and pending gates: [PR #87](https://github.com/dnk1000/GymBro/pull/87).

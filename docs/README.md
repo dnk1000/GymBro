@@ -21,7 +21,7 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 ## Current subsystem contracts
 
-- [V3_CUTOVER_READINESS_PROPOSAL.md](V3_CUTOVER_READINESS_PROPOSAL.md) — proposed #84 Phase 1 Production rehearsal boundary, schema manifest, current-backup/comparison gates and Phase 2 go/no-go/recovery procedure; approval and execution pending. Normal Production workout authority/local persistence are unchanged.
+- [V3_CUTOVER_READINESS_PROPOSAL.md](V3_CUTOVER_READINESS_PROPOSAL.md) — approved #84 Phase 1 design at `1f54d09`: immutable-deployment/SHA/build-pinned Production rehearsal, schema manifest, current-backup/comparison gates and Phase 2 go/no-go/recovery procedure. Actual implementation/verification and pending live approvals: PR #87. Normal Production workout authority/local persistence are unchanged.
 
 - [V3_OPERATIONAL_RECOVERY_PROPOSAL.md](V3_OPERATIONAL_RECOVERY_PROPOSAL.md) — approved #42 operational diagnostics, safe support context and recovery matrix at 0925f8a; implementation/verification and pending gates in PR #81.
 

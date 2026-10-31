@@ -35,7 +35,7 @@ function replace(dir, file, change) {
 
 test("current release metadata validates independently from historical version references", () => {
   const result = checkRelease(root);
-  assert.match(result.version, /^3\.14\.1-\d{8}T\d{6}Z$/);
+  assert.match(result.version, /^3\.15\.0-\d{8}T\d{6}Z$/);
   assert.equal(result.schema, 8);
 });
 
@@ -46,7 +46,7 @@ test("stale current release documentation fails validation", (t) => {
     "docs/CHANGELOG.md",
   ]) {
     const dir = releaseCopy(t);
-    replace(dir, file, (source) => source.replaceAll("3.14.1", "3.0.0"));
+    replace(dir, file, (source) => source.replaceAll("3.15.0", "3.0.0"));
     assert.throws(() => checkRelease(dir), undefined, file);
   }
 });
@@ -66,7 +66,7 @@ test("runtime-generated or invalid UTC build identifiers are rejected", (t) => {
 
 test("wrong release and unapproved schema changes fail the release check", (t) => {
   for (const [file, from, to] of [
-    ["app-version.js", "const minor = 14", "const minor = 15"],
+    ["app-version.js", "const minor = 15", "const minor = 16"],
     ["workout-data.js", "const DATA_VERSION = 8", "const DATA_VERSION = 9"],
   ]) {
     const dir = releaseCopy(t);

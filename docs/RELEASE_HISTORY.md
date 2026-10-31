@@ -210,3 +210,6 @@ The initial session-model extraction was [1062a60](https://github.com/dnk1000/Gy
 - Documentation-only release-history updates do not change the application version or schema.
 - Update this file for each accepted release, recording the exact canonical version, schema, application revision, PR and meaningful changes. Keep preview builds distinct from accepted releases. The linked PR records the final merge commit; record production verification only after it succeeds.
 - Automated testing and production deployment checks are not physical iPhone acceptance. Record actual device/browser/results separately in [REAL_PHONE_SMOKE_TEST.md](REAL_PHONE_SMOKE_TEST.md).
+# V3 Production readiness rehearsal candidate — not accepted
+
+`3.15.0-20261031T192000Z`, workout schema 8/model 1/protocol 1/cloud backup 1; #84 alone. Owner approved the revised design at `1f54d09` and its version authority. Distinct default-off deployment-pinned rehearsal, unchanged normal local authority, no schema migration or Production operation. Verification and remaining technical/approval gates: [PR #87](https://github.com/dnk1000/GymBro/pull/87). Candidate lineage only, not a shipped or accepted Production release.
