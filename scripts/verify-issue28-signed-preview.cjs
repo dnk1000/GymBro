@@ -19,7 +19,9 @@ async function main(){
     clients.push(client);sessions.push(signed.data.session);repos.push(f.lifecycle.createRepository({client,ownerId:account.id}));
   }
   for(const file of ['index.html','app-version.js','app.js','guided-ui.js','cloud-ui.js','account-access.js','workout-cloud.js','workout-migration.js','workout-repository.js','workout-lifecycle.js','workout-lifecycle-panel.js','storage.js']){
-    const body=await read('/'+file);assert.equal(body.toString().replaceAll('\r\n','\n'),fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n'));cache.set('/'+file,Promise.resolve(body));
+    const body=await read('/'+file);let comparable=body.toString().replaceAll('\r\n','\n');
+    if(file==='index.html') {const toolbar=comparable.match(/<script\b[^>]*src=["']https:\/\/vercel\.live\/_next-live\/feedback\/feedback\.js["'][^>]*><\/script>/g)??[];assert.equal(toolbar.length,1,'only the identified provider toolbar may be excluded');comparable=comparable.replace(toolbar[0],'');}
+    assert.equal(comparable,fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n'));cache.set('/'+file,Promise.resolve(body));
   }
   const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']}),contexts=[];
   const upload=(p,selector,name,text)=>p.locator(selector).setInputFiles({name,mimeType:'application/json',buffer:Buffer.from(text)});
