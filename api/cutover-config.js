@@ -1,7 +1,4 @@
 // Phase 1 only. No Production permission follows from a branch or design approval.
-const { readFileSync } = require('node:fs');
-const { join } = require('node:path');
-const { runInNewContext } = require('node:vm');
 const { createHash } = require('node:crypto');
 const { environments } = require('./_lib/supabase-environment.cjs');
 const branch = 'codex/issue-84-production-readiness';
@@ -14,7 +11,7 @@ const actions = ['read','initializeMigration','restoreCompleteBackup','mergeHist
   'selectGuidedSlot','moveGuidedSlot','setGuidedSlotStatus','substituteGuidedExercise','logGuidedSet','finishGuidedSession'];
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 function buildVersion() {
-  return runInNewContext(readFileSync(join(__dirname,'..','app-version.js'),'utf8')+'\nAPP_VERSION.version',{}, {timeout:1000});
+  return require('../app-version.js').version;
 }
 function parseApproval(body) {
   if (typeof body !== 'string' || body.split(marker).length !== 2 || body.split(endMarker).length !== 2) throw Error('approval');

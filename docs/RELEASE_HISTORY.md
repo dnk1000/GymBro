@@ -1,3 +1,7 @@
+# Pending #84 canonical build packaging candidate
+
+`3.15.2-20261101T001518Z`, schema 8. Scoped fix for the verified hosted BUILD_METADATA refusal; one canonical frozen version remains. [PR #87](https://github.com/dnk1000/GymBro/pull/87) records actual verification and required new exact-source operational approval. No accepted release or cutover.
+
 # Pending #84 hosted diagnosis candidate
 
 `3.15.1-20261101T000913Z`, schema 8. Scoped diagnostic PATCH only; the prior hosted refusal is not a Production acceptance result. Exact source, failure evidence and live approval status: [PR #87](https://github.com/dnk1000/GymBro/pull/87). No accepted release or authority cutover.

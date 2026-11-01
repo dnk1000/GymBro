@@ -1,3 +1,13 @@
+# Issue #84 canonical server build dependency candidate
+
+Release status: **preparation**
+
+Application version: `3.15.2-20261101T001518Z`
+
+Data schema: `8`
+
+The hosted diagnostic identified BUILD_METADATA before any Production access. Consume the same frozen canonical app metadata through a static CommonJS dependency, replacing filesystem/VM evaluation in the server function so deployment packaging can trace it. No second version source or identity-check relaxation. Scoped #84 PATCH; actual hosted verification, required new exact-deployment operational approval and remaining acceptance are recorded in [PR #87](https://github.com/dnk1000/GymBro/pull/87). Not an accepted release or cutover.
+
 # Issue #84 hosted refusal diagnosis candidate
 
 Release status: **preparation**

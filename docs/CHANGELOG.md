@@ -1,3 +1,7 @@
+## 3.15.2 — Package canonical build metadata for rehearsal (#84)
+
+Use a static server import of the same frozen application version after hosted BUILD_METADATA refusal. Preserve exact immutable deployment/SHA/build approval, default-off behavior and generic refusal. No workout/schema change or authority cutover.
+
 ## 3.15.1 — Identify hosted rehearsal refusals (#84)
 
 Return only a fixed failure stage when the deployment-pinned rehearsal cannot authorize access. Preserve every guard and generic user message; never return provider errors, credentials or personal content. Candidate only; actual live failure and diagnosis are recorded in PR #87.
