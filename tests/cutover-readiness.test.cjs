@@ -31,12 +31,30 @@ test('only exact immutable URL, platform SHA, canonical build, owner scope and a
     {SUPABASE_URL:env.SUPABASE_URL+'/'},{GYMBRO_CLOUD_ENV:'preview'},{VERCEL:'0'},{VERCEL_GIT_COMMIT_SHA:'b'.repeat(40)}])
     assert.notEqual((await cutoverConfig({...env,...patch},host,{fetcher:fetcher(),build})).configured,true);
 });
+test('server derives the current canonical build when no test override is supplied',async()=>{
+  const result=await cutoverConfig(env,host,{fetcher:fetcher()});
+  assert.equal(result.configured,true);assert.equal(result.build,build);
+});
 test('approval revocation, missing/duplicate record, unavailable GitHub and quota failure never yield an enabled configuration',async()=>{
   assert.throws(()=>parseApproval(marker+'{}'+endMarker+marker+'{}'+endMarker));
   for(const f of [async()=>{throw Error('private-token');},async()=>({ok:false,status:429}),
     async()=>({ok:true,json:async()=>({number:84,state:'closed',body:marker+JSON.stringify(approval)+endMarker})}),
     async()=>({ok:true,json:async()=>({number:84,state:'open',body:'design approved, no operational record'})})]){
     const c=await cutoverConfig(env,host,{fetcher:f,build});assert.equal(c.configured,false);assert(!JSON.stringify(c).includes('private-token'));
+  }
+});
+test('hosted refusal identifies only the fixed failed stage without reflecting private errors',async()=>{
+  const cases=[
+    [{...env,VERCEL_URL:'wrong.vercel.app'},fetcher(),'PLATFORM_IDENTITY'],
+    [env,async()=>{throw Error('private-provider-secret');},'APPROVAL_TRANSPORT'],
+    [env,async()=>({ok:true,json:async()=>({number:84,state:'open',body:'invalid'})}),'APPROVAL_DOCUMENT'],
+    [env,fetcher({...approval,gitSha:'b'.repeat(40)}),'APPROVAL_SCOPE'],
+  ];
+  for(const [environment,request,reason] of cases){
+    const result=await cutoverConfig(environment,host,{fetcher:request,build});
+    assert.equal(result.configured,false);assert.equal(result.reason,reason);
+    assert(!JSON.stringify(result).includes('private-provider-secret'));
+    assert(!JSON.stringify(result).includes(env.SUPABASE_PUBLISHABLE_KEY));
   }
 });
 function browserGuard(config){

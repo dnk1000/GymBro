@@ -1,3 +1,7 @@
+## 3.15.1 — Identify hosted rehearsal refusals (#84)
+
+Return only a fixed failure stage when the deployment-pinned rehearsal cannot authorize access. Preserve every guard and generic user message; never return provider errors, credentials or personal content. Candidate only; actual live failure and diagnosis are recorded in PR #87.
+
 ## 3.14.1 — Preserve #42 diagnostic-authority clarification
 
 Explicit backend/environment/generation matching before retaining private drafts; diagnostic action labels remain descriptive. Same #42 scope, pending Preview verification and human acceptance in PR #81.

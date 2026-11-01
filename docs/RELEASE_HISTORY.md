@@ -1,3 +1,7 @@
+# Pending #84 hosted diagnosis candidate
+
+`3.15.1-20261101T000913Z`, schema 8. Scoped diagnostic PATCH only; the prior hosted refusal is not a Production acceptance result. Exact source, failure evidence and live approval status: [PR #87](https://github.com/dnk1000/GymBro/pull/87). No accepted release or authority cutover.
+
 # Pending #42 clarification candidate
 
 `3.14.1-20261031T124231Z`, schema 8. Candidate only; PR #81 records verification and pending approval/acceptance. No Production acceptance or cutover.

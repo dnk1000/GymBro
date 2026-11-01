@@ -48,16 +48,24 @@ function validateApproval(approval, env, host, build, now = Date.now()) {
 }
 async function cutoverConfig(env, host, {fetcher = fetch, now = Date.now(), build} = {}) {
   if (env.GYMBRO_CUTOVER_REHEARSAL !== 'true') return {enabled:false};
+  let reason = 'PLATFORM_IDENTITY';
   try {
     if (env.VERCEL_ENV !== 'preview' || env.VERCEL_GIT_COMMIT_REF !== branch || host !== env.VERCEL_URL) throw Error('boundary');
+    reason = 'APPROVAL_TRANSPORT';
     const response = await fetcher(approvalUrl,{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000),
       headers:{Accept:'application/vnd.github+json','User-Agent':'GymBro-Phase1-readiness'}});
     if (!response.ok) throw Error('approval');
+    reason = 'APPROVAL_DOCUMENT';
     const issue = await response.json();
     if (issue.number !== 84 || issue.state !== 'open') throw Error('approval');
-    return validateApproval(parseApproval(issue.body),env,host,build??buildVersion(),now);
+    const approval = parseApproval(issue.body);
+    reason = 'BUILD_METADATA';
+    const canonicalBuild = build??buildVersion();
+    reason = 'APPROVAL_SCOPE';
+    return validateApproval(approval,env,host,canonicalBuild,now);
   } catch {
-    return {enabled:true,configured:false,message:'Production rehearsal is not authorized for this exact deployment/source. No cloud access is enabled.'};
+    // Fixed stages only: never expose an exception, request body or credential.
+    return {enabled:true,configured:false,reason,message:'Production rehearsal is not authorized for this exact deployment/source. No cloud access is enabled.'};
   }
 }
 async function handler(req,res) {
