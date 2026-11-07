@@ -80,7 +80,8 @@ let {
     "importFile",
   ].map((id) => [id, document.getElementById(id)]),
 );
-const cloudMode = new URLSearchParams(location.search).get('storage') === 'cloud';
+const productionCloud = location.origin === PRODUCTION_WORKOUT_ORIGIN;
+const cloudMode = productionCloud || new URLSearchParams(location.search).get('storage') === 'cloud';
 // Cloud mode is selected before any legacy storage read or adapter construction.
 let db = cloudMode ? emptyData() : load();
 let cloudController = null;

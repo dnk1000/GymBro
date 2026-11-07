@@ -1,3 +1,13 @@
+# Issue #85 cloud-first candidate
+
+Release status: **preparation**
+
+Application version: `3.16.1-20261107T022229Z`
+
+Data schema: `8`
+
+The owner approved 3.16.0 for #85 alone. The candidate uses existing cloud persistence for an authenticated empty start or a reviewed JSON import. PATCH 1 preserves staging configuration and diagnostic behavior by scoping the new Production checks and messages to normal Production. Production authority and smoke checks await explicit approval.
+
 # Issue #84 canonical server build dependency candidate
 
 Release status: **preparation**

@@ -4,18 +4,23 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {createHash}=require('node:crypto'),{chromium}=require('playwright-core');
 const {setup}=require('./lifecycle-fixture.cjs');
 const {actions}=require('../api/cutover-config.js');
+const productionOrigin=require('../cloud-authority.js');
 const root=path.resolve(__dirname,'..'),origin='https://gymbro-synthetic-immutable.vercel.app';
 const build=vm.runInNewContext(fs.readFileSync(path.join(root,'app-version.js'),'utf8')+'\nAPP_VERSION.version');
 let browser;
 before(async()=>{browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});});
 after(async()=>{await browser?.close();});
-async function open(t,width,{failedLoad=false,alias=false}={}){
+async function open(t,width,{failedLoad=false,alias=false,production=false,empty=false,disabled=false,mismatch=false}={}){
   const f=await setup(),source=JSON.stringify(f.source);let saved=structuredClone(f.handle),bad=false,failLoad=failedLoad,authorityChecks=0;
+  if(empty)saved={...saved,status:'uninitialized',initialized:false,document:null,bodyweightIds:[],
+    rows:Object.fromEntries(Object.keys(saved.rows).map(key=>[key,[]])),revision:'0'};
   const receipts=new Map(),calls=[],errors=[];
   const config={enabled:true,configured:true,rehearsal:true,environment:'production-rehearsal',projectRef:'loowxditqikcwyeftfgx',
     url:'https://loowxditqikcwyeftfgx.supabase.co',publishableKey:'sb_publishable_synthetic_fixture_only',allowedOwners:[f.owner],
     syntheticOnly:false,fixtureTag:null,sourceByteDigest:createHash('sha256').update(source).digest('hex'),actions,
     deploymentUrl:origin,gitSha:'a'.repeat(40),build,expiresAt:'2099-01-01T00:00:00Z',approvalDigest:'b'.repeat(64)};
+  const normalConfig={enabled:true,configured:true,environment:'production',projectRef:config.projectRef,
+    url:config.url,publishableKey:config.publishableKey,allowedOwners:config.allowedOwners};
   const context=await browser.newContext({viewport:{width,height:844}});t.after(()=>context.close());
   const page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
   await context.addInitScript(({owner})=>{
@@ -37,20 +42,22 @@ async function open(t,width,{failedLoad=false,alias=false}={}){
       if(receipts.has(key))answer={code:'REPLAY',result:receipts.get(key),operationRevision:saved.revision};
       else if(name.endsWith('_resolve'))answer={code:'CANCELLED'};
       else if(packet.expectedRevision!==saved.revision)answer={code:'CONFLICT'};
-      else {saved={...saved,...structuredClone(f.repository.assemble(packet.next,f.owner)),rows:structuredClone(packet.next),
+      else {saved={...saved,...structuredClone(f.repository.assemble(packet.next,f.owner)),rows:structuredClone(packet.next),status:'healthy',initialized:true,
         revision:String(BigInt(saved.revision)+1n),fingerprint:'c'.repeat(64)};receipts.set(key,packet.result);answer={code:'OK',result:packet.result,operationRevision:saved.revision};}
       return route.fulfill({json:{data:{...answer,operation:args.operation??packet.operation,snapshot:saved}}});
     }
-    if(![origin,'https://branch-alias.vercel.app'].includes(url.origin))return route.abort();
+    if(![origin,productionOrigin,'https://branch-alias.vercel.app'].includes(url.origin))return route.abort();
     if(url.pathname==='/api/cutover-config'){authorityChecks++;return route.fulfill({json:bad?{...config,gitSha:'c'.repeat(40)}:config});}
+    if(production&&url.pathname==='/api/account-config')return route.fulfill({json:disabled?{enabled:false}:normalConfig});
+    if(production&&url.pathname==='/api/workout-config')return route.fulfill({json:mismatch?{...normalConfig,publishableKey:'sb_publishable_other_fixture'}:normalConfig});
     if(url.pathname.startsWith('/api/'))return route.fulfill({json:{enabled:false}});
     const relative=url.pathname==='/'?'index.html':url.pathname.slice(1);
     if(relative.includes('..')||!/^([a-zA-Z0-9_-]+\.(js|html|css|png)|vendor\/[a-zA-Z0-9_.-]+\.js)$/.test(relative))return route.abort();
     const types={'.js':'text/javascript','.html':'text/html','.css':'text/css','.png':'image/png'};
     return route.fulfill({body:fs.readFileSync(path.join(root,relative)),contentType:types[path.extname(relative)]});
   });
-  await page.goto((alias?'https://branch-alias.vercel.app':origin)+'/?storage=cloud&rehearsal=production');
-  if(!alias){await page.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');await page.locator('#cloudConnect').click();
+  await page.goto(production?productionOrigin:(alias?'https://branch-alias.vercel.app':origin)+'/?storage=cloud&rehearsal=production');
+  if(!production&&!alias){await page.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');await page.locator('#cloudConnect').click();
     if(failedLoad)await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('could not load'));
     else await page.waitForFunction(()=>cloudReady&&cloudController?.getStatus().phase==='READY');}
   t.after(()=>assert.deepEqual(errors,[],'no unexpected page exceptions'));
@@ -73,6 +80,53 @@ for(const width of [320,390,1280])test('Production rehearsal controlled transpor
   await p.locator('#migrationFile').setInputFiles({name:'unapproved.json',mimeType:'application/json',buffer:Buffer.from(f.source+' ')});
   await p.locator('#migrationReview').click();assert.equal(await p.locator('#migrationCommit').isDisabled(),true);
   assert.deepEqual(await p.evaluate(()=>[keyReads,keyWrites]),[0,0]);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+});
+test('normal Production origin starts empty on explicit choice and an acknowledged set survives reload',async t=>{
+  const f=await open(t,390,{production:true,empty:true}),p=f.page;
+  await p.locator('#cloudStartEmpty').waitFor({state:'visible'});
+  assert.equal(f.saved().revision,'0');
+  assert(!f.calls.some(x=>x.endsWith('_mutate')));
+  await p.locator('#cloudStartEmpty').click();
+  await p.waitForFunction(()=>cloudReady);
+  assert.equal(f.saved().rows.sets.length,0);
+  assert.equal(f.saved().rows.bodyweights.length,0);
+  await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());
+  await p.locator('#fExercise').selectOption(f.saved().document.catalog.exercises[0].id);
+  await p.locator('#fDate').fill('2026-10-28');await p.locator('#fWeight').fill('0');await p.locator('#fReps').fill('7');
+  await p.locator('#saveSetBtn').click();
+  await p.waitForFunction(()=>cloudController.getWorkoutState().data.sets.length===1);
+  await p.reload();await p.waitForFunction(()=>cloudReady);
+  assert.equal(await p.evaluate(()=>cloudController.getWorkoutState().data.sets[0].reps),7);
+  assert.deepEqual(await p.evaluate(()=>[keyReads,keyWrites]),[0,0]);
+  assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+});
+test('qualified empty Production account reviews JSON and commits only on confirmation',async t=>{
+  const f=await open(t,1280,{production:true,empty:true}),p=f.page;
+  await p.locator('#cloudStartEmpty').waitFor({state:'visible'});
+  const file=p.locator('#migrationFile');
+  await file.setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{')});
+  await p.locator('#migrationReview').click();
+  assert(await p.locator('#migrationCommit').isDisabled());assert.equal(f.saved().revision,'0');
+  await file.setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(f.source)});
+  await p.locator('#migrationReview').click();
+  await p.waitForFunction(()=>document.getElementById('migrationSummary').textContent.includes('backup.json'));
+  assert.equal(f.saved().revision,'0');
+  p.once('dialog',d=>d.accept());
+  await p.locator('#migrationCommit').click();
+  await p.waitForFunction(()=>cloudReady);
+  f.f.get(fs.readFileSync(path.join(root,'workout-migration.js'),'utf8'));
+  const migration=f.f.get('WorkoutMigration'),candidate=await migration.prepareSource(f.source,f.f.owner);
+  assert(migration.compare(candidate,f.saved(),f.f.owner).pass);
+  assert.deepEqual(await p.evaluate(()=>[keyReads,keyWrites]),[0,0]);
+});
+for(const options of [{disabled:true},{mismatch:true},{failedLoad:true}])test('normal Production route fails closed with '+Object.keys(options)[0],async t=>{
+  const f=await open(t,320,{production:true,...options}),p=f.page;
+  await p.waitForFunction(id=>/configuration|could not load|unavailable/i.test(document.getElementById(id).textContent),
+    options.disabled?'accountStatus':'cloudStatus');
+  assert.equal(await p.evaluate(()=>cloudController),null);
+  assert(await p.locator('#cloudStartEmpty').isHidden());
+  assert(!f.calls.some(x=>x.endsWith('_mutate')));
+  assert.deepEqual(await p.evaluate(()=>[keyReads,keyWrites]),[0,0]);
 });
 test('failed Production cloud load does not show an empty account, initialize, seed or access local workout storage',async t=>{
   const f=await open(t,390,{failedLoad:true});assert.equal(await f.page.evaluate(()=>cloudController),null);

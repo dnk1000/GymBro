@@ -1,4 +1,5 @@
 const environments = require("../../supabase/environments.json");
+const productionOrigin = require("../../cloud-authority.js");
 
 // Project IDs are public deployment boundaries, never credentials.
 function previewEnvironment(env) {
@@ -13,4 +14,22 @@ function previewEnvironment(env) {
   return { ok: true, projectRef: expected, url: url.origin };
 }
 
-module.exports = { environments, previewEnvironment };
+function productionCloudConfig(env, host) {
+  if (env.VERCEL_ENV !== "production") return null;
+  if (env.GYMBRO_PRODUCTION_WORKOUTS !== "true") return { enabled: false };
+  const projectRef = environments.production.projectRef;
+  const url = `https://${projectRef}.supabase.co`;
+  const publishableKey = env.SUPABASE_PUBLISHABLE_KEY;
+  const allowedOwners = (env.GYMBRO_PRODUCTION_WORKOUT_OWNERS ?? "").split(",");
+  if (env.VERCEL !== "1" || host !== new URL(productionOrigin).host ||
+      env.GYMBRO_CLOUD_ENV !== "production" || env.SUPABASE_PROJECT_REF !== projectRef ||
+      ![url, url + "/"].includes(env.SUPABASE_URL) ||
+      !/^sb_publishable_[A-Za-z0-9_-]{16,}$/.test(publishableKey ?? "") ||
+      !allowedOwners.every(id => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(id)) ||
+      new Set(allowedOwners).size !== allowedOwners.length)
+    return { enabled: true, configured: false, environment: "production" };
+  return { enabled: true, configured: true, environment: "production",
+    projectRef, url, publishableKey, allowedOwners };
+}
+
+module.exports = { environments, previewEnvironment, productionCloudConfig };

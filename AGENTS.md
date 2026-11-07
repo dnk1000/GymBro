@@ -113,8 +113,8 @@ V3.x is the persistent-data/core-product-maturity generation, not the external-A
 Approved V3 direction includes:
 
 - recoverable personal access/private ownership;
-- stable canonical exercise identity before accepted full migration;
-- verified Supabase/PostgreSQL migration on Preview;
+- stable canonical exercise identity in the cloud data model;
+- an authenticated empty cloud start and optional reviewed GymBro JSON import;
 - controlled Production cutover;
 - Supabase/PostgreSQL as the sole active workout store after accepted cutover;
 - no indefinite dual writes or automatic local-only workout fallback after cutover;
@@ -158,7 +158,7 @@ Never rewrite historical workout facts or reseed an existing user's database to 
 
 Startup must not destroy corrupt/unsupported future data. Failed saves must leave saved/committed state intact and must not be reported as success. Keep unsaved visible input when the approved interaction contract requires retry.
 
-Before persistence/migration testing, export and verify a complete Production JSON backup. Preview and Production are different origins/data scopes. Automated tests use disposable storage only.
+Before a persistence test or approved migration that uses the owner's personal workout data, export and verify a complete Production JSON backup. The cloud-first cutover can be verified with disposable storage and does not require a personal migration. Preview and Production are different origins/data scopes. Automated tests use disposable storage only.
 
 A data-model change requires explicit migration/backward-compatibility handling and regression coverage. For V3 migration, compare relationships/content rather than only record counts; retries must not duplicate or silently overwrite data.
 

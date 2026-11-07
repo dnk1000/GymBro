@@ -77,7 +77,17 @@ select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}'
 select is_empty('select * from public.gymbro_mutation_receipts','other owner cannot inspect receipts');
 select is_empty('select * from public.gymbro_workout_versions','other owner cannot inspect revision');
 select is(jsonb_array_length(public.gymbro_workout_snapshot()->'rows'->'sets'),0,'second authenticated-role owner sees no workout facts');
+select is_empty($test$select set_id from public.gymbro_sets where owner_id='${owner}'$test$,'signed-in owner cannot read another owner’s set directly');
+select throws_ok($test$insert into public.gymbro_sets select (jsonb_populate_record(null::public.gymbro_sets,(select packet->'next'->'sets'->0 from protocol_packets where step=0))).*$test$,'42501',null,'signed-in owner cannot insert a set for another owner');
+select throws_ok($test$update public.gymbro_sets set notes='forbidden' where owner_id='${owner}'$test$,'42501',null,'signed-in owner cannot update another owner’s set directly');
+select throws_ok($test$delete from public.gymbro_sets where owner_id='${owner}'$test$,'42501',null,'signed-in owner cannot delete another owner’s set directly');
 select throws_ok($test$select ${call(0)}$test$,'23514',null,'cross-owner packet fails before mutation');
+select is(public.gymbro_workout_snapshot()->>'revision','0','second owner’s revision remains unchanged');
+select set_config('request.jwt.claim.sub','${owner}',true);
+select set_config('request.jwt.claims','{"sub":"${owner}","is_anonymous":false}',true);
+select is(public.gymbro_workout_snapshot()->>'revision','9007199254740993123456790','first owner’s revision remains unchanged after isolation attempts');
+select is(public.gymbro_workout_normalize(public.gymbro_workout_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(precise)}),'first owner’s full snapshot remains unchanged');
+select set_config('request.jwt.claim.sub','${other}',true);
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":true}',true);
 select throws_ok($test$select public.gymbro_workout_snapshot()$test$,'42501',null,'anonymous auth cannot read snapshot');
 select throws_ok($test$select ${call(0)}$test$,'42501',null,'anonymous auth cannot mutate');
