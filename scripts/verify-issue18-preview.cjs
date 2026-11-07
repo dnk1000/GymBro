@@ -7,11 +7,16 @@ const {setup}=require('../tests/lifecycle-fixture.cjs'),{storage,plain}=require(
 const {chromium}=require('playwright-core');
 const root=path.resolve(__dirname,'..');
 async function main(){
-  assert.equal(process.argv.length,2);const sha=guard(),state=validate(JSON.parse(fs.readFileSync(path.join(root,'.env.issue28-fixtures.json'),'utf8')));
+  const finish=process.argv[2]==='--finish-isolation';assert.equal(process.argv.length,finish?3:2);
+  const sha=guard(),state=validate(JSON.parse(fs.readFileSync(path.join(root,'.env.issue28-fixtures.json'),'utf8')));
   assert.equal(state.status,'ready');const config=JSON.parse(await read('/api/workout-config'));
   assert(config.enabled&&config.configured&&config.syntheticOnly);assert.equal(config.projectRef,project);assert.equal(config.fixtureTag,state.tag);assert.deepEqual(config.allowedOwners,state.accounts.map(a=>a.id));
   const f=await setup();for(const file of ['workout-migration.js','workout-cloud.js'])f.get(fs.readFileSync(path.join(root,file),'utf8'));
-  const clients=[],repos=[],checks=[],errors=[],cache=new Map(),contexts=[];
+  // Resume only the read/denial closeout after the recorded six completed checks;
+  // never reseed owners or replay already committed fixture imports.
+  const prior=finish?JSON.parse(fs.readFileSync(path.join(root,'test-results/issue18-signed-progress.json'),'utf8')):null;
+  if(finish)assert.equal(prior.checks.length,6,'All six preceding signed checks must already have passed.');
+  const clients=[],repos=[],checks=prior?.checks??[],errors=[],cache=new Map(),contexts=[];
   const check=name=>{checks.push(name);console.log(name+' PASS');fs.writeFileSync(path.join(root,'test-results/issue18-signed-progress.json'),JSON.stringify({sha,checks},null,2));};
   const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
   try{
@@ -19,7 +24,9 @@ async function main(){
       const client=sdk().createClient(config.url,config.publishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
       const signed=await client.auth.signInWithPassword({email:account.email,password:account.password});assert(!signed.error);assert.equal(signed.data.user.id,account.id);assert.equal(signed.data.user.is_anonymous,false);
       clients.push(client);const repo=f.lifecycle.createRepository({client,ownerId:account.id});repos.push(repo);
-      const initial=await repo.load();assert.equal(initial.status,'uninitialized','never reseed a populated fixture');
+      const initial=await repo.load();
+      if(finish){assert.equal(initial.status,'healthy');assert.equal(initial.document.data.extension.previewMigrationFixture,state.tag);continue;}
+      assert.equal(initial.status,'uninitialized','never reseed a populated fixture');
       const source=structuredClone(f.source);source.extension.previewMigrationFixture=state.tag;f.get('ensureExercise')(source,'Rope Triceps Pushdown');
       const controller=f.get('WorkoutCloud').create({client,ownerId:account.id,initial,recoveryStorage:storage(),fixtureTag:state.tag});
       assert((await controller.execute('initializeMigration',{text:JSON.stringify(source),confirmed:true})).ok);
@@ -30,7 +37,7 @@ async function main(){
       if(file==='index.html')comparable=comparable.replace(/<script\b[^>]*src=["']https:\/\/vercel\.live\/_next-live\/feedback\/feedback\.js["'][^>]*><\/script>/g,'');
       assert.equal(comparable,fs.readFileSync(path.join(root,file),'utf8').replaceAll('\r\n','\n'));cache.set('/'+file,Promise.resolve(body));
     }
-    check('exact-source Preview assets and two signed isolated synthetic owners');
+    if(!finish)check('exact-source Preview assets and two signed isolated synthetic owners');
     let loseFor=null;const expectedFaults=new Set();
     async function open(width){
       const session=(await clients[0].auth.getSession()).data.session,context=await browser.newContext({viewport:{width,height:844}});contexts.push(context);const p=await context.newPage();p.setDefaultTimeout(20000);
@@ -45,7 +52,7 @@ async function main(){
       });
       p.on('dialog',d=>d.accept());await p.goto(preview+'/?storage=cloud');await p.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');await p.locator('#cloudConnect').click();await p.waitForFunction(()=>cloudReady);return p;
     }
-    for(const width of [1280,390,320]){
+    if(!finish)for(const width of [1280,390,320]){
       const p=await open(width),before=await repos[0].load(),alias=width===1280?'Rope Triceps Pressdown':'Exact cable alias '+width,fresh='Dumbbell distinct '+width,skip='Smith distinct excluded '+width;
       const input={schema:'gym-tracker-chatgpt-v1',importId:'issue18-ui-'+width,date:'2026-11-07',bodyweight:200,notes:'  original summary\n',sets:[alias,fresh,skip].map(exercise=>({exercise,weight:0,unit:'lb',reps:7,rpe:7,rir:2,pain:1,painArea:'raw area',notes:'  raw note\n',complete:false}))};
       await p.locator('[data-view="inbox"]').click();await p.locator('#inboxRaw').fill(JSON.stringify(input));await p.getByRole('button',{name:'Review import',exact:true}).click();
@@ -71,6 +78,7 @@ async function main(){
     async function prepare(initial,input){let packet;const capturing={rpc:async(name,args)=>{if(name==='gymbro_workout_mutate'){packet=plain(args.packet);return {error:{code:'23514'}};}return clients[0].rpc(name,args);}};
       const controller=f.get('WorkoutCloud').create({client:capturing,ownerId:owner,initial,recoveryStorage:storage()});assert.equal((await controller.execute('commitImport',input)).code,'VALIDATION_ERROR');assert(packet);return packet;}
     const make=(id,label,destination)=>({...f.get('normalizeInboxPayload')({importId:id,date:'2026-11-07',sets:[{exercise:label,weight:0,unit:'lb',reps:7}]}),resolutions:[{label,kind:'map',exerciseId:destination}]});
+    if(!finish){
     const before=await repos[0].load(),bad=await prepare(before,make('sql-rejection','Reject alias',target));bad.next.sets.at(-1).reps=0;
     const denied=await clients[0].rpc('gymbro_workout_mutate',{packet:bad});assert(denied.error||denied.data?.code==='VALIDATION_ERROR');const after=await repos[0].load();assert.equal(after.revision,before.revision);assert(f.lifecycle.equalRows(after.rows,before.rows));
     check('actual PostgreSQL rejection rolls back alias, sets, import and revision');
@@ -79,9 +87,12 @@ async function main(){
     const replies=await Promise.all(packets.map(packet=>clients[0].rpc('gymbro_workout_mutate',{packet})));assert(replies.every(r=>!r.error));assert.deepEqual(replies.map(r=>r.data.code).sort(),['CONFLICT','OK']);
     const raced=await repos[0].load(),winner=replies.findIndex(r=>r.data.code==='OK');assert.equal(raced.rows.sets.length,before.rows.sets.length+1);assert.equal(f.identity.resolveLabel(raced.document.catalog,label),winner===0?target:other);
     check('concurrent signed conflicting alias imports: one atomic OK and one CONFLICT');
-    const foreignBefore=await repos[1].load(),foreign=await clients[1].from('gymbro_exercise_aliases').select().eq('owner_id',owner);assert(!foreign.error);assert.deepEqual(foreign.data,[]);
-    const foreignWrite=await clients[1].rpc('gymbro_workout_mutate',{packet:packets[0]});assert(foreignWrite.error||foreignWrite.data?.code==='AUTHORIZATION_ERROR');
+    }
+    const raced=await repos[0].load(),foreignBefore=await repos[1].load(),foreign=await clients[1].from('gymbro_exercise_aliases').select().eq('owner_id',owner);assert(!foreign.error);assert.deepEqual(plain(foreign.data),[]);
+    const foreignPacket=await prepare(raced,make('foreign-denial','Foreign denied alias',target));
+    const foreignWrite=await clients[1].rpc('gymbro_workout_mutate',{packet:foreignPacket});assert(foreignWrite.error||foreignWrite.data?.code==='AUTHORIZATION_ERROR');
     assert(f.lifecycle.equalRows((await repos[1].load()).rows,foreignBefore.rows));assert(f.lifecycle.equalRows((await repos[0].load()).rows,raced.rows));check('cross-owner alias invisibility and foreign-owner mutation denial');
+    if(finish){const p=await open(320);await p.locator('[data-view="inbox"]').click();await p.locator('#inboxRaw').fill(JSON.stringify({importId:'read-only-final-review',date:'2026-11-07',sets:[{exercise:'Rope Triceps Pressdown',weight:0,unit:'lb',reps:7}]}));await p.getByRole('button',{name:'Review import',exact:true}).click();assert.match(await p.locator('#inboxResolution').textContent(),/Saved alias: 1/);assert(f.lifecycle.equalRows((await repos[0].load()).rows,raced.rows));check('read-only final saved-alias review and browser console');}
     assert.deepEqual(errors,[]);fs.writeFileSync(path.join(root,'test-results/issue18-signed-preview.json'),JSON.stringify({sha,preview,build:require('../app-version.js').version,project,checks,unexpectedErrors:errors},null,2));
   }finally{for(const context of contexts)await context.close();await browser.close();for(const client of clients)await client.auth.signOut({scope:'local'});}
 }
