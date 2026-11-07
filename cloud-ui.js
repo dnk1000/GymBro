@@ -67,7 +67,7 @@ function renderCloudExerciseInput() {
     el('cloudRetry').disabled=accountBlocked||!s.canRetry;el('cloudResolve').disabled=accountBlocked||!s.canResolve;
     el('cloudLifecycle').querySelectorAll('fieldset[data-controls]').forEach(f=>f.disabled=accountBlocked);
     const diagnosticMessage=support.update({operation,config,status:{...s,code:result?.code},handle:h,parity:parityBlocked&&h.status==='healthy'});
-    say(canStart && !accountBlocked && s.phase==='READY' && !result ?
+    say(productionCloud && canStart && !accountBlocked && s.phase==='READY' && !result ?
       'This cloud account has no workouts. Start empty or review a JSON backup.' :
       s.diagnostic || s.phase==='LOAD_ERROR' || h.status!=='healthy' ? diagnosticMessage : parityBlocked&&h.status==='healthy'?'Import verification or recovery metadata is pending; editing is blocked.':s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
   }
@@ -100,9 +100,9 @@ function renderCloudExerciseInput() {
       if(generation!==epoch)return;
       config=nextConfig;
       if((response&&!response.ok)||!config.enabled||!config.configured||(!rehearsal&&!productionCloud&&!config.syntheticOnly)||!account||
-        account.config.projectRef!==config.projectRef||account.config.url!==config.url||
+        account.config.projectRef!==config.projectRef||
         (productionCloud&&(config.environment!=='production'||account.config.environment!==config.environment||
-          account.config.publishableKey!==config.publishableKey||!Array.isArray(config.allowedOwners)||
+          account.config.url!==config.url||account.config.publishableKey!==config.publishableKey||!Array.isArray(config.allowedOwners)||
           JSON.stringify(account.config.allowedOwners)!==JSON.stringify(config.allowedOwners)))||
         (rehearsal&&(!account.config.rehearsal||account.config.approvalDigest!==config.approvalDigest)))throw OperationalDiagnostics.failure(!account?'AUTH':'CONFIGURATION','Approved cloud capability unavailable.');
       const verified=await connection.client.auth.getUser();

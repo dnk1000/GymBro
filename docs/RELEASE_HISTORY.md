@@ -1,6 +1,6 @@
 # Issue #85 cloud-first candidate (unreleased)
 
-`3.16.0-20261107T021316Z`, schema 8. Candidate lineage only. See [#85](https://github.com/dnk1000/GymBro/issues/85) for the rollout gate and actual evidence.
+`3.16.1-20261107T022229Z`, schema 8. Corrected a staging compatibility regression in `3.16.0-20261107T021316Z`. Candidate lineage only. See [#85](https://github.com/dnk1000/GymBro/issues/85) for the rollout gate and actual evidence.
 
 # Pending #84 canonical build packaging candidate
 

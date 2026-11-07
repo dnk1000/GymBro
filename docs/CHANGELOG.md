@@ -1,3 +1,7 @@
+## 3.16.1 — Keep Production config matching scoped to Production (#85)
+
+Preserve the established staging connection contract. The new normal Production path still requires the account and workout configuration to match.
+
 ## 3.16.0 — Cloud-first workouts candidate (#85)
 
 Open private cloud workouts on the normal Production origin when approved for activation. A new cloud account can start with an empty workout history or import a reviewed GymBro JSON backup. Cloud access failures keep workout saving paused.
