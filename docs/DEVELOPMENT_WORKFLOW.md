@@ -167,7 +167,7 @@ Select applicable checks against acceptance criteria and affected contracts; do 
 
 More verification alone does not raise Change Level. A Change Level 1 mobile-layout fix may still require physical-device evidence. A Change Level 3 architecture-only proposal needs design/decision evidence rather than migration tests when no implementation exists. Discovering foundational risk can require escalation before additional checks are defined. Responsive Chromium does not prove physical Safari behavior; record actual device/build/commit/results when required, otherwise report unverified evidence explicitly.
 
-Automatic CI is supporting evidence, not a command to manually repeat unrelated suites. Report the assigned Change Level, Validation approach, actual checks/results and anything required but unverified, using the issue's AC-to-evidence mapping.
+Use focused checks during implementation and debugging. Run the applicable full regression, database and hosted verification at the required acceptance checkpoints or earlier when a material change affects those areas and needs broader verification. CI evidence can cover the checks it actually ran on the relevant candidate. Required checks still apply, including database authorization and RLS, migration parity, backup integrity and retry/idempotency where in scope. Report the assigned Change Level, Validation approach, actual results and anything required but unverified using the issue's AC-to-evidence mapping.
 
 ### Historical terminology
 
@@ -175,11 +175,15 @@ The former numbered validation levels are retired for new work. Existing labels 
 
 ## Efficient execution
 
-Use the [efficient-execution rules in AGENTS.md](../AGENTS.md#efficient-execution) throughout the task. Required reading establishes the governing context once; it is not a command to repeatedly read every document in full. Reuse current session context, inspect relevant baseline/document changes, and read the sections needed to understand the actual requirements and risks. Do not traverse unrelated roadmap or historical links.
+Use the [efficient-execution rules in AGENTS.md](../AGENTS.md#efficient-execution) throughout the task. Establish the applicable governing context and reuse it while current. Read changed sections, relevant PR fields and targeted log excerpts as needed. Keep source references in handoff summaries so decisions and evidence can be checked without reconstructing the task history.
 
-Select verification against the acceptance criteria and affected contracts before running tools. Prefer one focused local pass plus applicable existing CI coverage. A full local suite is appropriate when required by the issue or affected risk, when CI cannot supply necessary evidence, or when diagnosing a failure; it is not automatic for every UI edit. Recheck only what later changes or failures invalidate. A documentation-only evidence follow-up does not require another application/browser/migration run merely because CI runs automatically. Screenshots and logs support specific claims; collecting more is not an independent deliverable. Apply the bounded recovery rule when a tool fails and keep required missing verification visible.
+Select verification against the acceptance criteria and affected contracts. When the candidate changes, carry forward evidence only where the tested behavior, relevant inputs and environment still support the claim. Preserve the original tested revision and environment where applicable. Rerun affected checks when changes or new findings invalidate their evidence, or when a gate requires a fresh result or exact candidate identity. A documentation-only evidence follow-up does not by itself require another application, browser or migration run.
 
-The normal evidence home is the PR's canonical completion report. The issue and final response can summarize the outcome and link to that report, including pending criteria and negative evidence, without reproducing it. A separate durable document is needed only for an owning product/architecture/compatibility contract, an explicitly required record, or a user-requested artifact. Directly authorized documentation/process maintenance may use the user's bounded request as the approved work package; do not invent another implementation issue or proposal solely for that maintenance. Preserve focused branches/PRs and all applicable governance gates.
+Before live operations, stabilize the candidate and complete the prerequisite checks in local or disposable environments and staging as applicable. Perform authorized Production verification on the exact approved deployment, using its immutable URL, full Git SHA and build where required. Keep that candidate fixed during verification. If a defect requires a source or deployment change, separate the fix from the live operation and re-establish the applicable evidence and approval before resuming.
+
+Reuse documented approvals while valid and only for the scope they cover. Check the applicable operation, environment, deployment identity, data and accounts against the approval before acting. Obtain new authorization for expanded Production permissions, data access or mutations, and whenever the governing runbook requires fresh approval. Preserve separate merge, activation, verification and acceptance gates where applicable.
+
+Directly authorized documentation/process maintenance may use the user's bounded request as the approved work package. A separate durable document is needed only for an owning product, architecture or compatibility contract, an explicitly required record, or a user-requested artifact.
 
 ## Codex execution contract
 
@@ -242,7 +246,7 @@ Identify remaining work, known negative evidence, blockers and pending actions i
 
 ### Completion report
 
-Provide this report for completed work and partial/blocked handoffs, normally once in the PR body. Issue/final-response summaries may link to it; a separate repository report file is not required. For a task without a PR, the final response can hold the report. Keep it proportionate; use `None` or `Not applicable` where appropriate and link evidence rather than repeating logs. Include:
+Maintain one canonical report for completed work and partial or blocked handoffs, normally in the PR body or in the final response for work without a PR. Update new or changed findings in place and retain still-valid evidence and the disposition of prior failures or gaps. Default to a short handoff covering changes, checks, failures, blockers and the next action. Link to the report for the AC mapping and any detail required by the Change Level, acceptance contract or user. Keep the report proportionate and use `None` or `Not applicable` where appropriate. Include:
 
 - **Scope and delivery:** issue or approved work package; branch; final commit; PR; exact files changed; concise implementation summary and user-visible behavior changes/preservation; unexpected changes (or `None`); repository scope-check method and result.
 - **Classification and verification:** assigned Change Level and rationale; issue-specific Validation approach; actual tests/checks and results; applicable exact Preview environment/revision/build and browser/device evidence (actual device/iOS/browser/build/commit/results for required physical iPhone checks).
