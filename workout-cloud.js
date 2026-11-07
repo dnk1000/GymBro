@@ -46,7 +46,13 @@ const WorkoutCloud = (() => {
         input.exercise=id;input.originalLabel=label;
       };
       for(const arg of args)resolve(arg,['logSet','editSet','addSlot'].includes(name));
-      if(name==='commitImport')for(const row of args[0].sets.filter(r=>r.include))resolve(row,true);
+      if(name==='commitImport') {
+        if (base.document.data.imports.some(row => row.importId === args[0]?.importId))
+          return { result: { ok: false, code: 'DUPLICATE_IMPORT', errors: ['That workout has already been imported.'], changes: [], state: base.document } };
+        const reviewed=ImportResolution.prepare(catalog(),args[0]);
+        working.document.catalog=reviewed.catalog;
+        args[0]=reviewed.draft;
+      }
       return WorkoutRepository.prepareAction(working,name,args,{createId:()=>crypto.randomUUID()});
     }
     controller=WorkoutConcurrency.create({initial,repository,recoveryStorage,prepare});

@@ -89,7 +89,10 @@ for(const width of [320,390,1280])test('normal seven-view cloud app migrates, pr
     assert(!f.getSaved().rows.sets.some(s=>s.set_id===last.set_id));
     assert(f.getSaved().rows.guided_requests.some(r=>r.set_id===last.set_id),'deleted guided request retains original request identity as a tombstone');
     await page.locator('[data-view="inbox"]').click();await page.locator('#inboxRaw').fill(JSON.stringify({schema:'gym-tracker-chatgpt-v1',importId:'synthetic-inbox',date:'2026-10-28',exercises:[{exercise:'New synthetic import label',sets:[{weight:0,unit:'bodyweight',reps:7,notes:'exact import'}]}]}));
-    await page.evaluate(()=>parseInbox());await page.evaluate(()=>commitInbox());
+    await page.evaluate(()=>parseInbox());
+    assert(await page.locator('#commitInboxBtn').isDisabled(),'unknown imports now require an explicit #18 decision');
+    await page.getByRole('combobox',{name:'Resolve exercise 1',exact:true}).selectOption('create');
+    await page.evaluate(()=>commitInbox());
     assert.equal(f.getSaved().rows.imports.at(-1).import_id,'synthetic-inbox');
     const count=f.getSaved().rows.sets.length;await page.evaluate(()=>parseInbox());await page.evaluate(()=>commitInbox());assert.equal(f.getSaved().rows.sets.length,count);
     await page.locator('[data-view="data"]').click();

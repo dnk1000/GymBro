@@ -33,10 +33,12 @@ The preferred format is:
 }
 ```
 
-The app also accepts a flat top-level `sets` array. Supply either `sets` or `exercises`, not both. Missing weights or reps are preserved as incomplete records rather than guessed. Set `complete: false` to mark approximate data even when both numbers are available. Session-level `notes` are preserved in import history and JSON backups. Unknown exercise names are added as `Uncategorized`; a classification editor is not yet available.
+The app also accepts a flat top-level `sets` array. Supply either `sets` or `exercises`, not both. Missing weights or reps are preserved as incomplete records rather than guessed. Set `complete: false` to mark approximate data even when both numbers are available. Session-level `notes` are preserved in import history and JSON backups. The #18 cloud candidate adds [explicit exercise resolution](SMART_IMPORT_RESOLUTION.md): known canonical IDs/names/aliases resolve automatically; unknown labels require mapping, explicit new Uncategorized/default exercise creation, or exclusion before commit. Similar exercise/equipment names are never silently merged. Non-Production V2 development adapters retain their existing unknown-name creation behavior; a classification editor remains outside scope.
 
 `importId` is used for duplicate protection. If omitted, the app generates a deterministic ID from the workout contents.
 
 Prefer a stable, unique explicit `importId` per workout. Correcting or deleting committed sets does not remove that ID. Generated IDs retain V1.5's representation for compatibility; changing workout contents can produce a new ID.
+
+Excluded sets are not saved. After committing the selected sets, importing excluded sets later requires a separate future import with a new import ID; the original ID cannot be reused. Resolution choices do not recalculate the existing generated import ID.
 
 Dates must be real calendar dates in `YYYY-MM-DD` form. Supported load units are `lb`, `lb/side`, `assist lb`, and `bodyweight`. Loads must be nonnegative finite numbers, reps positive whole numbers, RPE 1–10, RIR a whole number 0–10, and pain 0–10. Optional duration and bodyweight must be positive. Invalid values block commit; missing load/reps and unknown exercise names are review warnings. Unchecked sets are excluded from validation and commit.

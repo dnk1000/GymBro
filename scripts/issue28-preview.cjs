@@ -3,8 +3,10 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {spawn,execFileSync,spawnSync}=require('node:child_process');
 const {validate,project}=require('./issue28-staging-fixtures.cjs');
 const {commandsFor}=require('./preview-db.cjs');
-const root=path.resolve(__dirname,'..'),branch='codex/issue-28-migration-parity';
-const preview='https://gymbro-git-codex-issue-28-migration-parity-dnk-9999.vercel.app';
+// #18 reuses the exact synthetic fixture/configuration controls, on its own branch.
+const issue18=process.env.GYMBRO_PREVIEW_VERIFICATION_ISSUE==='18';
+const root=path.resolve(__dirname,'..'),branch=issue18?'codex/issue-18-smart-import':'codex/issue-28-migration-parity';
+const preview=issue18?'https://gymbro-git-codex-issue-18-smart-import-dnk-9999.vercel.app':'https://gymbro-git-codex-issue-28-migration-parity-dnk-9999.vercel.app';
 const cli=process.env.GYMBRO_VERCEL_CLI_JS||(process.env.APPDATA&&path.join(process.env.APPDATA,'npm/node_modules/vercel/dist/index.js'));
 function guard(){const sha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();commandsFor('apply',process.env,sha);
   assert.equal(execFileSync('git',['branch','--show-current'],{cwd:root,encoding:'utf8'}).trim(),branch);

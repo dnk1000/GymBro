@@ -1,5 +1,7 @@
 # Canonical exercise identity — issue #16
 
+The #18 candidate reuses these exact primitives for [Smart Import Resolution](SMART_IMPORT_RESOLUTION.md), including explicitly reviewed alias/new-exercise additions atomically with imported facts. It adds no identity schema, fuzzy equivalence or catalog merge. Existing foundation descriptions below retain their original scope and release context.
+
 Issue [#16](https://github.com/dnk1000/GymBro/issues/16), based on accepted main `b40156bd943d230bdfa2e636390b85f5be1fd639`. Branch `codex/issue-16-exercise-identity`. The user approved application `3.3.0` for this candidate on October 27, 2026. This foundation does not switch workout persistence or run a personal migration.
 
 ## Identity and ownership
