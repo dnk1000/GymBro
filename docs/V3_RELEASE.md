@@ -1,3 +1,33 @@
+# Issue #84 canonical server build dependency candidate
+
+Release status: **preparation**
+
+Application version: `3.15.2-20261101T001518Z`
+
+Data schema: `8`
+
+The hosted diagnostic identified BUILD_METADATA before any Production access. Consume the same frozen canonical app metadata through a static CommonJS dependency, replacing filesystem/VM evaluation in the server function so deployment packaging can trace it. No second version source or identity-check relaxation. Scoped #84 PATCH; actual hosted verification, required new exact-deployment operational approval and remaining acceptance are recorded in [PR #87](https://github.com/dnk1000/GymBro/pull/87). Not an accepted release or cutover.
+
+# Issue #84 hosted refusal diagnosis candidate
+
+Release status: **preparation**
+
+Application version: `3.15.1-20261101T000913Z`
+
+Data schema: `8`
+
+Scoped PATCH under the approved #84 design: the hosted rehearsal refused a valid operational record before any fixture/workout mutation. Report only a fixed refusal stage to distinguish platform, approval transport/document, canonical build and scope failures. All identity/safety checks remain unchanged. This is diagnostic preparation, not a successful Production rehearsal, acceptance or cutover. Actual findings and further exact-deployment approval gates: [PR #87](https://github.com/dnk1000/GymBro/pull/87).
+
+# Issue #84 Production readiness rehearsal candidate
+
+Release status: **preparation**
+
+Application version: `3.15.0-20261031T192000Z`
+
+Data schema: `8`
+
+Approved design at `1f54d09`, #84 alone and scoped PATCH authority. Adds a distinct default-off immutable-deployment/SHA/build-pinned rehearsal boundary and read-only schema inspection tooling. Normal Production workout authority/local persistence are unchanged; no operational approval record or Production capability is activated. No new migration. Actual verification, negative evidence and pending live-operation/personal gates: [PR #87](https://github.com/dnk1000/GymBro/pull/87). This is not an accepted release or cutover.
+
 # Issue #42 diagnostic-authority clarification
 
 Release status: **preparation**

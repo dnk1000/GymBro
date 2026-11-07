@@ -13,7 +13,7 @@ const OperationalDiagnostics = (() => {
     DENIED: 'This account is not authorized for this operation. Verify the selected account.',
     RATE_LIMIT: 'Too many requests. Wait before trying again.',
     COMPATIBILITY: 'This data or service response is incompatible with this app. Keep the original material and reload the current app before seeking recovery help. Reload may lose unsaved entries and file choices.',
-    CONFIGURATION: 'Cloud access is disabled or unconfigured for this environment. Verify the Preview configuration.',
+    CONFIGURATION: 'Cloud access is disabled or unconfigured for this environment. Verify the approved configuration.',
     VALIDATION: 'The input could not be validated. Review the selected file or entered values and the operation requirements.',
     PARITY: 'Migration verification or recovery metadata is pending. Editing is blocked. Preserve the source and comparison report; refresh saved data and verify the comparison before recovery.',
     UNKNOWN: 'The operation could not be verified. Preserve this tab and try the indicated recovery action.',
@@ -55,14 +55,15 @@ const OperationalDiagnostics = (() => {
     else if (error && operation==='initial load') message = 'Saved cloud workouts could not load. No account contents are shown. Retry connecting after checking account access and connectivity.';
     if (error || status.diagnostic) message += (message?' ':'')+(tagged.get(error)?.message || causes[cause]);
     if (!message) message = status.message || (operation==='initial load'?'Connect a verified account to load saved cloud workouts.':'Review saved data before continuing.');
-    const verified = config?.configured===true && config.enabled===true && ['preview','local'].includes(config.environment) && config.projectRef==='obebuvpsqapgevwivwho';
+    const rehearsal=config?.configured===true&&config.enabled===true&&config.rehearsal===true&&config.environment==='production-rehearsal'&&config.projectRef==='loowxditqikcwyeftfgx';
+    const verified = rehearsal || (config?.configured===true && config.enabled===true && ['preview','local'].includes(config.environment) && config.projectRef==='obebuvpsqapgevwivwho');
     const summary = {
       appVersion: APP_VERSION.version,
       supported: {workout:8,identity:1,model:1,protocol:1,cloudBackup:1},
       observedWorkout: handle.status==='healthy' ? 8 : 'unknown',
-      environment: verified ? (config.environment==='preview'?'Preview':'Local test against Preview') : 'unknown/unverified',
+      environment: rehearsal?'Production rehearsal':verified ? (config.environment==='preview'?'Preview':'Local test against Preview') : 'unknown/unverified',
       project: verified ? config.projectRef : 'unknown/unverified',
-      authority: mode==='local'?'local workout storage':'synthetic cloud Preview; no Production cutover',
+      authority: mode==='local'?'local workout storage':rehearsal?'Production cloud candidate; normal workouts remain local':'synthetic cloud Preview; no Production cutover',
       operation: operations.includes(operation)?operation:'configuration',
       classification: ['CONFLICT','REQUEST_CONFLICT','PENDING','OUTCOME_UNKNOWN','AUTHORIZATION_ERROR','VALIDATION_ERROR'].includes(phase)?phase:phase.startsWith('RECOVERY_')?'RECOVERY':status.code==='VALIDATION_ERROR'?'VALIDATION_ERROR':parity?'PARITY':['uninitialized','unreadable'].includes(handle.status)?'RECOVERY':cause, cause, phase,
       acknowledgement:phase==='OUTCOME_UNKNOWN'?'unknown':phase==='PENDING'?'pending':phase==='RECOVERY_PENDING'?'confirmed; recovery cleanup pending':'no new save claimed',

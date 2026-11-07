@@ -7,14 +7,15 @@ const accountConfig = require("../api/account-config.js");
 const concurrencyConfig = require("../api/concurrency-config.js");
 const lifecycleConfig = require("../api/lifecycle-config.js");
 const workoutConfig = require("../api/workout-config.js");
+const cutoverConfig = require("../api/cutover-config.js");
 const root = path.resolve(__dirname, "..");
 function createServer() {
   return http.createServer(async (req, res) => {
     const pathname = new URL(req.url, "http://localhost").pathname;
-    if (["/api/supabase-probe-config", "/api/account-config", "/api/concurrency-config", "/api/lifecycle-config", "/api/workout-config"].includes(pathname)) {
+    if (["/api/supabase-probe-config", "/api/account-config", "/api/concurrency-config", "/api/lifecycle-config", "/api/workout-config", "/api/cutover-config"].includes(pathname)) {
       res.status = code => { res.statusCode = code; return res; };
       res.json = body => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(body)); };
-      return (pathname === "/api/workout-config" ? workoutConfig : pathname === "/api/lifecycle-config" ? lifecycleConfig : pathname === "/api/concurrency-config" ? concurrencyConfig : pathname === "/api/account-config" ? accountConfig : config)(req, res);
+      return (pathname === "/api/cutover-config" ? cutoverConfig : pathname === "/api/workout-config" ? workoutConfig : pathname === "/api/lifecycle-config" ? lifecycleConfig : pathname === "/api/concurrency-config" ? concurrencyConfig : pathname === "/api/account-config" ? accountConfig : config)(req, res);
     }
     try {
       if (!["GET", "HEAD"].includes(req.method)) throw Error("method");

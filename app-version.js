@@ -2,9 +2,9 @@
 // never from the browser clock. Persistence compatibility uses DATA_VERSION.
 const APP_VERSION = (() => {
   const major = 3;
-  const minor = 14;
-  const patch = 1;
-  const build = "20261031T124231Z";
+  const minor = 15;
+  const patch = 2;
+  const build = "20261101T001518Z";
   return Object.freeze({
     major,
     minor,
@@ -13,6 +13,9 @@ const APP_VERSION = (() => {
     version: `${major}.${minor}.${patch}-${build}`,
   });
 })();
+
+// Statically traceable server dependency; the browser uses the same frozen value.
+if (typeof module === 'object' && module.exports) module.exports = APP_VERSION;
 
 // Complete backup metadata is export-only; do not mutate committed state.
 // `version` is the existing data/schema version, independent of APP_VERSION.

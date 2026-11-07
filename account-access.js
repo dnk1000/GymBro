@@ -9,6 +9,7 @@
   const support=OperationalDiagnostics.mount(card,{operation:'account',mode:typeof cloudMode!=='undefined'&&cloudMode?'cloud':'local'});
 
   async function timedFetch(url, options = {}) {
+    if (config?.rehearsal) await CutoverRehearsal.beforeFetch(config,url,options);
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (options.signal?.aborted) abort();
@@ -78,14 +79,19 @@
     if (initializing || !/^https?:$/.test(location.protocol)) return;
     initializing = true;
     try {
-      const response = await timedFetch("/api/account-config", { cache: "no-store" });
+      const rehearsal=CutoverRehearsal.active();
+      const response = rehearsal ? null : await timedFetch("/api/account-config", { cache: "no-store" });
+      if(rehearsal) config=await CutoverRehearsal.configuration();
+      else {
       if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) return;
       config = await response.json();
+      }
       support.update({config});
       if (!config.enabled) return;
       card.hidden = false;
       if (!config.configured) { status.textContent = support.update({config,error:OperationalDiagnostics.failure("CONFIGURATION","Account configuration unavailable.")}); return; }
-      el("accountEnvironment").textContent = `Preview accounts · ${config.projectRef} · separate from Production`;
+      el("accountEnvironment").textContent = config.rehearsal ? `Production rehearsal · ${config.projectRef} · ${config.build} · ${config.deploymentUrl}` : `Preview accounts · ${config.projectRef} · separate from Production`;
+      el("accountCheck").hidden=!!config.rehearsal;
       if (!window.supabase?.createClient) await new Promise((resolve, reject) => {
         const script = document.createElement("script");
         const timer = setTimeout(() => script.onerror(), 15000);
@@ -119,7 +125,7 @@
     if (!email.reportValidity() || !email.value.trim()) return;
     run(async () => {
       const { error } = await client.auth.signInWithOtp({ email: email.value.trim(), options: {
-        shouldCreateUser: true, emailRedirectTo: new URL("/", location.href).href,
+        shouldCreateUser: !config.rehearsal, emailRedirectTo: new URL(config.rehearsal?"/?storage=cloud&rehearsal=production":"/", location.href).href,
       } });
       if (error) throw error;
       status.textContent = "Check your email and open the sign-in link. Wait at least 60 seconds before requesting another.";

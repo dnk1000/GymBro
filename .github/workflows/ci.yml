@@ -47,6 +47,7 @@ jobs:
           node scripts/workout-migration-races.cjs --local
           node scripts/workout-migration-db-fixture.cjs
           npx --no-install supabase test db --local test-results/workout-migration.test.sql
+          node scripts/verify-cutover-schema.cjs capture
       - name: Replay from empty local database and verify retry
         run: |
           npx --no-install supabase db reset --local --version 20261028042000 --no-seed
@@ -61,6 +62,7 @@ jobs:
           npx --no-install supabase test db --local test-results/workout-lifecycle.test.sql
           npx --no-install supabase test db --local test-results/workout-migration.test.sql
           npx --no-install supabase db query --local --file supabase/verify-infrastructure.sql
+          node scripts/verify-cutover-schema.cjs compare
       - name: Retain database evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
