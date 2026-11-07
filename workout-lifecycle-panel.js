@@ -27,9 +27,9 @@ const WorkoutLifecyclePanel = (() => {
     const el=name=>host.querySelector(`[data-${name}]`);
     host.querySelectorAll('fieldset').forEach(field=>field.style.minWidth='0');
     el('summary').style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';
-    el('authority').textContent=`${environment} · Account ${ownerId} · Cloud workout data. Normal GymBro activation follows accepted migration/cutover.`;
+    el('authority').textContent=`${environment} · Account ${ownerId} · Workout data is saved to this cloud account.`;
     el('local-note').textContent=cutoverAccepted?'Deletes only this browser recovery copy after raw backup verification; cloud data and account are unaffected.':
-      'Cleanup is disabled until accepted cutover. Current normal GymBro workouts still use their local store.';
+      'Local recovery cleanup is disabled. Any retained browser copy is kept intact.';
     for(const n of ['local-export','local-file','local-delete','tabs']) el(n).disabled=!cutoverAccepted;
     const say=text=>{if(live)el('status').textContent=text;};
     const support=OperationalDiagnostics.mount(host,{config});

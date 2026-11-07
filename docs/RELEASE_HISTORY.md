@@ -1,5 +1,7 @@
 # Issue #85 cloud-first candidate (unreleased)
 
+`3.16.2-20261107T025231Z`, schema 8. Recovery-panel copy correction, pending merge/deployment approval. The active `3.16.1-20261107T022229Z` deployment has signed save/reload/reauthentication evidence in [#85](https://github.com/dnk1000/GymBro/issues/85). Final acceptance and the live failure check remain pending.
+
 `3.16.1-20261107T022229Z`, schema 8. Corrected a staging compatibility regression in `3.16.0-20261107T021316Z`. Candidate lineage only. See [#85](https://github.com/dnk1000/GymBro/issues/85) for the rollout gate and actual evidence.
 
 # Pending #84 canonical build packaging candidate

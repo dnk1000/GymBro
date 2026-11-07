@@ -1,3 +1,7 @@
+## 3.16.2 — Correct recovery-panel authority wording (#85)
+
+Describe the displayed cloud account as the workout store and the retained browser copy as inactive recovery material. Cleanup controls stay disabled.
+
 ## 3.16.1 — Keep Production config matching scoped to Production (#85)
 
 Preserve the established staging connection contract. The new normal Production path still requires the account and workout configuration to match.

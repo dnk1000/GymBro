@@ -2,11 +2,11 @@
 
 Release status: **preparation**
 
-Application version: `3.16.1-20261107T022229Z`
+Application version: `3.16.2-20261107T025231Z`
 
 Data schema: `8`
 
-The owner approved 3.16.0 for #85 alone. The candidate uses existing cloud persistence for an authenticated empty start or a reviewed JSON import. PATCH 1 preserves staging configuration and diagnostic behavior by scoping the new Production checks and messages to normal Production. Production authority and smoke checks await explicit approval.
+The owner approved 3.16.0 for #85 alone. Production activation and signed save/reload/reauthentication passed on 3.16.1 as recorded in [#85](https://github.com/dnk1000/GymBro/issues/85). PATCH 2 corrects recovery-panel wording only and awaits merge/deployment approval. The live network-failure check remains pending.
 
 # Issue #84 canonical server build dependency candidate
 
