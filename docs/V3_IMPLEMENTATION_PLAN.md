@@ -91,7 +91,7 @@ Provide supportable failure states for auth, network, database, stale writes, mi
 
 **#29 — V3 Foundation: Controlled Production Cutover and Local Workout-Storage Retirement**
 
-After accepted Preview migration and explicit Production approval, make Supabase/PostgreSQL the sole active workout store. Do not keep indefinite dual writes or automatic local-only fallback. Retain legacy local data only as deliberately managed recovery material until cleanup is separately approved.
+Reuse #84 readiness evidence, then verify #85's authenticated empty start, optional JSON import, durability and signed isolation on Preview. Make Supabase/PostgreSQL the sole normal workout store only after explicit Production approval. Keep any legacy copy inactive. #86 handles residual legacy paths after accepted cutover. The [PRD](GymBro_PRD.md) and [#29](https://github.com/dnk1000/GymBro/issues/29) define the simplified release gates.
 
 ### Phase D — Exercise/catalog/import maturity
 

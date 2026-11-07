@@ -10,6 +10,8 @@ Decision date: October 27, 2026 (America/New_York).
 
 ## Verified starting baseline
 
+The historical full migration and personal evidence gates below were superseded for [#29](https://github.com/dnk1000/GymBro/issues/29) by the November 6 owner decision in the [PRD](GymBro_PRD.md). The original approvals and verification status remain historical evidence.
+
 | Item | Evidence and limit |
 | --- | --- |
 | Repository and checkout | `dnk1000/GymBro`; existing Windows GymBro checkout. Clean at M0 start; no user changes were discarded. |

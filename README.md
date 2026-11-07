@@ -16,7 +16,7 @@ Current workout data uses browser `localStorage` key `daveGymTrackerV1` and data
 
 ### Approved V3.x direction
 
-V3.x is the persistent-data/core-product-maturity generation. The approved transition introduces recoverable personal access, canonical exercise identity, verified Supabase/PostgreSQL migration, controlled Production cutover, exercise catalog/import normalization, History/data-model improvements, and the remaining live-workout adaptation gaps.
+V3.x is the persistent-data/core-product-maturity generation. The approved transition introduces recoverable personal access, canonical exercise identity, an empty cloud start or optional GymBro JSON import, controlled Production cutover, exercise catalog/import normalization, History/data-model improvements, and the remaining live-workout adaptation gaps.
 
 After accepted cutover, Supabase/PostgreSQL is intended to become the sole active workout store; indefinite dual writes and an automatic local-only workout fallback are not part of the approved target.
 
@@ -72,7 +72,7 @@ Tests use disposable browser storage and must never touch a user's real workout 
 
 Until V3 controlled cutover is accepted, the deployed V2 localStorage database remains authoritative for real workouts.
 
-Before testing any issue that touches persistence or migration, export and verify a complete Production JSON backup. Preview and Production have different browser origins; an empty Preview does not mean Production history is missing.
+Before testing with personal workout data, export and verify a complete Production JSON backup. Use disposable data for development verification. Preview and Production have different browser origins.
 
 Current complete JSON backup/restore preserves the supported database, including history, bodyweights, program/templates, exercise library, preferences, import metadata, sessions, plan snapshots, guidance state, and the active-session pointer. CSV is sets-only and is not a complete backup.
 

@@ -1,5 +1,7 @@
 # Production cutover Phase 1 — proposed execution plan
 
+The November 6 [PRD decision](GymBro_PRD.md) supersedes the personal rehearsal and historical parity release gates in this Phase 1 record. The technical guard still governs any use of the existing immutable rehearsal deployment. See [#84](https://github.com/dnk1000/GymBro/issues/84) for current readiness and [#29](https://github.com/dnk1000/GymBro/issues/29) for the revised sequence.
+
 Status: **design approved at `1f54d09255232f54ba2dad3a0b33e252e757eb53`; bounded implementation in progress**, not completed Production readiness evidence. The owner explicitly stated “#84 design is approved, continue with implementation.” This includes the 3.15.0/#84 mapping and necessary scoped PATCH fixes below. Implements [#84](https://github.com/dnk1000/GymBro/issues/84), Phase 1 of [#29](https://github.com/dnk1000/GymBro/issues/29). Neither Phase 2 nor Phase 3 is started here. Live operational approvals remain separate.
 
 Baseline: accepted GitHub `main` **4dad121e739d27f6233e03318a0b43620c219161**, fetched October 31, 2026; baseline application **3.14.1-20261031T124231Z**, workout schema 8, canonical identity/relational model/concurrency protocol/cloud-backup format 1. Preparation at `1f54d09` changed no executable assets/configuration/data/version. The subsequent candidate build and actual implementation/verification are recorded in [PR #87](https://github.com/dnk1000/GymBro/pull/87) and [candidate release metadata](V3_RELEASE.md); no live Production configuration/database change is implied.

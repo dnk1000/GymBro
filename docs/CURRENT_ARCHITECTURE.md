@@ -32,15 +32,15 @@ V3.x is the **persistent-data and core-product-maturity generation**. It is not 
 Approved direction:
 
 1. recoverable personal account access and private ownership;
-2. stable canonical exercise identity incorporated into the database model before full migration acceptance;
-3. verified migration of the complete V2 dataset to Supabase/PostgreSQL on Preview;
-4. controlled Production cutover after data/evidence gates;
+2. stable canonical exercise identity in the existing database model;
+3. a qualified empty cloud start or an explicit owner-scoped import of supported GymBro JSON;
+4. controlled Production cutover after focused cloud verification and explicit approval;
 5. Supabase/PostgreSQL becomes the sole active workout store after accepted cutover;
 6. no indefinite dual writes or automatic local-only workout fallback after cutover;
 7. preserve JSON backup/import/export and historical truth;
 8. mature exercise catalog/import normalization, History/data semantics, and remaining core workout behavior before external AI/provider integration.
 
-The approved scope and migration gates are recorded in [V3_M0_SCOPE_AND_ACCEPTANCE.md](V3_M0_SCOPE_AND_ACCEPTANCE.md). New implementation work is specified by GitHub issues and summarized in [V3_IMPLEMENTATION_PLAN.md](V3_IMPLEMENTATION_PLAN.md).
+The current cutover decision is recorded in the [PRD](GymBro_PRD.md) and [#29](https://github.com/dnk1000/GymBro/issues/29). The [M0 record](V3_M0_SCOPE_AND_ACCEPTANCE.md) retains the original milestones and evidence.
 
 ## Target V3.x data boundaries
 
@@ -72,18 +72,17 @@ Issue #84's approved [Phase 1 rehearsal contract](V3_CUTOVER_READINESS_PROPOSAL.
 
 Until controlled cutover, the deployed V2 localStorage database remains authoritative for real workouts.
 
-V3 migration work must:
+Use the existing authenticated repository, checked RPCs and lifecycle controller for the normal cloud path. Offer an explicit empty start only after the server qualifies the owner and destination as uninitialized. Use the existing reviewed initialization path for an optional portable backup into an empty account and the existing owner-bound, explicitly confirmed lifecycle paths for supported populated-account imports. Validation or conflict writes nothing. Preserve format, owner and retry checks, and require durable acknowledgement before reporting success.
 
-- use deliberate Preview/test migration before Production;
-- preserve all IDs, relationships, historical fields and unknown preserved metadata unless an explicitly approved migration changes them;
-- compare content/relationships, not only record counts;
-- be retry-safe and avoid duplicate records;
-- fail visibly rather than present a cloud-load failure as an empty account;
-- retain a verified legacy backup/inactive copy through cutover until explicit cleanup approval;
-- require durable acknowledgement before reporting a cloud mutation saved;
-- preserve visible unsaved input on save failure where the approved UI contract requires it.
+Verify these paths with disposable data on Preview. Personal history transfer and exhaustive parity are optional. A failed load cannot initialize, reseed or consult legacy workout data. After cutover, keep any local copy inactive and retain acknowledged cloud writes during recovery. A rollback that would re-enable stale local authority requires a separate decision and preservation of any newer cloud writes.
 
 Initial cloud operation requires connectivity to save. Offline workout-write queuing is not part of the approved initial V3 scope.
+
+### #85 rollout design for review
+
+Keep the existing app and project. Select cloud authority at startup for the normal Production origin in the reviewed cutover build, before any local workout read. The account and workout configuration endpoints must agree on the native Production environment, pinned project/URL, publishable key and private owner scope. Missing or conflicting configuration blocks cloud operation. Keep the existing staging and immutable #84 rehearsal guards separate. Use existing private recoverable accounts and keep account creation out of this cutover.
+
+On a qualified empty destination, offer **Start empty** and **Import JSON**. Start empty explicitly initializes the existing empty workout model using the checked initialization path, without reading localStorage. Import uses the existing validation, review and initialization or lifecycle operation appropriate to the destination. Confirm durable results through the existing controller. Exercise the same startup and persistence paths with disposable Preview data and targeted signed denial tests. Keep Production configuration and the authority switch outside implementation approval.
 
 ## AI/provider boundary
 
