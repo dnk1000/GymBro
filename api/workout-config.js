@@ -1,6 +1,8 @@
-// #28 Preview capability. Login/Preview load never implies migration.
 const {probeConfig}=require('./supabase-probe-config.js');
-function workoutConfig(env) {
+const {productionCloudConfig}=require('./_lib/supabase-environment.cjs');
+function workoutConfig(env,host) {
+  const production=productionCloudConfig(env,host);
+  if(production)return production;
   if(env.GYMBRO_PREVIEW_WORKOUTS!=='true')return {enabled:false};
   const base=probeConfig({...env,GYMBRO_SUPABASE_PROBE:'true'});
   if(!base.enabled||!base.configured)return base;
@@ -13,5 +15,5 @@ function workoutConfig(env) {
 }
 function handler(req,res){res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Content-Type-Options','nosniff');
   if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
-  return res.status(200).json(workoutConfig(process.env));}
+  return res.status(200).json(workoutConfig(process.env,req.headers.host));}
 module.exports=handler;module.exports.workoutConfig=workoutConfig;

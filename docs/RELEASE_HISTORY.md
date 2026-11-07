@@ -1,3 +1,7 @@
+# Issue #85 cloud-first candidate (unreleased)
+
+`3.16.0-20261107T021316Z`, schema 8. Candidate lineage only. See [#85](https://github.com/dnk1000/GymBro/issues/85) for the rollout gate and actual evidence.
+
 # Pending #84 canonical build packaging candidate
 
 `3.15.2-20261101T001518Z`, schema 8. Scoped fix for the verified hosted BUILD_METADATA refusal; one canonical frozen version remains. [PR #87](https://github.com/dnk1000/GymBro/pull/87) records actual verification and required new exact-source operational approval. No accepted release or cutover.

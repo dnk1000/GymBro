@@ -112,3 +112,31 @@ test('complete migration comparison detects equal-count personal-copy corruption
     const changed=structuredClone(rows);change(changed);assert.equal(migration.compare(candidate,{rows:changed,revision:'1'},f.owner).pass,false);
   }
 });
+test('normal cloud capability requires native Production, canonical host and the same pinned private configuration',()=>{
+  const {accountConfig}=require('../api/account-config.js'),{workoutConfig}=require('../api/workout-config.js');
+  const host=new URL(require('../cloud-authority.js')).host;
+  const production={
+    VERCEL:'1',VERCEL_ENV:'production',GYMBRO_PRODUCTION_WORKOUTS:'true',GYMBRO_CLOUD_ENV:'production',
+    SUPABASE_PROJECT_REF:'loowxditqikcwyeftfgx',SUPABASE_URL:'https://loowxditqikcwyeftfgx.supabase.co',
+    SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture_only_value',
+    GYMBRO_PRODUCTION_WORKOUT_OWNERS:'59a1550a-c087-4fa4-b63f-f665d69c99fb',
+  };
+  const expected=accountConfig(production,host);
+  assert.equal(expected.configured,true);
+  assert.deepEqual(workoutConfig(production,host),expected);
+  for(const configure of [accountConfig,workoutConfig]){
+    assert.deepEqual(configure({...production,GYMBRO_PRODUCTION_WORKOUTS:''},host),{enabled:false});
+    assert.deepEqual(configure({...production,VERCEL_ENV:'preview'},host),{enabled:false});
+    for(const [changes,target] of [
+      [{VERCEL:''},host],[{},'branch-alias.vercel.app'],
+      [{SUPABASE_PROJECT_REF:'obebuvpsqapgevwivwho'},host],
+      [{SUPABASE_URL:production.SUPABASE_URL+'/path'},host],
+      [{SUPABASE_PUBLISHABLE_KEY:'sb_secret_fixture'},host],
+      [{GYMBRO_PRODUCTION_WORKOUT_OWNERS:''},host],
+    ]) {
+      const result=configure({...production,...changes},target);
+      assert.equal(result.configured,false);
+      assert(!Object.hasOwn(result,'publishableKey'));
+    }
+  }
+});

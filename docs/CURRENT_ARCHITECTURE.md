@@ -78,11 +78,13 @@ Verify these paths with disposable data on Preview. Personal history transfer an
 
 Initial cloud operation requires connectivity to save. Offline workout-write queuing is not part of the approved initial V3 scope.
 
-### #85 rollout design for review
+### Approved #85 rollout design
 
 Keep the existing app and project. Select cloud authority at startup for the normal Production origin in the reviewed cutover build, before any local workout read. The account and workout configuration endpoints must agree on the native Production environment, pinned project/URL, publishable key and private owner scope. Missing or conflicting configuration blocks cloud operation. Keep the existing staging and immutable #84 rehearsal guards separate. Use existing private recoverable accounts and keep account creation out of this cutover.
 
 On a qualified empty destination, offer **Start empty** and **Import JSON**. Start empty explicitly initializes the existing empty workout model using the checked initialization path, without reading localStorage. Import uses the existing validation, review and initialization or lifecycle operation appropriate to the destination. Confirm durable results through the existing controller. Exercise the same startup and persistence paths with disposable Preview data and targeted signed denial tests. Keep Production configuration and the authority switch outside implementation approval.
+
+The cutover candidate requires the canonical `https://gymbro-v15.vercel.app` origin, native Vercel Production metadata, `GYMBRO_PRODUCTION_WORKOUTS=true`, `GYMBRO_CLOUD_ENV=production`, the pinned `SUPABASE_PROJECT_REF` and `SUPABASE_URL`, a publishable key, and an explicit `GYMBRO_PRODUCTION_WORKOUT_OWNERS` UUID allowlist. Before an approved switch, verify the designated private account and exact Auth callback, preserve any desired local export and close legacy tabs. After activation, smoke the approved build with a signed save, reload and reauthentication. If a failure occurs after a possible cloud write, pause writes and keep the cloud records and receipts intact. Use forward repair or obtain separate approval for a recovery plan that preserves those writes.
 
 ## AI/provider boundary
 

@@ -2,6 +2,10 @@
 (() => {
   const el = id => document.getElementById(id);
   const card = el("accountAccess"), status = el("accountStatus");
+  if (productionCloud) {
+    card.hidden = false;
+    el("accountHelp").textContent = "Sign in with your email to open your private cloud workouts.";
+  }
   const email = el("accountEmail");
   const callbackError = /(?:^#|&)error=/.test(location.hash);
   const callbackSession = /(?:^#|&)access_token=/.test(location.hash);
@@ -36,6 +40,10 @@
     const { data, error } = await client.auth.getUser();
     if (error) {window.dispatchEvent(new Event("gymbro-account-unavailable"));throw OperationalDiagnostics.transport(error);}
     if (!data.user?.id || data.user.is_anonymous || !data.user.email) {window.dispatchEvent(new Event("gymbro-account-unavailable"));throw OperationalDiagnostics.failure("AUTH","Identity could not be verified.");}
+    if (productionCloud && !config.allowedOwners.includes(data.user.id)) {
+      window.dispatchEvent(new Event("gymbro-account-unavailable"));
+      throw OperationalDiagnostics.failure("DENIED","This account is not enabled for GymBro.");
+    }
     return data.user;
   }
   async function restore() {
@@ -79,19 +87,26 @@
     if (initializing || !/^https?:$/.test(location.protocol)) return;
     initializing = true;
     try {
-      const rehearsal=CutoverRehearsal.active();
+      const rehearsal=!productionCloud && CutoverRehearsal.active();
       const response = rehearsal ? null : await timedFetch("/api/account-config", { cache: "no-store" });
       if(rehearsal) config=await CutoverRehearsal.configuration();
       else {
-      if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) return;
+      if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
+        if (productionCloud) throw OperationalDiagnostics.failure("CONFIGURATION","Cloud account access is unavailable.");
+        return;
+      }
       config = await response.json();
       }
       support.update({config});
-      if (!config.enabled) return;
+      if (!config.enabled && !productionCloud) return;
       card.hidden = false;
-      if (!config.configured) { status.textContent = support.update({config,error:OperationalDiagnostics.failure("CONFIGURATION","Account configuration unavailable.")}); return; }
-      el("accountEnvironment").textContent = config.rehearsal ? `Production rehearsal · ${config.projectRef} · ${config.build} · ${config.deploymentUrl}` : `Preview accounts · ${config.projectRef} · separate from Production`;
-      el("accountCheck").hidden=!!config.rehearsal;
+      if (!config.enabled || !config.configured || (config.environment === "production") !== productionCloud ||
+          (productionCloud && !Array.isArray(config.allowedOwners))) {
+        status.textContent = support.update({config,error:OperationalDiagnostics.failure("CONFIGURATION","Account configuration unavailable.")}); return;
+      }
+      el("accountEnvironment").textContent = config.rehearsal ? `Production rehearsal · ${config.projectRef} · ${config.build} · ${config.deploymentUrl}` :
+        productionCloud ? "Private cloud account" : `Preview accounts · ${config.projectRef} · separate from Production`;
+      el("accountCheck").hidden=!!config.rehearsal || productionCloud;
       if (!window.supabase?.createClient) await new Promise((resolve, reject) => {
         const script = document.createElement("script");
         const timer = setTimeout(() => script.onerror(), 15000);
@@ -125,7 +140,7 @@
     if (!email.reportValidity() || !email.value.trim()) return;
     run(async () => {
       const { error } = await client.auth.signInWithOtp({ email: email.value.trim(), options: {
-        shouldCreateUser: !config.rehearsal, emailRedirectTo: new URL(config.rehearsal?"/?storage=cloud&rehearsal=production":"/", location.href).href,
+        shouldCreateUser: !config.rehearsal && !productionCloud, emailRedirectTo: new URL(config.rehearsal?"/?storage=cloud&rehearsal=production":"/", location.href).href,
       } });
       if (error) throw error;
       status.textContent = "Check your email and open the sign-in link. Wait at least 60 seconds before requesting another.";
@@ -146,6 +161,7 @@
     await restore(); status.textContent = user ? "Account restored." : "Signed out. Request a new link.";
   }));
   el("accountCheck").addEventListener("click", () => run(async () => {
+    if (productionCloud) return;
     el("accountCheckResult").textContent = "";
     const revision = generation, owner = await verifiedUser();
     const { error } = await client.from("gymbro_private_access").upsert({ owner_id: owner.id, value: "Account access verified" });

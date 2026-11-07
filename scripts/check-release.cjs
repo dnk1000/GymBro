@@ -11,8 +11,8 @@ function checkRelease(root) {
   const version = vm.runInContext("APP_VERSION", runtime);
   assert.deepEqual(
     [version.major, version.minor, version.patch],
-    [3, 15, 2],
-    "Expected approved issue #84 readiness rehearsal candidate 3.15.2",
+    [3, 16, 0],
+    "Expected approved issue #85 cloud-first candidate 3.16.0",
   );
   assert.ok(Object.isFrozen(version), "Canonical version must be immutable");
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
@@ -27,7 +27,7 @@ function checkRelease(root) {
     iso.replace("Z", ".000Z"),
     "Build must be a valid UTC date/time",
   );
-  assert.equal(version.version, `3.15.2-${b}`);
+  assert.equal(version.version, `3.16.0-${b}`);
   const schemaRuntime = vm.createContext({});
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);
@@ -48,8 +48,8 @@ function checkRelease(root) {
   );
   assert.match(
     read("docs/CHANGELOG.md"),
-    /^## 3\.15\.2\b/m,
-    "Changelog is missing the readiness rehearsal candidate",
+    /^## 3\.16\.0\b/m,
+    "Changelog is missing the cloud-first candidate",
   );
   const html = read("index.html");
   assert.equal(

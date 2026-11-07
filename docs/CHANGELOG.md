@@ -1,3 +1,7 @@
+## 3.16.0 — Cloud-first workouts candidate (#85)
+
+Open private cloud workouts on the normal Production origin when approved for activation. A new cloud account can start with an empty workout history or import a reviewed GymBro JSON backup. Cloud access failures keep workout saving paused.
+
 ## 3.15.2 — Package canonical build metadata for rehearsal (#84)
 
 Use a static server import of the same frozen application version after hosted BUILD_METADATA refusal. Preserve exact immutable deployment/SHA/build approval, default-off behavior and generic refusal. No workout/schema change or authority cutover.
