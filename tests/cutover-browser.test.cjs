@@ -88,6 +88,9 @@ test('normal Production origin starts empty on explicit choice and an acknowledg
   assert(!f.calls.some(x=>x.endsWith('_mutate')));
   await p.locator('#cloudStartEmpty').click();
   await p.waitForFunction(()=>cloudReady);
+  assert.match(await p.locator('#cloudLifecycle [data-authority]').textContent(),/Workout data is saved to this cloud account/);
+  assert.equal(await p.locator('#cloudLifecycle [data-local-note]').textContent(),'Local recovery cleanup is disabled. Any retained browser copy is kept intact.');
+  assert(await p.locator('#cloudLifecycle [data-local-delete]').isDisabled());
   assert.equal(f.saved().rows.sets.length,0);
   assert.equal(f.saved().rows.bodyweights.length,0);
   await p.locator('[data-view="workout"]').click();await p.evaluate(()=>useManualLogging());
