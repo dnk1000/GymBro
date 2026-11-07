@@ -1,6 +1,8 @@
 # Smart Import Resolution proposal — issue #18
 
-Status: **Needs decision; proposal only.** Prepared November 7, 2026 from freshly fetched accepted main `b3315080465f5b1f0ab5f1cfb675ca187cf1377d`, on `codex/issue-18-smart-import`. No runtime implementation or new application build is included in this proposal. Approval must be recorded before dependent implementation.
+Status: **Approved for bounded implementation.** The owner approved this design at `7793fd0370ce1eb4b3794b034d866af0b03c83da`, 3.17.0/scoped PATCH fixes and the disposable staging verification on November 7, 2026. Approval is recorded in issue #18; excluded sets must explicitly require a separate future import, and exercise/equipment distinctions remain strict. Merge and Production operations are excluded.
+
+The preparation record below is historical: Prepared November 7, 2026 from freshly fetched accepted main `b3315080465f5b1f0ab5f1cfb675ca187cf1377d`, on `codex/issue-18-smart-import`. No runtime implementation or new application build is included in this proposal. Approval must be recorded before dependent implementation.
 
 ## Scope, authority and existing approvals
 

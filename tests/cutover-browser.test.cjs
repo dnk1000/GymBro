@@ -14,7 +14,7 @@ async function open(t,width,{failedLoad=false,alias=false,production=false,empty
   const f=await setup(),source=JSON.stringify(f.source);let saved=structuredClone(f.handle),bad=false,failLoad=failedLoad,authorityChecks=0,failMutation=false;
   if(empty)saved={...saved,status:'uninitialized',initialized:false,document:null,bodyweightIds:[],
     rows:Object.fromEntries(Object.keys(saved.rows).map(key=>[key,[]])),revision:'0'};
-  const receipts=new Map(),calls=[],errors=[];
+  const receipts=new Map(),calls=[],errors=[];let loseAck=false;
   const config={enabled:true,configured:true,rehearsal:true,environment:'production-rehearsal',projectRef:'loowxditqikcwyeftfgx',
     url:'https://loowxditqikcwyeftfgx.supabase.co',publishableKey:'sb_publishable_synthetic_fixture_only',allowedOwners:[f.owner],
     syntheticOnly:false,fixtureTag:null,sourceByteDigest:createHash('sha256').update(source).digest('hex'),actions,
@@ -53,6 +53,7 @@ async function open(t,width,{failedLoad=false,alias=false,production=false,empty
       else if(packet.expectedRevision!==saved.revision)answer={code:'CONFLICT'};
       else {saved={...saved,...structuredClone(f.repository.assemble(packet.next,f.owner)),rows:structuredClone(packet.next),status:'healthy',initialized:true,
         revision:String(BigInt(saved.revision)+1n),fingerprint:'c'.repeat(64)};receipts.set(key,packet.result);answer={code:'OK',result:packet.result,operationRevision:saved.revision};}
+      if(loseAck&&name.endsWith('_mutate')){loseAck=false;return route.abort('failed');}
       return route.fulfill({json:{data:{...answer,operation:args.operation??packet.operation,snapshot:saved}}});
     }
     if(![origin,productionOrigin,'https://branch-alias.vercel.app'].includes(url.origin))return route.abort();
@@ -70,7 +71,7 @@ async function open(t,width,{failedLoad=false,alias=false,production=false,empty
     if(failedLoad)await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('could not load'));
     else await page.waitForFunction(()=>cloudReady&&cloudController?.getStatus().phase==='READY');}
   t.after(()=>assert.deepEqual(errors,[],'no unexpected page exceptions'));
-  return {f,page,calls,source,saved:()=>saved,checks:()=>authorityChecks,failMutation:()=>{failMutation=true;},mismatch:()=>{bad=true;},recover:()=>{bad=false;failLoad=false;}};
+  return {f,page,calls,source,saved:()=>saved,checks:()=>authorityChecks,loseAck:()=>{loseAck=true;},failMutation:()=>{failMutation=true;},mismatch:()=>{bad=true;},recover:()=>{bad=false;failLoad=false;}};
 }
 for(const width of [320,390,1280])test('Production rehearsal controlled transport retains local authority/drafts and refuses changed identity at '+width+'px',async t=>{
   const f=await open(t,width),p=f.page;
@@ -207,4 +208,34 @@ for(const localRaw of [null,'{retained original bytes'])test('#86 failed normal-
   assert.deepEqual(await p.evaluate(()=>[keyReads,keyWrites,keyRemovals,localWorkoutBytes()]),[0,0,0,localRaw]);
   assert(!f.calls.some(x=>x.endsWith('_mutate')));
   assert(await p.locator('#cloudStartEmpty').isHidden());
+});
+
+for(const width of [320,390,1280])test('#18 explicit resolution, exclusions, lost acknowledgement and alias reuse at '+width+'px',async t=>{
+  const f=await open(t,width,{production:true}),p=f.page;
+  await p.waitForFunction(()=>cloudReady);
+  const before=structuredClone(f.saved()),target=before.document.catalog.exercises[0],alias='Imported cable label <img src=x onerror=alert(1)>',fresh='Dumbbell distinct exercise',skip='Smith distinct skipped exercise';
+  const draft={schema:'gym-tracker-chatgpt-v1',importId:'issue18-'+width,date:'2026-11-07',bodyweight:201,notes:'import summary',sets:[alias,fresh,skip,target.displayName].map(exercise=>({exercise,weight:0,reps:7,unit:'lb',rpe:7,rir:2,pain:1,painArea:'exact',notes:'  preserved\n',complete:false}))};
+  await p.locator('[data-view="inbox"]').click();await p.locator('#inboxRaw').fill(JSON.stringify(draft));await p.getByRole('button',{name:'Review import',exact:true}).click();
+  assert(await p.locator('#commitInboxBtn').isDisabled());assert.equal(await p.locator('#inboxResolution select').count(),3);
+  assert.equal(await p.locator('#inboxResolution img').count(),0);assert.deepEqual(f.saved(),before,'preview writes nothing');
+  await p.getByRole('combobox',{name:'Resolve exercise 1',exact:true}).selectOption('map:'+target.id);
+  await p.getByRole('combobox',{name:'Resolve exercise 2',exact:true}).selectOption('create');
+  await p.getByRole('combobox',{name:'Resolve exercise 3',exact:true}).selectOption('skip');
+  assert.match(await p.locator('#inboxResolution').textContent(),/3 sets to import; 1 excluded/);
+  assert.match(await p.locator('#inboxResolution').textContent(),/separate future import with a new import ID/);
+  assert.deepEqual(f.saved(),before,'decisions write nothing');assert(!(await p.locator('#commitInboxBtn').isDisabled()));
+  f.loseAck();const alert=new Promise(resolve=>p.once('dialog',async d=>{await d.accept();resolve();}));await p.locator('#commitInboxBtn').click();await alert;
+  await p.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');assert.equal(await p.locator('#inboxResolution').count(),1);
+  assert(await p.getByRole('combobox',{name:'Resolve exercise 1',exact:true}).isDisabled());
+  const uncertain=structuredClone(f.saved());assert.equal(uncertain.rows.sets.length,before.rows.sets.length+3);
+  await p.locator('[data-view="data"]').click();await p.locator('#cloudRetry').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+  assert.deepEqual(f.saved(),uncertain,'same request does not duplicate anything');await p.locator('[data-view="inbox"]').click();assert.equal(await p.locator('#inboxResolution').count(),0);
+  const doc=f.saved().document,sets=doc.data.sets.slice(-3);assert.equal(doc.catalog.exercises.length,before.document.catalog.exercises.length+1);
+  assert.equal(sets[0].exercise.exerciseId,target.id);assert.equal(sets[0].exercise.originalLabel,alias);assert.notEqual(sets[1].exercise.exerciseId,target.id);
+  assert(!doc.catalog.aliases.some(a=>a.label===skip));assert(sets.every(s=>s.weight===0&&s.complete===false&&s.notes==='  preserved\n'&&!s.sessionId));
+  await p.reload();await p.waitForFunction(()=>cloudReady);await p.locator('[data-view="inbox"]').click();
+  await p.locator('#inboxRaw').fill(JSON.stringify({...draft,importId:'alias-next-'+width,sets:[draft.sets[0]]}));await p.getByRole('button',{name:'Review import',exact:true}).click();
+  assert.match(await p.locator('#inboxResolution').textContent(),/Saved alias: 1/);assert.equal(await p.locator('#inboxResolution select').count(),0);
+  assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  fs.mkdirSync(path.join(root,'test-results'),{recursive:true});await p.screenshot({path:path.join(root,'test-results','issue18-'+width+'.png'),fullPage:true});
 });

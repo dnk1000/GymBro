@@ -1,3 +1,7 @@
+# Pending #18 Smart Import Resolution candidate
+
+`3.17.0-20261107T122404Z`, schema 8. Candidate only, not shipped or accepted. [PR #93](https://github.com/dnk1000/GymBro/pull/93) records exact verification and pending human acceptance.
+
 # Issue #85 cloud-first candidate (unreleased)
 
 `3.16.2-20261107T025231Z`, schema 8. Recovery-panel copy correction, pending merge/deployment approval. The active `3.16.1-20261107T022229Z` deployment has signed save/reload/reauthentication evidence in [#85](https://github.com/dnk1000/GymBro/issues/85). Final acceptance and the live failure check remain pending.
