@@ -1,5 +1,9 @@
 # GymBro current architecture and transition authority
 
+## Accepted Production cutover update — November 6, 2026
+
+The owner accepted #85 at Production `3.16.2-20261107T025231Z`: authenticated Supabase/PostgreSQL is the sole normal workout authority. Existing browser workout bytes are inactive backup material; cloud failures never select them. The earlier transition descriptions below retain their historical context. [The #86 path audit](V3_LOCAL_WORKOUT_RETIREMENT.md) records the normal-origin boundary, retained non-Production development/regression paths, focused checks and acceptance evidence.
+
 Status: current architecture summary as of October 27, 2026. This document distinguishes the **deployed V2 runtime today** from the **approved V3.x target direction**. Historical milestone documents remain valid descriptions of what existed at their respective releases.
 
 ## Today: deployed V2 runtime
