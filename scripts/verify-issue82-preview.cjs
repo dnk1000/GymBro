@@ -5,7 +5,7 @@ const {read,preview,guard}=require('./issue28-preview.cjs'),{sdk,validate,projec
 const {setupBatch,workouts,history}=require('../tests/batch-import-fixture.cjs'),{storage,plain}=require('../tests/protocol-fixture.cjs');
 const {chromium}=require('playwright-core'),root=path.resolve(__dirname,'..');
 async function main(){
-  assert.equal(process.argv.length,2);const sha=guard(),state=validate(JSON.parse(fs.readFileSync(path.join(root,'.env.issue28-fixtures.json'),'utf8'))),config=JSON.parse(await read('/api/workout-config'));
+  const wrapperOnly=process.argv[2]==='--wrapper-only';assert.equal(process.argv.length,wrapperOnly?3:2);const sha=guard(),state=validate(JSON.parse(fs.readFileSync(path.join(root,'.env.issue28-fixtures.json'),'utf8'))),config=JSON.parse(await read('/api/workout-config'));
   assert.equal(state.status,'ready');assert(config.enabled&&config.configured&&config.syntheticOnly);assert.equal(config.projectRef,project);assert.equal(config.fixtureTag,state.tag);assert.deepEqual(config.allowedOwners,state.accounts.map(a=>a.id));
   const f=await setupBatch();f.get(fs.readFileSync(path.join(root,'workout-migration.js'),'utf8'));
   const clients=[],repos=[],contexts=[],checks=[],errors=[],cache=new Map();
@@ -13,7 +13,9 @@ async function main(){
   const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
   try{
     for(const account of state.accounts){const client=sdk().createClient(config.url,config.publishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});const signed=await client.auth.signInWithPassword({email:account.email,password:account.password});assert(!signed.error);assert.equal(signed.data.user.id,account.id);assert.equal(signed.data.user.is_anonymous,false);clients.push(client);
-      const repo=f.lifecycle.createRepository({client,ownerId:account.id});repos.push(repo);const initial=await repo.load();assert.equal(initial.status,'uninitialized','never reseed a populated fixture');
+      const repo=f.lifecycle.createRepository({client,ownerId:account.id});repos.push(repo);const initial=await repo.load();
+      if(wrapperOnly){assert.equal(initial.status,'healthy');assert.equal(initial.document.data.extension.previewMigrationFixture,state.tag);continue;}
+      assert.equal(initial.status,'uninitialized','never reseed a populated fixture');
       const source=structuredClone(f.source);source.extension.previewMigrationFixture=state.tag;source.sets=[];source.sessions=[];source.activeSessionId=null;source.bodyweights=[];source.imports=[];for(const key of ['session','exerciseSession','exercise'])source.noteScopes[key]=[];
       const controller=f.cloud.create({client,ownerId:account.id,initial,recoveryStorage:storage(),fixtureTag:state.tag});assert((await controller.execute('initializeMigration',{text:JSON.stringify(source),confirmed:true})).ok);
     }
@@ -28,6 +30,8 @@ async function main(){
       await context.route('**/*',async route=>{const req=route.request(),url=new URL(req.url());if(url.origin===config.url){if(loseFor===p&&url.pathname==='/rest/v1/rpc/gymbro_lifecycle_mutate'){loseFor=null;const r=await route.fetch();assert(r.ok());expectedFaults.add(p);return route.abort('failed');}return route.continue();}if(url.origin==='https://vercel.live'&&req.method()==='GET')return route.continue();if(url.origin!==preview||req.method()!=='GET'){errors.push('Unexpected network destination/method');return route.abort();}if(!cache.has(url.pathname))cache.set(url.pathname,read(url.pathname+url.search));return route.fulfill({body:await cache.get(url.pathname),contentType:url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':url.pathname.startsWith('/api/')?'application/json':url.pathname.endsWith('.png')?'image/png':'text/html'});});
       await p.goto(preview+'/?storage=cloud');await p.waitForFunction(()=>document.getElementById('accountStatus').textContent==='Account restored.');await p.locator('#cloudConnect').click();await p.waitForFunction(()=>cloudReady);return p;
     }
+    if(wrapperOnly){const before=await repos[0].load(),p=await open(390),payload=workouts(f,1),body=payload.workouts[0].workout;payload.workouts[0].workout={session:{...body,import_id:'contradictory-inner-id'}};
+      await p.locator('[data-view="inbox"]').click();await p.locator('#inboxFile').setInputFiles({name:'conflicting-wrapper.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(payload))});await p.getByRole('checkbox',{name:'Select workout 1',exact:true}).waitFor();assert.match(await p.locator('#inboxReview').textContent(),/IDs disagree/);assert(await p.locator('#commitInboxBtn').isDisabled());assert(f.lifecycle.equalRows((await repos[0].load()).rows,before.rows));assert.deepEqual(errors,[]);check('final-source nested legacy ID conflict blocks confirmation with no writes');fs.writeFileSync(path.join(root,'test-results/issue82-wrapper-preview.json'),JSON.stringify({sha,preview,project,build:require('../app-version.js').version,checks,errors},null,2));return;}
     for(const width of [1280,390,320]){
       const before=await repos[0].load(),payload=workouts(f,9);payload.batchId='signed-batch-'+width;payload.workouts.forEach((u,i)=>{u.importId='signed-'+width+'-'+i;u.workout.sets[0].exercise=i===1?'Imported exact alias '+width:target.displayName;});payload.workouts.push(rich);
       const p=await open(width);await p.locator('[data-view="inbox"]').click();await p.locator('#inboxFile').setInputFiles({name:'ten-workouts.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(payload))});await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).waitFor();

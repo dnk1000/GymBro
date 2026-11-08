@@ -41,6 +41,14 @@ test('batch identity conflicts, bodyweight identity and unsupported envelopes fa
   const invalid=history(f);invalid.sessions[0].status='active';invalid.sessions[0].completedAt=null;invalid.activeSessionId=invalid.sessions[0].id;
   const result=await f.batch.review(f.handle,{...payload,workouts:[{history:invalid}]});assert.equal(result.candidate,null);assert(result.units[0].errors.length);
 });
+test('all supported inner import-ID spellings must agree with the batch wrapper',async()=>{
+  const f=await setupBatch();for(const wrapper of ['session','workout'])for(const spelling of ['importId','import_id']){
+    const payload=workouts(f,1),body=payload.workouts[0].workout;
+    payload.workouts[0].workout={[wrapper]:{...body,[spelling]:'different-inner-id'}};
+    const rejected=await f.batch.review(f.handle,payload);assert.equal(rejected.candidate,null);assert.match(rejected.units[0].errors.join(' '),/IDs disagree/);
+    payload.workouts[0].importId='different-inner-id';assert((await f.batch.review(f.handle,payload)).candidate);
+  }
+});
 test('one lifecycle transaction, exact lost-ack replay/disposition, hard reload, rollback and stale writes',async()=>{
   const f=await cloudBatchFixture(),a=f.create(),payload=workouts(f),input={batch:true,text:JSON.stringify(payload),confirmed:true,selected:[0,1,2]},before=f.getSaved();
   f.fault('rollback');assert.equal((await a.execute('mergeHistoryBackup',input)).code,'VALIDATION_ERROR');assert.deepEqual(f.getSaved(),before);

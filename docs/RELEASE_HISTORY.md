@@ -1,3 +1,7 @@
+# Pending #82 legacy ID agreement candidate
+
+`3.18.2-20261108T023453Z`, schema 8. Scoped #82 PATCH; strict wrapper/inner ID agreement. Candidate only; evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
 # Pending #82 provenance correction candidate
 
 `3.18.1-20261108T023052Z`, schema 8. Scoped #82 PATCH; source metadata preservation. Candidate only, not shipped or accepted. Evidence: [PR #94](https://github.com/dnk1000/GymBro/pull/94).

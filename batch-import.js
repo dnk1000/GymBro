@@ -30,8 +30,9 @@ const BatchImport = (() => {
         unit.digest=await digest(item);unit.kind=Object.hasOwn(item,'workout')?'workout':'history';
         if(unit.kind==='workout'){
           unit.draft=normalizeInboxPayload(item.workout);
-          const inner=item.workout.importId??item.workout.import_id??item.workout.session?.importId??item.workout.workout?.importId;
-          check(!item.importId||!inner||item.importId===inner,'Wrapper and workout import IDs disagree.');
+          const src=item.workout.session??item.workout.workout??item.workout;
+          const inner=item.workout.importId??item.workout.import_id??src.importId??src.import_id;
+          check(item.importId===undefined||inner==null||item.importId===inner,'Wrapper and workout import IDs disagree.');
           if(item.importId)unit.draft.importId=item.importId;
           unit.id=unit.draft.importId;unit.date=unit.draft.date;
           if(unit.draft.sets.some(r=>r.include&&(!r.complete||r.weight==null||r.reps==null)))unit.warning='Includes incomplete/approximate sets; existing performance eligibility is preserved.';

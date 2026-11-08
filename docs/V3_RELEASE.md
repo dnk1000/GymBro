@@ -1,3 +1,13 @@
+# Issue #82 legacy ID agreement correction candidate
+
+Release status: **preparation**
+
+Application version: `3.18.2-20261108T023453Z`
+
+Data schema: `8`
+
+Scoped PATCH under #82 approval: validate every supported nested importId/import_id spelling against an explicit batch wrapper ID. Focused no-write Preview check supplements existing signed batch preservation/recovery evidence; no infrastructure change. Acceptance status: PR #94.
+
 # Issue #82 source provenance correction candidate
 
 Release status: **preparation**

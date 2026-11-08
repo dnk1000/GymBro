@@ -1,3 +1,7 @@
+## 3.18.2 — Batch legacy ID agreement candidate
+
+- Reject contradictory explicit wrapper and nested legacy import IDs before confirmation; preserve supported nested spellings. Scoped #82 PATCH.
+
 ## 3.18.1 — Batch source provenance correction candidate
 
 - Retain supported cloud backup-envelope and identity/catalog metadata with historical import provenance. Scoped #82 PATCH; no new schema or RPC.
