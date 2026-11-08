@@ -91,6 +91,7 @@ const BatchImport = (() => {
     for(const d of resolutions.filter(d=>d.kind==='skip'))if(!resolution.groups.some(g=>g.label===d.label)&&units.some(u=>chosen.has(u.index)&&u.kind==='history'&&u.refs?.some(r=>r.exercise===d.label)))resolution.groups.push({label:d.label,status:'skipped',count:0});
     for(const r of resolution.rows)if(r.include&&r.sourceId&&r.status!=='unresolved'&&r.exerciseId!==r.sourceId)block(r.unit,'A supplied canonical exercise ID cannot be retargeted.');
     candidate.document.catalog=resolution.catalog;
+    const acceptedDefinitions=new Map();
     for(const u of pending){
       if(u.status==='blocked')continue;
       const resolved=resolution.rows.filter(r=>r.unit===u.index);
@@ -125,9 +126,9 @@ const BatchImport = (() => {
           append(existing.imports,data.imports,r=>r.importId,'import provenance');
           for(const [key,value] of Object.entries(incoming.signatureSchemes)){check(!Object.hasOwn(candidate.signatureSchemes,key)||candidate.signatureSchemes[key]===value,'Conflicting signature metadata.');candidate.signatureSchemes[key]=value;}
           for(const [label,id] of forced)if(resolved.some(r=>r.sourceId===id)){
-            const source=incoming.document.catalog.exercises.find(e=>e.id===id),current=base.document.catalog.exercises.find(e=>e.id===id);
+            const source=incoming.document.catalog.exercises.find(e=>e.id===id),current=base.document.catalog.exercises.find(e=>e.id===id)??acceptedDefinitions.get(id);
             if(current)check(equal(source,current),'Canonical metadata conflicts; history cannot rewrite the catalog.');
-            else{for(const a of incoming.document.catalog.aliases.filter(a=>a.exerciseId===id))candidate.document.catalog=ExerciseIdentity.addAlias(candidate.document.catalog,a);const target=candidate.document.catalog.exercises.findIndex(e=>e.id===id);candidate.document.catalog.exercises[target]=clone(source);}
+            else{for(const a of incoming.document.catalog.aliases.filter(a=>a.exerciseId===id))candidate.document.catalog=ExerciseIdentity.addAlias(candidate.document.catalog,a);const target=candidate.document.catalog.exercises.findIndex(e=>e.id===id);candidate.document.catalog.exercises[target]=clone(source);acceptedDefinitions.set(id,clone(source));}
           }
           imported={importId:u.id,date:u.date,setCount:data.sets.length,notes:'Batch historical import',committedAt:new Date().toISOString()};
           check(!existing.imports.some(r=>r.importId===u.id),'Historical import ID collides with supplied import provenance.');existing.imports.push(imported);

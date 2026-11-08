@@ -1,3 +1,7 @@
+# Pending #82 canonical definition conflict candidate
+
+`3.18.4-20261108T025122Z`, schema 8. Scoped #82 PATCH; conflicting new canonical metadata rejects the selected import. Candidate only; evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
 # Pending #82 historical label preservation candidate
 
 `3.18.3-20261108T024701Z`, schema 8. Scoped #82 PATCH; original historical labels remain exact. Candidate only; technical evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).

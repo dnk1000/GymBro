@@ -1,3 +1,13 @@
+# Issue #82 canonical definition conflict candidate
+
+Release status: **preparation**
+
+Application version: `3.18.4-20261108T025122Z`
+
+Data schema: `8`
+
+Scoped PATCH under #82 approval: reject incompatible metadata/equipment for a new supplied canonical ID across selected histories. Focused rejection/deselection regression; existing checked writer/recovery unchanged. Acceptance status: PR #94.
+
 # Issue #82 historical label preservation candidate
 
 Release status: **preparation**

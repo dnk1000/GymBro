@@ -1,3 +1,7 @@
+## 3.18.4 — Batch canonical definition conflict candidate
+
+- Reject differing definitions/equipment for the same newly supplied canonical ID across selected historical units. Explicit deselection permits the compatible remainder. Scoped #82 PATCH.
+
 ## 3.18.3 — Historical original-label preservation candidate
 
 - Preserve supported UUID-shaped historical labels exactly through shared resolution; scoped #82 PATCH with repository round-trip regression.

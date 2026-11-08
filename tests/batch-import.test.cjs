@@ -75,6 +75,11 @@ test('same-owner cloud history keeps supplied canonical/bodyweight identities; u
   const provenance=created.candidate.document.data.imports.find(r=>r.importId==='cloud-history');
   assert.deepEqual(plain(provenance.historyIdentityMetadata.sourceExtension),{preserve:[0,false,null]});assert.equal(provenance.historySourceMetadata.source.originalExportContext,'literal source context');assert.deepEqual(plain(provenance.historyCatalog),plain(document.catalog));
   const foreign=structuredClone(payload);foreign.workouts[0].history.source.ownerId='88888888-8888-4888-8888-888888888888';assert.equal((await f.batch.review(base,foreign)).candidate,null);
+  const conflicting=structuredClone(payload),second=structuredClone(conflicting.workouts[0]);second.importId='conflicting-catalog-history';
+  const newId=f.identity.resolveLabel(document.catalog,'Explicit new cable identity');
+  second.history.payload.document.catalog.exercises.find(e=>e.id===newId).equipment='Different equipment';conflicting.workouts.push(second);
+  const rejected=await f.batch.review(base,conflicting,{resolutions:[{label:'Explicit new cable identity',kind:'create'}]});assert.equal(rejected.candidate,null);assert.match(rejected.errors.join(' '),/Canonical metadata conflicts/);
+  assert((await f.batch.review(base,conflicting,{selected:[0],resolutions:[{label:'Explicit new cable identity',kind:'create'}]})).candidate);
 });
 
 test('historical UUID-shaped original labels survive the shared resolver unchanged',async()=>{
