@@ -11,8 +11,8 @@ function checkRelease(root) {
   const version = vm.runInContext("APP_VERSION", runtime);
   assert.deepEqual(
     [version.major, version.minor, version.patch],
-    [3, 18, 2],
-    "Expected approved issue #82 candidate 3.18.2",
+    [3, 18, 3],
+    "Expected approved issue #82 candidate 3.18.3",
   );
   assert.ok(Object.isFrozen(version), "Canonical version must be immutable");
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
@@ -27,7 +27,7 @@ function checkRelease(root) {
     iso.replace("Z", ".000Z"),
     "Build must be a valid UTC date/time",
   );
-  assert.equal(version.version, `3.18.2-${b}`);
+  assert.equal(version.version, `3.18.3-${b}`);
   const schemaRuntime = vm.createContext({});
   vm.runInContext(read("workout-data.js"), schemaRuntime, { timeout: 1000 });
   const schema = vm.runInContext("DATA_VERSION", schemaRuntime);

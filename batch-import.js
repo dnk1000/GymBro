@@ -109,7 +109,7 @@ const BatchImport = (() => {
           imported=candidate.document.data.imports.find(r=>r.importId===u.id);
         }else{
           const incoming=clone(u.history),data=incoming.document.data;
-          references(data).forEach(([r,k],i)=>{r[k]={exerciseId:resolved[i].exerciseId,originalLabel:resolved[i].originalLabel};});
+          references(data).forEach(([r,k],i)=>{r[k]={exerciseId:resolved[i].exerciseId,originalLabel:r[k].originalLabel};});
           const existing=candidate.document.data;
           // Add records directly under existing validators, never use the lossy
           // generic merge's bodyweight/content deduplication or overwrite rules.

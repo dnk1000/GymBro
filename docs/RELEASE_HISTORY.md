@@ -1,3 +1,7 @@
+# Pending #82 historical label preservation candidate
+
+`3.18.3-20261108T024701Z`, schema 8. Scoped #82 PATCH; original historical labels remain exact. Candidate only; technical evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
 # Pending #82 legacy ID agreement candidate
 
 `3.18.2-20261108T023453Z`, schema 8. Scoped #82 PATCH; strict wrapper/inner ID agreement. Candidate only; evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).

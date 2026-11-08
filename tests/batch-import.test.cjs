@@ -76,3 +76,18 @@ test('same-owner cloud history keeps supplied canonical/bodyweight identities; u
   assert.deepEqual(plain(provenance.historyIdentityMetadata.sourceExtension),{preserve:[0,false,null]});assert.equal(provenance.historySourceMetadata.source.originalExportContext,'literal source context');assert.deepEqual(plain(provenance.historyCatalog),plain(document.catalog));
   const foreign=structuredClone(payload);foreign.workouts[0].history.source.ownerId='88888888-8888-4888-8888-888888888888';assert.equal((await f.batch.review(base,foreign)).candidate,null);
 });
+
+test('historical UUID-shaped original labels survive the shared resolver unchanged',async()=>{
+  const f=await setupBatch(),source=history(f),document=await f.identity.migrateV2(source),base=structuredClone(f.handle);
+  for(const k of ['sets','sessions','bodyweights','imports'])base.document.data[k]=[];base.document.data.activeSessionId=null;base.bodyweightIds=[];
+  for(const scope of ['session','exerciseSession','exercise'])base.document.data.noteScopes[scope]=[];
+  const reference=document.data.sets[0].exercise,id=reference.exerciseId;
+  for(const catalog of [document.catalog,base.document.catalog])catalog.aliases.push({label:id,exerciseId:id,provenance:'user-created'});
+  reference.originalLabel=id;
+  const cloud=f.lifecycle.backup({...f.handle,document,bodyweightIds:['uuid-label-measurement-a','uuid-label-measurement-b']});
+  const payload={format:'gymbro-workout-batch',formatVersion:1,workouts:[{importId:'uuid-label-history',history:cloud}]};
+  const prepared=await f.batch.prepare(base,{text:JSON.stringify(payload),confirmed:true});assert(prepared.candidate);
+  assert.deepEqual(plain(prepared.candidate.document.data.sets[0]),plain(document.data.sets[0]));
+  const rows=f.repository.project(prepared.candidate.document,f.owner,prepared.candidate.bodyweightIds,prepared.candidate.signatureSchemes);
+  const restored=f.repository.assemble(rows,f.owner);assert.deepEqual(plain(restored.document.data.sets[0]),plain(document.data.sets[0]));
+});

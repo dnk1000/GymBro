@@ -1,3 +1,7 @@
+## 3.18.3 — Historical original-label preservation candidate
+
+- Preserve supported UUID-shaped historical labels exactly through shared resolution; scoped #82 PATCH with repository round-trip regression.
+
 ## 3.18.2 — Batch legacy ID agreement candidate
 
 - Reject contradictory explicit wrapper and nested legacy import IDs before confirmation; preserve supported nested spellings. Scoped #82 PATCH.

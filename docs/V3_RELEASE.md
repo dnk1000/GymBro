@@ -1,3 +1,13 @@
+# Issue #82 historical label preservation candidate
+
+Release status: **preparation**
+
+Application version: `3.18.3-20261108T024701Z`
+
+Data schema: `8`
+
+Scoped PATCH under #82 approval: retain original historical labels even when they are UUID-shaped. Domain and repository round-trip regression; prior signed transaction/recovery evidence remains valid. Acceptance status: PR #94.
+
 # Issue #82 legacy ID agreement correction candidate
 
 Release status: **preparation**
