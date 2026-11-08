@@ -1,3 +1,13 @@
+# Issue #75 integration candidate
+
+Release status: **preparation**
+
+Application version: `3.18.10-20261108T033325Z`
+
+Data schema: `8`
+
+Resolve shared release metadata against accepted main while preserving Workout, Dashboard and History styling/tests. Owner authorized commit/merge; verification recorded in PR #96. No schema/domain change.
+
 # Issue #75 compact-header correction candidate
 
 Release status: **preparation**
@@ -13,6 +23,26 @@ Scoped presentation correction under VERSION_POLICY.md: retain the accepted comp
 Release status: **preparation**
 
 Application version: `3.18.6-20261108T031000Z`
+# Issue #74 integration candidate
+
+Release status: **preparation**
+
+Application version: `3.18.9-20261108T032746Z`
+
+Data schema: `8`
+
+Resolve shared release metadata against accepted main while retaining Dashboard and Workout styling/tests. Owner authorized commit/merge; verification recorded in PR #95. No schema/domain change.
+
+# Issue #74 presentation candidate
+
+Release status: **preparation**
+
+Application version: `3.18.5-20261108T030728Z`
+# Issue #73 presentation candidate
+
+Release status: **preparation**
+
+Application version: `3.18.7-20261108T031259Z`
 
 Data schema: `8`
 

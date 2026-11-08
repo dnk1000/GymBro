@@ -1,3 +1,7 @@
+# Pending #75 integration candidate
+
+`3.18.10-20261108T033325Z`, schema 8. PR #96 integrates accepted Workout and Dashboard with History; no Production verification claimed.
+
 # Pending #75 compact-header correction
 
 `3.18.8-20261108T031605Z`, schema 8. Scoped non-functional correction; no acceptance, merge or Production claim. Evidence: PR #96.
@@ -5,6 +9,16 @@
 # Pending #75 presentation candidate
 
 `3.18.6-20261108T031000Z`, schema 8. Independent #75 PATCH from accepted main 30f271d; not merged, accepted or deployed to Production. Evidence in its focused PR.
+# Pending #74 integration candidate
+
+`3.18.9-20261108T032746Z`, schema 8. PR #95 integrates accepted Dashboard with Workout. Candidate; no Production verification claimed.
+
+# Pending #74 presentation candidate
+
+`3.18.5-20261108T030728Z`, schema 8. Independent #74 PATCH from accepted main 30f271d; not merged, accepted or deployed to Production. Evidence in its focused PR.
+# Pending #73 presentation candidate
+
+`3.18.7-20261108T031259Z`, schema 8. Independent #73 PATCH from accepted main 30f271d; not merged, accepted or deployed to Production. Evidence in its focused PR.
 
 # Pending #82 canonical definition conflict candidate
 
