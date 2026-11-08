@@ -1,3 +1,7 @@
+## 3.18.7 — Heritage Utility Dashboard candidate
+
+- Presentation-only refinement for #73; existing behavior/data preserved. Pending review.
+
 ## 3.18.4 — Batch canonical definition conflict candidate
 
 - Reject differing definitions/equipment for the same newly supplied canonical ID across selected historical units. Explicit deselection permits the compatible remainder. Scoped #82 PATCH.
