@@ -1882,6 +1882,17 @@ test("linked History edits/deletes preserve session identity, completion and aut
   );
 });
 
+for(const width of [320,390,1280])test('#75 ledger hierarchy preserves disclosures and facts at '+width+'px',async t=>{
+ const p=await app(t,{viewport:{width,height:844}});await sessionHistoryFixture(p);const before=await backup(p),raw=await stored(p);
+ await p.locator('[data-view="history"]').click();await p.getByRole('button',{name:'Expand all',exact:true}).click();
+ const exercise=p.locator('.history-exercise').first();await exercise.locator(':scope > summary').click();assert(await exercise.evaluate(e=>e.open));
+ assert.equal(await exercise.evaluate(e=>getComputedStyle(e).borderRadius),'0px');assert.equal(await exercise.evaluate(e=>getComputedStyle(e).borderTopWidth),'0px');
+ assert(await exercise.getByRole('button',{name:'Edit',exact:true}).first().isVisible());
+ await exercise.locator(':scope > summary').click();assert(!(await exercise.evaluate(e=>e.open)));
+ assert.deepEqual(await backup(p),before);assert.equal(await stored(p),raw);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await exercise.locator(':scope > summary').click();await fs.mkdir(path.resolve(__dirname,'../test-results'),{recursive:true});await p.screenshot({path:path.resolve(__dirname,'../test-results/issue75-'+width+'.png'),fullPage:true});
+});
+
 test("History session cards and expanded record metadata fit narrow phones and desktop", async (t) => {
   const p = await app(t);
   await sessionHistoryFixture(p);

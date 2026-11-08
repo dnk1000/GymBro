@@ -1,3 +1,7 @@
+# Pending #75 presentation candidate
+
+`3.18.6-20261108T031000Z`, schema 8. Independent #75 PATCH from accepted main 30f271d; not merged, accepted or deployed to Production. Evidence in its focused PR.
+
 # Pending #82 canonical definition conflict candidate
 
 `3.18.4-20261108T025122Z`, schema 8. Scoped #82 PATCH; conflicting new canonical metadata rejects the selected import. Candidate only; evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).

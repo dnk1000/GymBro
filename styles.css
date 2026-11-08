@@ -528,10 +528,19 @@ canvas {
 
 .history-group {
   min-width: 0;
-  margin-top: 6px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
+  margin-top: var(--space-3);
+  border-block: 1px solid var(--line);
+  border-radius: 0;
 }
+/* #75: a training ledger; boundaries and indentation replace nested boxes. */
+#history .history-disclosure > .history-summary { padding-block: var(--space-3); }
+#history .history-disclosure > .history-summary h3 { font-size: 18px; color: var(--heritage); }
+#history .history-exercise-summary strong { font-size: 16px; color: var(--text); }
+#history .history-exercise-summary .history-counts { margin-top: var(--space-1); }
+#history .history-sets { font-variant-numeric: tabular-nums; }
+#history .history-sets th { font-size: 12px; letter-spacing: .025em; }
+#history .history-filters { padding-block: var(--space-4); border-block: 1px solid var(--line); }
+#history .history-set-controls { white-space: nowrap; }
 .history-heading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -606,9 +615,10 @@ canvas {
 }
 .history-exercise {
   min-width: 0;
-  margin-top: 6px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-detail);
+  margin-top: var(--space-2);
+  border: 0;
+  border-left: 2px solid var(--line);
+  border-radius: 0;
 }
 .history-exercise-summary {
   padding-left: 10px;

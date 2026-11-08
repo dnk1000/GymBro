@@ -12,9 +12,9 @@ test("canonical application version is fixed, immutable and independent of schem
   );
   vm.runInContext(source, runtime);
   const version = vm.runInContext("APP_VERSION", runtime);
-  assert.deepEqual([version.major, version.minor, version.patch], [3, 18, 4]);
+  assert.deepEqual([version.major, version.minor, version.patch], [3, 18, 6]);
   assert.match(version.build, /^\d{8}T\d{6}Z$/);
-  assert.equal(version.version, `3.18.4-${version.build}`);
+  assert.equal(version.version, `3.18.6-${version.build}`);
   assert.equal(Object.isFrozen(version), true);
   const serverVersion=require('../app-version.js');
   assert.equal(Object.isFrozen(serverVersion),true);
