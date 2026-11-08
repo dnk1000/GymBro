@@ -39,6 +39,7 @@ For new implementation work, the **target GitHub issue is the executable specifi
 
 - [EXERCISE_IDENTITY.md](EXERCISE_IDENTITY.md) — #16 canonical IDs/aliases, lossless V2 conversion, SQL ownership/constraints and downstream #39/#28 boundary.
 - [SMART_IMPORT_RESOLUTION.md](SMART_IMPORT_RESOLUTION.md) — #18 candidate explicit import review, alias/creation transaction and exclusion/retry semantics; [approved proposal](V3_SMART_IMPORT_RESOLUTION_PROPOSAL.md).
+- [BATCH_WORKOUT_IMPORT.md](BATCH_WORKOUT_IMPORT.md) — #82 candidate batch selection, strict historical preservation, duplicates and atomic lifecycle recovery; [approved proposal](V3_BATCH_IMPORT_PROPOSAL.md).
 
 - [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) — #38 environment inventory, Vercel variable contract, migrations, disposable replay, promotion and recovery.
 - [V3_RELEASE.md](V3_RELEASE.md) — current V3 candidate and actual acceptance evidence; not a Production release declaration.

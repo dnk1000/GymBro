@@ -1,3 +1,7 @@
+# Pending #82 Batch Workout Import candidate
+
+`3.18.0-20261108T022048Z`, schema 8. Candidate only; not shipped or accepted. [PR #94](https://github.com/dnk1000/GymBro/pull/94) records technical evidence and human-acceptance status.
+
 # Pending #18 Smart Import Resolution candidate
 
 `3.17.0-20261107T122404Z`, schema 8. Candidate only, not shipped or accepted. [PR #93](https://github.com/dnk1000/GymBro/pull/93) records exact verification and pending human acceptance.

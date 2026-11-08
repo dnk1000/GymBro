@@ -807,6 +807,8 @@ function showExercise(ex) {
 }
 
 let inboxDraft = null;
+let batchDraft = null;
+let batchReviewGeneration = 0;
 let inboxResolutions = [];
 let inboxResolutionGroups = [];
 function decideInboxResolution(index, value) {
@@ -820,9 +822,17 @@ function inboxResolutionReview() {
   if (!catalog) return { errors: ['Connect cloud workouts before reviewing exercises.'], groups: [], rows: inboxDraft.sets, included: 0, excluded: 0 };
   return ImportResolution.review(catalog, inboxDraft.sets, inboxResolutions);
 }
-function parseInbox() {
+async function parseInbox() {
   try {
-    inboxDraft = normalizeInboxPayload(JSON.parse(inboxRaw.value));
+    const payload=JSON.parse(inboxRaw.value);
+    if(payload?.format==='gymbro-workout-batch') {
+      if(!cloudMode)throw Error('Batch import requires the cloud workout account.');
+      clearInbox(false);
+      batchDraft={payload,selected:payload.workouts?.map((_,i)=>i)??[],resolutions:[]};
+      await renderBatchDraft();return;
+    }
+    batchDraft=null;batchReviewGeneration++;
+    inboxDraft = normalizeInboxPayload(payload);
     inboxResolutions = [];
     renderInboxDraft();
   } catch (error) {
@@ -888,6 +898,7 @@ function renderInboxDraft() {
   inboxReview.querySelectorAll("label.label").forEach(explainAcronyms);
 }
 async function commitInbox() {
+  if(batchDraft){await commitBatchDraft();return;}
   if (!inboxDraft) return;
   const result = await workoutActions.commitImport(cloudMode ? { ...inboxDraft, resolutions: inboxResolutions } : inboxDraft);
   if (!applyActionResult(result)) return;
@@ -895,6 +906,7 @@ async function commitInbox() {
   inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${result.count} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
 }
 function clearInbox(clearText = true) {
+  batchDraft = null;batchReviewGeneration++;
   inboxDraft = null;
   inboxResolutions = [];
   inboxResolutionGroups = [];
@@ -904,6 +916,7 @@ function clearInbox(clearText = true) {
     '<div class="sub">Paste a workout above to begin.</div>';
   inboxStatus.innerHTML = '<div class="sub">No workout staged.</div>';
   commitInboxBtn.disabled = true;
+  commitInboxBtn.textContent = 'Commit workout';
 }
 function loadInboxFile(ev) {
   const f = ev.target.files[0];

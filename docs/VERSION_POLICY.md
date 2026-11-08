@@ -91,3 +91,5 @@ The owner approved **3.14.0 for #42 alone** on October 31, 2026 by approving the
 The owner approved **3.15.0 for #84 alone and necessary scoped PATCH fixes** on October 31, 2026 by approving the revised [Phase 1 design](V3_CUTOVER_READINESS_PROPOSAL.md) at `1f54d09255232f54ba2dad3a0b33e252e757eb53` and requesting implementation. This does not authorize live Production operations, personal migration, acceptance, merge or Phase 2/3.
 
 The owner approved **3.17.0 for #18 alone and necessary scoped PATCH fixes** on November 7, 2026 by approving PR #93 design commit `7793fd0370ce1eb4b3794b034d866af0b03c83da`. No merge, Production deployment or Production data mutation is authorized.
+
+The owner approved **3.18.0 for #82 alone and necessary scoped PATCH fixes**, the PR #94 Level 3 design at `5851f94b24fb5be9021f8bc94417d15630d8945b`, and bounded disposable Preview verification in this implementation chat. No merge, Production deployment or Production data mutation is authorized.

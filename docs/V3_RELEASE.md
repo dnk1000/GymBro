@@ -1,3 +1,13 @@
+# Issue #82 Batch Workout Import candidate
+
+Release status: **preparation**
+
+Application version: `3.18.0-20261108T022048Z`
+
+Data schema: `8`
+
+Approved PR #94 design/version mapping. Consolidated selection and exact historical preservation use existing canonical resolution and checked lifecycle recovery. Actual verification and pending human acceptance: PR #94. Not a Production release.
+
 # Issue #18 Smart Import Resolution candidate
 
 Release status: **preparation**

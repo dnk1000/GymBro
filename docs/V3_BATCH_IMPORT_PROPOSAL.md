@@ -1,6 +1,6 @@
 # Batch Workout Import — issue #82 proposal
 
-Status: **Needs decision; design only.** Baseline: newly accepted main `fb7aef24c7aa07635896aee4809ce981a4689a1f` (merged PR #93), branch `codex/issue-82-batch-import`. The owner requested bounded #82 preparation, with approval before uncovered data-contract implementation. No runtime/schema/build change or test-data mutation is included here.
+Status: **Approved for bounded implementation.** The owner approved proposal `5851f94b24fb5be9021f8bc94417d15630d8945b`, 3.18.0/scoped PATCH fixes and bounded disposable staging verification in this implementation chat; approval is recorded in #82. Required priorities are exact historical preservation/rejection and a simple consolidated workflow. Merge and Production operations remain excluded. The preparation record below is historical. Baseline: newly accepted main `fb7aef24c7aa07635896aee4809ce981a4689a1f` (merged PR #93), branch `codex/issue-82-batch-import`. The owner requested bounded #82 preparation, with approval before uncovered data-contract implementation. No runtime/schema/build change or test-data mutation is included here.
 
 ## Authority and existing capabilities
 

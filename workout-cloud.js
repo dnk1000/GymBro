@@ -22,6 +22,10 @@ const WorkoutCloud = (() => {
       }};
     let controller;
     async function prepare(base,name,args) {
+      if(name==='mergeHistoryBackup' && args[0]?.batch===true) {
+        if(sourceGuard)throw Error('Batch import is unavailable in a source-pinned migration rehearsal.');
+        return BatchImport.prepare(base,args[0],{fixtureTag});
+      }
       if(['initializeMigration','restoreCompleteBackup','mergeHistoryBackup'].includes(name)) {
         if(sourceGuard)await sourceGuard(args[0].text);
         if(fixtureTag){const incoming=await WorkoutLifecycle.parse(args[0].text,ownerId);if(incoming.document.data.extension?.previewMigrationFixture!==fixtureTag)throw Error('Configured synthetic fixtures only.');}

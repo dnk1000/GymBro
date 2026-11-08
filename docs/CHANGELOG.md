@@ -1,3 +1,9 @@
+## 3.18.0 — Batch Workout Import candidate
+
+- Upload multiple workouts, review exceptions and selection, then confirm one atomic import.
+- Preserve supported historical sessions/IDs/notes/effort/pain/context; reject conflicting facts rather than overwrite or drop them.
+- Reuse exact exercise resolution and checked request recovery. Candidate pending human acceptance in PR #94.
+
 ## 3.17.0 — Smart Import Resolution candidate
 
 - Review unknown exercise labels explicitly: map to an existing identity, create new, or exclude.
