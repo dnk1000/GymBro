@@ -1,3 +1,13 @@
+# Issue #73 presentation candidate
+
+Release status: **preparation**
+
+Application version: `3.18.7-20261108T031259Z`
+
+Data schema: `8`
+
+Presentation-only PATCH under VERSION_POLICY.md, authorized UI scope; no domain/schema/persistence change. Separate branch and PR from common accepted main 30f271d. Pending human review, no merge or Production deployment.
+
 # Issue #82 canonical definition conflict candidate
 
 Release status: **preparation**

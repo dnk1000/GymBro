@@ -157,6 +157,28 @@ main {
   padding: var(--space-4);
   box-shadow: var(--shadow-panel);
 }
+/* #73: a training board with strong numbers and restrained ledger surfaces. */
+#dashboard #kpis { gap: 0; border-block: 1px solid var(--line); }
+#dashboard #kpis > .card {
+  border: 0; border-right: 1px solid var(--line); border-radius: 0;
+  background: transparent; padding: var(--space-4);
+}
+#dashboard #kpis > .card:last-child { border-right: 0; }
+#dashboard #kpis .kpi { font-size: clamp(28px, 3vw, 36px); color: var(--heritage); line-height: 1.15; }
+#dashboard > .grid.cols2 > .card { border-radius: var(--radius-detail); }
+#dashboard .card h2 { padding-bottom: var(--space-2); border-bottom: 1px solid var(--line); }
+#dashboard #gains > .item, #dashboard #flags > .item {
+  background: transparent; border: 0; border-bottom: 1px solid var(--line);
+  border-radius: 0; padding: var(--space-3) 0;
+}
+#dashboard #gains strong, #dashboard #flags strong { font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) {
+  #dashboard #kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #dashboard #kpis > .card { padding: var(--space-3); }
+  #dashboard #kpis > .card:nth-child(2n) { border-right: 0; }
+  #dashboard #kpis > .card:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+}
+
 .kpi {
   font-size: 27px;
   font-weight: 700;
