@@ -3087,3 +3087,18 @@ for (const width of [320, 390, 1280]) {
     await p.locator('.history-filters').screenshot({path: 'test-results/issue22-filters-' + width + '.png'});
   });
 }
+
+for(const width of [320,390,1280])test('#74 active workout hierarchy and entry remain usable at '+width+'px',async t=>{
+ const p=await app(t,{viewport:{width,height:844}});await startGuide(p);
+ const before=await backup(p),raw=await stored(p);
+ assert(await p.locator('#guidedWorkout > h3').isVisible());
+ assert(await p.locator('#guidedWorkout > h3').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=23));
+ assert(await p.locator('#fWeight').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=24));
+ assert((await p.locator('#saveSetBtn').boundingBox()).height>=52);
+ await p.locator('#guidedWorkout details summary').click();assert(await p.locator('#guidedWorkout details').evaluate(e=>e.open));
+ assert.deepEqual(await backup(p),before);assert.equal(await stored(p),raw);
+ await p.locator('#fWeight').fill('0');await p.locator('#fReps').fill('8');await p.locator('#fRpe').fill('7');await p.locator('#fNotes').fill('Exact training note');await p.locator('#saveSetBtn').click();
+ const after=await backup(p);assert.equal(after.sets.length,before.sets.length+1);assert.equal(after.sets.at(-1).weight,0);assert.equal(after.sets.at(-1).notes,'Exact training note');
+ assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await fs.mkdir(path.resolve(__dirname,'../test-results'),{recursive:true});await p.screenshot({path:path.resolve(__dirname,'../test-results/issue74-'+width+'.png'),fullPage:true});
+});
