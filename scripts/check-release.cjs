@@ -48,7 +48,7 @@ function checkRelease(root) {
   );
   assert.match(
     read("docs/CHANGELOG.md"),
-    /^## 3\.18\.2\b/m,
+    /^## 3\.18\.4\b/m,
     "Changelog is missing the batch import candidate",
   );
   const html = read("index.html");
