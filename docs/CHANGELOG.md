@@ -1,3 +1,25 @@
+## 3.18.4 — Batch canonical definition conflict candidate
+
+- Reject differing definitions/equipment for the same newly supplied canonical ID across selected historical units. Explicit deselection permits the compatible remainder. Scoped #82 PATCH.
+
+## 3.18.3 — Historical original-label preservation candidate
+
+- Preserve supported UUID-shaped historical labels exactly through shared resolution; scoped #82 PATCH with repository round-trip regression.
+
+## 3.18.2 — Batch legacy ID agreement candidate
+
+- Reject contradictory explicit wrapper and nested legacy import IDs before confirmation; preserve supported nested spellings. Scoped #82 PATCH.
+
+## 3.18.1 — Batch source provenance correction candidate
+
+- Retain supported cloud backup-envelope and identity/catalog metadata with historical import provenance. Scoped #82 PATCH; no new schema or RPC.
+
+## 3.18.0 — Batch Workout Import candidate
+
+- Upload multiple workouts, review exceptions and selection, then confirm one atomic import.
+- Preserve supported historical sessions/IDs/notes/effort/pain/context; reject conflicting facts rather than overwrite or drop them.
+- Reuse exact exercise resolution and checked request recovery. Candidate pending human acceptance in PR #94.
+
 ## 3.17.0 — Smart Import Resolution candidate
 
 - Review unknown exercise labels explicitly: map to an existing identity, create new, or exclude.

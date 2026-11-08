@@ -1,3 +1,23 @@
+# Pending #82 canonical definition conflict candidate
+
+`3.18.4-20261108T025122Z`, schema 8. Scoped #82 PATCH; conflicting new canonical metadata rejects the selected import. Candidate only; evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
+# Pending #82 historical label preservation candidate
+
+`3.18.3-20261108T024701Z`, schema 8. Scoped #82 PATCH; original historical labels remain exact. Candidate only; technical evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
+# Pending #82 legacy ID agreement candidate
+
+`3.18.2-20261108T023453Z`, schema 8. Scoped #82 PATCH; strict wrapper/inner ID agreement. Candidate only; evidence and pending human acceptance in [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
+# Pending #82 provenance correction candidate
+
+`3.18.1-20261108T023052Z`, schema 8. Scoped #82 PATCH; source metadata preservation. Candidate only, not shipped or accepted. Evidence: [PR #94](https://github.com/dnk1000/GymBro/pull/94).
+
+# Pending #82 Batch Workout Import candidate
+
+`3.18.0-20261108T022048Z`, schema 8. Candidate only; not shipped or accepted. [PR #94](https://github.com/dnk1000/GymBro/pull/94) records technical evidence and human-acceptance status.
+
 # Pending #18 Smart Import Resolution candidate
 
 `3.17.0-20261107T122404Z`, schema 8. Candidate only, not shipped or accepted. [PR #93](https://github.com/dnk1000/GymBro/pull/93) records exact verification and pending human acceptance.

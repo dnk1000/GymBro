@@ -62,6 +62,9 @@ function renderCloudExerciseInput() {
       inboxStatus.textContent = `Committed ${result.count} sets. Excluded sets require a separate future import with a new import ID.`;
     }
     if (inboxDraft && s.phase === 'READY') renderInboxDraft();
+    if (batchDraft && s.phase === 'READY') renderBatchDraft();
+    if (batchDraft && ['PENDING','OUTCOME_UNKNOWN','RECOVERY_PENDING'].includes(s.phase)) inboxStatus.textContent='Batch outcome pending or unknown. The selected preview is retained. Use Data → Retry same request or Check result before another import.';
+    if (result?.ok && result.batchDisposition) showBatchDisposition(result.batchDisposition);
     for(const f of fields)f.disabled=!cloudReady||s.phase!=='READY';
     el('migrationControls').disabled=accountBlocked||s.phase!=='READY';el('migrationCommit').disabled=accountBlocked||!review||s.phase!=='READY';
     const canStart=!rehearsal && h.status==='uninitialized' && !h.initialized &&
@@ -134,6 +137,7 @@ function renderCloudExerciseInput() {
   for(const [id,method]of[['cloudRefresh','refresh'],['cloudRetry','retry'],['cloudResolve','resolve']])el(id).onclick=async()=>{
     if(!cloudController)return;const op=cloudController.getStatus().operation,result=await cloudController[method]();
     if(result.ok&&method!=='refresh'&&op){clearForm();clearInbox();noteDrafts.clear();}
+    if(result.ok&&result.batchDisposition)showBatchDisposition(result.batchDisposition);
   };
   el('migrationFile').onchange=()=>{review=null;el('migrationCommit').disabled=true;};
   el('migrationReview').onclick=async()=>{

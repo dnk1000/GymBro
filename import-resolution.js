@@ -1,7 +1,7 @@
 // Exact canonical resolution only. Review is pure; allocation occurs at prepare.
 const ImportResolution = (() => {
   const clone = value => structuredClone(value);
-  function review(catalog, references, decisions = [], { materialize = false } = {}) {
+  function review(catalog, references, decisions = [], { materialize = false, createId } = {}) {
     ExerciseIdentity.validateCatalog(catalog);
     if (!Array.isArray(references) || !Array.isArray(decisions)) throw Error('Invalid import resolution input.');
     const choices = new Map();
@@ -39,7 +39,7 @@ const ImportResolution = (() => {
             if (materialize) {
               const temporary = { exerciseLibrary: {} }; ensureExercise(temporary, label);
               const meta = temporary.exerciseLibrary[label];
-              next = ExerciseIdentity.createExercise(next, { displayName: label, provenance: 'import-created', ...meta, metadata: meta });
+              next = ExerciseIdentity.createExercise(next, { id: createId?.(label), displayName: label, provenance: 'import-created', ...meta, metadata: meta });
               group.exerciseId = ExerciseIdentity.resolveLabel(next, label);
             }
           }

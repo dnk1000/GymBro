@@ -239,3 +239,19 @@ for(const width of [320,390,1280])test('#18 explicit resolution, exclusions, los
   assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   fs.mkdirSync(path.join(root,'test-results'),{recursive:true});await p.screenshot({path:path.join(root,'test-results','issue18-'+width+'.png'),fullPage:true});
 });
+
+for(const width of [320,390,1280])test('#82 file upload, 10-workout consolidated preview, selection and uncertain retry at '+width+'px',async t=>{
+  const f=await open(t,width,{production:true}),p=f.page;await p.waitForFunction(()=>cloudReady);
+  const before=structuredClone(f.saved()),name=before.document.catalog.exercises[0].displayName;
+  const payload={format:'gymbro-workout-batch',formatVersion:1,batchId:'browser-batch-'+width,workouts:Array.from({length:10},(_,i)=>({importId:'browser-'+width+'-'+i,workout:{date:'2026-11-07',sets:[{exercise:i===1?'Unknown dumbbell variant':name,weight:0,unit:'lb',reps:i===9?-1:7,rpe:7,pain:1,notes:'  retained\n',complete:false}]}}))};
+  await p.locator('[data-view="inbox"]').click();await p.locator('#inboxFile').setInputFiles({name:'batch.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(payload))});
+  await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).waitFor();assert.match(await p.locator('#inboxStatus').textContent(),/10 workouts/);assert(await p.locator('#commitInboxBtn').isDisabled());assert.deepEqual(f.saved(),before);
+  await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).uncheck();await p.getByRole('combobox',{name:'Resolve batch exercise 2',exact:true}).selectOption('create');
+  await p.waitForFunction(()=>!document.getElementById('commitInboxBtn').disabled);assert.deepEqual(f.saved(),before);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  f.loseAck();await p.locator('#commitInboxBtn').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');assert.match(await p.locator('#inboxStatus').textContent(),/outcome unknown/i);assert(await p.getByRole('checkbox',{name:'Select workout 1',exact:true}).isDisabled());
+  const committed=structuredClone(f.saved());assert.equal(committed.rows.sets.length,before.rows.sets.length+9);
+  await p.locator('[data-view="data"]').click();await p.locator('#cloudRetry').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='READY');assert.deepEqual(f.saved(),committed);
+  await p.locator('[data-view="inbox"]').click();assert.match(await p.locator('#inboxStatus').textContent(),/committed/);assert.match(await p.locator('#inboxStatus').textContent(),/excluded/);
+  fs.mkdirSync(path.join(root,'test-results'),{recursive:true});await p.screenshot({path:path.join(root,'test-results','issue82-'+width+'.png'),fullPage:true});
+  await p.locator('#inboxFile').setInputFiles({name:'batch.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(payload))});await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).waitFor();await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).uncheck();await p.waitForFunction(()=>document.getElementById('inboxStatus').textContent.includes('0 ready'));assert.deepEqual(f.saved(),committed);
+});

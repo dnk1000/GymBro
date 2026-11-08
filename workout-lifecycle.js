@@ -133,7 +133,7 @@ const WorkoutLifecycle = (() => {
       prepare(before,after,context) {
         const packet={protocolVersion:1,ownerId,action:context.action,operation:clone(context.operation),
           expectedRevision:before.revision,base:clone(before.rows),fingerprint:before.fingerprint,status:before.status,
-          sourceOwnerId:after.sourceOwnerId??null,safety:after.safety??null,next:rowsOf(after,ownerId),result:{changes:['workoutData']}};
+          sourceOwnerId:after.sourceOwnerId??null,safety:after.safety??null,next:rowsOf(after,ownerId),result:{changes:['workoutData'],...(context.result?.batchDisposition?{batchDisposition:clone(context.result.batchDisposition)}:{})}};
         const freeze=x=>{if(x && typeof x==='object'){Object.values(x).forEach(freeze);Object.freeze(x);}return x;};return freeze(packet);
       },
       submit:packet=>transmit('gymbro_lifecycle_mutate',{packet},packet.operation,packet),

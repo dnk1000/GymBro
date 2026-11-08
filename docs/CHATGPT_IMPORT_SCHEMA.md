@@ -1,5 +1,7 @@
 # GymBro V1.6 — ChatGPT Import Format
 
+The #82 candidate also accepts the separate [versioned batch envelope](BATCH_WORKOUT_IMPORT.md), reusing this single-workout payload unchanged. Rich historical session/ID/context preservation uses existing validated history documents inside that envelope; it is not inferred from this sessionless format.
+
 V1.6 accepts JSON pasted into the **ChatGPT Inbox** or loaded from a `.json` file. The existing `gym-tracker-chatgpt-v1` interchange schema is retained.
 
 The preferred format is:
