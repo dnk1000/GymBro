@@ -38,6 +38,7 @@ const BatchImport = (() => {
           unit.refs=unit.draft.sets.map((r,i)=>({exercise:r.exercise,include:r.include,key:i}));
         }else{
           const source=item.history;
+          unit.historySourceMetadata=source?.format==='gymbro-cloud-backup'?clone(Object.fromEntries(Object.entries(source).filter(([key])=>key!=='payload'))):null;
           if(fixtureTag)check((source?.payload?.document?.data??source)?.extension?.previewMigrationFixture===fixtureTag,'Preview historical sources must carry the configured synthetic fixture tag.');
           let bodyweightIndex=0;
           const keys=[];
@@ -133,6 +134,9 @@ const BatchImport = (() => {
           imported.historyContext=clone(Object.fromEntries(Object.entries(data).filter(([key])=>!['sets','sessions','bodyweights','noteScopes','imports'].includes(key))));
           imported.historyNoteMetadata=clone(Object.fromEntries(Object.entries(data.noteScopes).filter(([key])=>!['session','exerciseSession','exercise'].includes(key))));
           imported.historyExerciseDefinitions=clone(incoming.document.legacyExerciseLibrary);
+          imported.historyCatalog=clone(incoming.document.catalog);
+          imported.historyIdentityMetadata=clone(Object.fromEntries(Object.entries(incoming.document).filter(([key])=>!['catalog','data','legacyExerciseLibrary'].includes(key))));
+          imported.historySourceMetadata=clone(u.historySourceMetadata);
         }
         for(const r of resolved.filter(r=>r.include))if(!Object.hasOwn(candidate.document.legacyExerciseLibrary,r.originalLabel))candidate.document.legacyExerciseLibrary[r.originalLabel]=clone(u.history?.document.legacyExerciseLibrary[r.originalLabel]??{});
         imported.batchImport={format:'gymbro-workout-unit',version:1,batchId:parsed.batchId,envelopeDigest:parsed.envelopeDigest,unitDigest:u.digest,source:parsed.source,provenance:parsed.provenance,recordIds:u.kind==='history'?u.history.document.data.sets.map(r=>r.id):candidate.document.data.sets.filter(r=>r.importBatch===imported.batch).map(r=>r.id),excluded:resolved.filter(r=>!r.include).map(r=>r.key)};

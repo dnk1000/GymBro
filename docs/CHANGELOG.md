@@ -1,3 +1,7 @@
+## 3.18.1 — Batch source provenance correction candidate
+
+- Retain supported cloud backup-envelope and identity/catalog metadata with historical import provenance. Scoped #82 PATCH; no new schema or RPC.
+
 ## 3.18.0 — Batch Workout Import candidate
 
 - Upload multiple workouts, review exceptions and selection, then confirm one atomic import.

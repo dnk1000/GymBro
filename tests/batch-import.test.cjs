@@ -58,10 +58,13 @@ test('same-owner cloud history keeps supplied canonical/bodyweight identities; u
   source.exerciseLibrary['Explicit new cable identity']={primary:'Uncategorized',secondary:[],pattern:'',type:'',status:'accessory'};source.sets[0].exercise='Explicit new cable identity';
   const document=await f.identity.migrateV2(source),cloud=f.lifecycle.backup({...f.handle,document,bodyweightIds:['incoming-measurement-a','incoming-measurement-b']});
   const payload={format:'gymbro-workout-batch',formatVersion:1,workouts:[{importId:'cloud-history',history:cloud}]};
+  cloud.payload.document.sourceExtension={preserve:[0,false,null]};cloud.source.originalExportContext='literal source context';
   const unresolved=await f.batch.review(base,payload);assert.equal(unresolved.units[0].status,'blocked');assert(unresolved.groups.some(g=>g.label==='Explicit new cable identity'));
   const skipped=await f.batch.review(base,payload,{resolutions:[{label:'Explicit new cable identity',kind:'skip'}]});assert.equal(skipped.units[0].status,'excluded');assert(skipped.groups.some(g=>g.status==='skipped'));assert.equal(skipped.newCount,0);
   const created=await f.batch.review(base,payload,{resolutions:[{label:'Explicit new cable identity',kind:'create'}]});assert(created.candidate,created.errors.join('\n'));
   assert.equal(created.candidate.document.data.sets[0].exercise.exerciseId,f.identity.resolveLabel(document.catalog,'Explicit new cable identity'));
   assert.deepEqual(plain(created.candidate.bodyweightIds),['incoming-measurement-a','incoming-measurement-b']);
+  const provenance=created.candidate.document.data.imports.find(r=>r.importId==='cloud-history');
+  assert.deepEqual(plain(provenance.historyIdentityMetadata.sourceExtension),{preserve:[0,false,null]});assert.equal(provenance.historySourceMetadata.source.originalExportContext,'literal source context');assert.deepEqual(plain(provenance.historyCatalog),plain(document.catalog));
   const foreign=structuredClone(payload);foreign.workouts[0].history.source.ownerId='88888888-8888-4888-8888-888888888888';assert.equal((await f.batch.review(base,foreign)).candidate,null);
 });

@@ -1,3 +1,13 @@
+# Issue #82 source provenance correction candidate
+
+Release status: **preparation**
+
+Application version: `3.18.1-20261108T023052Z`
+
+Data schema: `8`
+
+Scoped PATCH under approved #82 authority: retain supported native backup-envelope, identity and catalog source metadata in existing import provenance. No schema/RPC change. Actual signed verification and human-acceptance state: PR #94.
+
 # Issue #82 Batch Workout Import candidate
 
 Release status: **preparation**
