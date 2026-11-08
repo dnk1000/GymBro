@@ -2,6 +2,8 @@
 
 Status: **Approved for bounded implementation.** The owner approved proposal `5851f94b24fb5be9021f8bc94417d15630d8945b`, 3.18.0/scoped PATCH fixes and bounded disposable staging verification in this implementation chat; approval is recorded in #82. Required priorities are exact historical preservation/rejection and a simple consolidated workflow. Merge and Production operations remain excluded. The preparation record below is historical. Baseline: newly accepted main `fb7aef24c7aa07635896aee4809ce981a4689a1f` (merged PR #93), branch `codex/issue-82-batch-import`. The owner requested bounded #82 preparation, with approval before uncovered data-contract implementation. No runtime/schema/build change or test-data mutation is included here.
 
+Implementation follow-up: the preparation results and pending gates below describe the original proposal only. See [recorded technical verification](BATCH_WORKOUT_IMPORT.md#recorded-technical-verification--2026-11-08-utc) for implemented behavior, all nine actual AC results and cleanup. Final human acceptance remains pending.
+
 ## Authority and existing capabilities
 
 Governing references: [#82 execution contract](https://github.com/dnk1000/GymBro/issues/82), [PRD](GymBro_PRD.md#current-product-scope-and-authority), [current architecture](CURRENT_ARCHITECTURE.md), [workflow](DEVELOPMENT_WORKFLOW.md), [version policy](VERSION_POLICY.md), [JSON interchange](CHATGPT_IMPORT_SCHEMA.md), [sessions](WORKOUT_SESSIONS.md), [note scopes](NOTE_SCOPES.md), [identity](EXERCISE_IDENTITY.md), [accepted #18 resolver](SMART_IMPORT_RESOLUTION.md), [relational persistence](V3_RELATIONAL_PERSISTENCE.md), [#40 recovery](V3_CONCURRENCY.md), and [approved #41 history/backup boundary](V3_DATA_LIFECYCLE_PROPOSAL.md).
