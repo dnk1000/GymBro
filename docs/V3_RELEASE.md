@@ -1,3 +1,13 @@
+# Issue #75 compact-header correction candidate
+
+Release status: **preparation**
+
+Application version: `3.18.8-20261108T031605Z`
+
+Data schema: `8`
+
+Scoped presentation correction under VERSION_POLICY.md: retain the accepted compact 10px session disclosure spacing. No test weakening, behavior or data change; pending review in PR #96.
+
 # Issue #75 presentation candidate
 
 Release status: **preparation**

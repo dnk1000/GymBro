@@ -533,7 +533,6 @@ canvas {
   border-radius: 0;
 }
 /* #75: a training ledger; boundaries and indentation replace nested boxes. */
-#history .history-disclosure > .history-summary { padding-block: var(--space-3); }
 #history .history-disclosure > .history-summary h3 { font-size: 18px; color: var(--heritage); }
 #history .history-exercise-summary strong { font-size: 16px; color: var(--text); }
 #history .history-exercise-summary .history-counts { margin-top: var(--space-1); }

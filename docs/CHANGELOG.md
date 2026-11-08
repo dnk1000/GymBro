@@ -1,3 +1,7 @@
+## 3.18.8 — History compact-header correction candidate
+
+- Retain accepted 10px disclosure padding; #75 hierarchy refinement preserves compact session headers.
+
 ## 3.18.6 — Heritage Utility History candidate
 
 - Presentation-only refinement for #75; existing behavior/data preserved. Pending review.

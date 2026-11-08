@@ -1,3 +1,7 @@
+# Pending #75 compact-header correction
+
+`3.18.8-20261108T031605Z`, schema 8. Scoped non-functional correction; no acceptance, merge or Production claim. Evidence: PR #96.
+
 # Pending #75 presentation candidate
 
 `3.18.6-20261108T031000Z`, schema 8. Independent #75 PATCH from accepted main 30f271d; not merged, accepted or deployed to Production. Evidence in its focused PR.
