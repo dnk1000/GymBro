@@ -1,3 +1,14 @@
+## 3.18.10 — History integration candidate
+
+- Resolve #75 release metadata against accepted Workout/Dashboard main; retain all three presentation refinements and compact History headers.
+
+## 3.18.8 — History compact-header correction candidate
+
+- Retain accepted 10px disclosure padding; #75 hierarchy refinement preserves compact session headers.
+
+## 3.18.6 — Heritage Utility History candidate
+
+- Presentation-only refinement for #75; existing behavior/data preserved. Pending review.
 ## 3.18.9 — Workout integration candidate
 
 - Resolve #74 release metadata against accepted Dashboard main; preserve both view refinements.
