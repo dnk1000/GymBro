@@ -1,6 +1,13 @@
+## 3.18.9 — Workout integration candidate
+
+- Resolve #74 release metadata against accepted Dashboard main; preserve both view refinements.
+
 ## 3.18.5 — Heritage Utility Active Workout candidate
 
 - Presentation-only refinement for #74; existing behavior/data preserved. Pending review.
+## 3.18.7 — Heritage Utility Dashboard candidate
+
+- Presentation-only refinement for #73; existing behavior/data preserved. Pending review.
 
 ## 3.18.4 — Batch canonical definition conflict candidate
 
