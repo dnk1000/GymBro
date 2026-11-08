@@ -38,6 +38,7 @@ For new implementation work, the **target GitHub issue is the executable specifi
 - [NOTE_SCOPES.md](NOTE_SCOPES.md) — #25 schema-8 session/exercise-occurrence/setup/set notes, conservative compatibility, canonical projection and downstream relational contract.
 
 - [EXERCISE_IDENTITY.md](EXERCISE_IDENTITY.md) — #16 canonical IDs/aliases, lossless V2 conversion, SQL ownership/constraints and downstream #39/#28 boundary.
+- [SMART_IMPORT_RESOLUTION.md](SMART_IMPORT_RESOLUTION.md) — #18 candidate explicit import review, alias/creation transaction and exclusion/retry semantics; [approved proposal](V3_SMART_IMPORT_RESOLUTION_PROPOSAL.md).
 
 - [V3_INFRASTRUCTURE.md](V3_INFRASTRUCTURE.md) — #38 environment inventory, Vercel variable contract, migrations, disposable replay, promotion and recovery.
 - [V3_RELEASE.md](V3_RELEASE.md) — current V3 candidate and actual acceptance evidence; not a Production release declaration.

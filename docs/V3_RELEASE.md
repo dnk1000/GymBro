@@ -1,3 +1,13 @@
+# Issue #18 Smart Import Resolution candidate
+
+Release status: **preparation**
+
+Application version: `3.17.0-20261107T122404Z`
+
+Data schema: `8`
+
+Owner-approved PR #93 design and 3.17.0/#18 mapping. Explicit map/create/skip review and saved aliases reuse the existing checked atomic import and retry path. Verification/acceptance is recorded in PR #93; this is not a Production release.
+
 # Issue #85 cloud-first candidate
 
 Release status: **preparation**

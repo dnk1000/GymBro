@@ -807,9 +807,23 @@ function showExercise(ex) {
 }
 
 let inboxDraft = null;
+let inboxResolutions = [];
+let inboxResolutionGroups = [];
+function decideInboxResolution(index, value) {
+  const label = inboxResolutionGroups[index].label;
+  inboxResolutions = inboxResolutions.filter(d => d.label !== label);
+  if (value) inboxResolutions.push(value.startsWith('map:') ? { label, kind: 'map', exerciseId: value.slice(4) } : { label, kind: value });
+  renderInboxDraft();
+}
+function inboxResolutionReview() {
+  const catalog = cloudController?.getWorkoutState()?.catalog;
+  if (!catalog) return { errors: ['Connect cloud workouts before reviewing exercises.'], groups: [], rows: inboxDraft.sets, included: 0, excluded: 0 };
+  return ImportResolution.review(catalog, inboxDraft.sets, inboxResolutions);
+}
 function parseInbox() {
   try {
     inboxDraft = normalizeInboxPayload(JSON.parse(inboxRaw.value));
+    inboxResolutions = [];
     renderInboxDraft();
   } catch (error) {
     clearInbox(false);
@@ -817,17 +831,20 @@ function parseInbox() {
   }
 }
 function updateDraft(index, key, value) {
+  if (key === 'exercise') inboxResolutions = inboxResolutions.filter(d => d.label !== inboxDraft.sets[index].exercise && d.label !== value);
   inboxDraft.sets[index][key] = value;
   renderInboxDraft();
 }
 function renderInboxDraft() {
   if (!inboxDraft) return;
   const dup = db.imports.some((x) => x.importId === inboxDraft.importId);
-  const issues = validateDraft(inboxDraft);
+  const resolution = cloudMode ? inboxResolutionReview() : null;
+  const reviewedDraft = resolution ? { ...inboxDraft, sets: resolution.rows } : inboxDraft;
+  const issues = [...validateDraft(reviewedDraft), ...(resolution?.errors ?? [])];
   const warnings = [];
-  inboxDraft.sets.forEach((s, i) => {
+  reviewedDraft.sets.forEach((s, i) => {
     if (!s.include) return;
-    if (s.exercise && !hasOwn(db.exerciseLibrary, s.exercise) && !(cloudMode && ExerciseIdentity.resolveLabel(cloudController.getWorkoutState().catalog,s.exercise)))
+    if (!cloudMode && s.exercise && !hasOwn(db.exerciseLibrary, s.exercise))
       warnings.push(
         `Set ${i + 1}: unknown exercise will be added as Uncategorized.`,
       );
@@ -855,17 +872,32 @@ function renderInboxDraft() {
       )
       .join("") || '<div class="sub">No sets found.</div>';
   commitInboxBtn.disabled = dup || issues.length > 0;
+  if (resolution) {
+    inboxResolutionGroups = resolution.groups;
+    const catalog = cloudController?.getWorkoutState()?.catalog;
+    const names = { canonical: 'Known canonical', alias: 'Saved alias', unresolved: 'Needs review', mapped: 'Approved mapping', new: 'New exercise', skipped: 'Skipped' };
+    const counts = Object.keys(names).map(key => `${names[key]}: ${resolution.groups.filter(g => g.status === key).length}`).join(' · ');
+    inboxMeta.insertAdjacentHTML('beforeend', `<div id="inboxResolution" class="notice" style="overflow-wrap:anywhere"><h3>Exercise resolution</h3><p>${esc(counts)}</p><p>${resolution.included} sets to import; ${resolution.excluded} excluded.</p><p>Exercise and equipment variants remain distinct. Mapping is your explicit choice; no similar names are merged automatically.</p>${resolution.groups.map((g, i) => {
+      const decision = inboxResolutions.find(d => d.label === g.label);
+      const selected = decision?.kind === 'map' ? 'map:' + decision.exerciseId : decision?.kind ?? '';
+      const controls = !['canonical','alias'].includes(g.status) || decision;
+      const options = [['','Choose resolution'],['create','Create new exercise'],['skip','Skip these sets'],...(catalog?.exercises ?? []).map(e => ['map:' + e.id, `Use ${e.displayName}${e.equipment ? ' · ' + e.equipment : ''}`])];
+      return `<div class="item"><strong>${esc(g.label)}</strong> — ${esc(names[g.status])}${g.displayName ? ': ' + esc(g.displayName) : ''} (${g.count} sets)${controls ? `<label class="label">Resolve ${esc(g.label)}<select aria-label="Resolve exercise ${i + 1}" onchange="decideInboxResolution(${i},this.value)">${options.map(([v, text]) => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(text)}</option>`).join('')}</select></label>` : ''}</div>`;
+    }).join('')}<p><strong>Excluded sets are not saved. After committing, importing them later requires a separate future import with a new import ID; this import ID cannot be reused.</strong></p></div>`);
+  }
   inboxReview.querySelectorAll("label.label").forEach(explainAcronyms);
 }
 async function commitInbox() {
   if (!inboxDraft) return;
-  const result = await workoutActions.commitImport(inboxDraft);
+  const result = await workoutActions.commitImport(cloudMode ? { ...inboxDraft, resolutions: inboxResolutions } : inboxDraft);
   if (!applyActionResult(result)) return;
   clearInbox(false);
   inboxStatus.innerHTML = `<div class="notice status-ok"><strong>Committed ${result.count} sets.</strong><div class="sub">They are now in Workout History and analytics.</div></div>`;
 }
 function clearInbox(clearText = true) {
   inboxDraft = null;
+  inboxResolutions = [];
+  inboxResolutionGroups = [];
   if (clearText) inboxRaw.value = "";
   inboxMeta.innerHTML = "";
   inboxReview.innerHTML =

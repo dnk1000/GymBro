@@ -57,6 +57,11 @@ function renderCloudExerciseInput() {
     let parityBlocked=true;try{parityBlocked=sessionStorage.getItem(`gymbro-migration-parity-v1-${h.ownerId}`)!==null;}catch{say('Request recovery metadata is unavailable; saving is paused.');}
     cloudReady=h.status==='healthy'&&!parityBlocked&&!accountBlocked;
     if(cloudReady && shownRevision!==h.revision){db=WorkoutRepository.presentation(h.document);shownRevision=h.revision;renderAll();}
+    if (result?.ok && inboxDraft && result.importId === inboxDraft.importId) {
+      clearInbox(false);
+      inboxStatus.textContent = `Committed ${result.count} sets. Excluded sets require a separate future import with a new import ID.`;
+    }
+    if (inboxDraft && s.phase === 'READY') renderInboxDraft();
     for(const f of fields)f.disabled=!cloudReady||s.phase!=='READY';
     el('migrationControls').disabled=accountBlocked||s.phase!=='READY';el('migrationCommit').disabled=accountBlocked||!review||s.phase!=='READY';
     const canStart=!rehearsal && h.status==='uninitialized' && !h.initialized &&
