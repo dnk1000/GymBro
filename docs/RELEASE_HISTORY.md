@@ -1,3 +1,7 @@
+# Pending #98 planned-target correction candidate
+
+`3.18.11-20261108T034614Z`, schema 8. Focused bug fix under VERSION_POLICY.md; no new schema/RPC. Technical evidence and human-review status belong to its focused PR; not merged or deployed to Production.
+
 # Pending #75 integration candidate
 
 `3.18.10-20261108T033325Z`, schema 8. PR #96 integrates accepted Workout and Dashboard with History; no Production verification claimed.

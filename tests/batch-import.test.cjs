@@ -96,3 +96,48 @@ test('historical UUID-shaped original labels survive the shared resolver unchang
   const rows=f.repository.project(prepared.candidate.document,f.owner,prepared.candidate.bodyweightIds,prepared.candidate.signatureSchemes);
   const restored=f.repository.assemble(rows,f.owner);assert.deepEqual(plain(restored.document.data.sets[0]),plain(document.data.sets[0]));
 });
+
+test('#98 maps multiple labels to one planned identity independent of decision and reference order',async()=>{
+ const f=await setupBatch(),payload=workouts(f,2);payload.workouts[0].workout.sets[0].exercise='New label B';payload.workouts[1].workout.sets[0].exercise='New label A';
+ const resolutions=[{label:'New label B',kind:'map',plannedLabel:'New label A'},{label:'New label A',kind:'create'}],before=plain(f.handle);
+ const review=await f.batch.review(f.handle,payload,{resolutions});assert(review.candidate,review.errors.join(' '));assert.deepEqual(plain(f.handle),before);
+ const prepared=await f.batch.prepare(f.handle,{text:JSON.stringify(payload),resolutions:resolutions.toReversed(),confirmed:true});assert(prepared.candidate);
+ const catalog=prepared.candidate.document.catalog,added=catalog.exercises.filter(e=>!f.document.catalog.exercises.some(old=>old.id===e.id));assert.equal(added.length,1);
+ assert.equal(catalog.aliases.find(a=>a.label==='New label B').exerciseId,added[0].id);
+ for(const label of ['New label A','New label B']){const set=prepared.candidate.document.data.sets.find(s=>s.exercise.originalLabel===label);assert.equal(set.exercise.exerciseId,added[0].id);}
+});
+
+test('#98 stale planned targets and excluded-only decisions cannot leak identities or aliases',async()=>{
+ const f=await setupBatch(),payload=workouts(f,2);payload.workouts[0].workout.sets[0].exercise='Planned A';payload.workouts[1].workout.sets[0].exercise='Alias B';
+ const choices=[{label:'Planned A',kind:'create'},{label:'Alias B',kind:'map',plannedLabel:'Planned A'}];
+ for(const resolutions of [choices.filter(d=>d.label!=='Planned A'),[{label:'Planned A',kind:'skip'},choices[1]],[{label:'Planned A',kind:'map',exerciseId:f.document.catalog.exercises[0].id},choices[1]]]){
+  const r=await f.batch.review(f.handle,payload,{resolutions});assert.equal(r.candidate,null);assert(!r.resolutions.some(d=>d.plannedLabel));
+ }
+ const excluded=await f.batch.review(f.handle,payload,{selected:[1],resolutions:choices});assert.equal(excluded.candidate,null);assert.equal(excluded.resolutions.length,0);
+ const onlyA=await f.batch.review(f.handle,payload,{selected:[0],resolutions:choices});assert(onlyA.candidate);assert(!onlyA.candidate.document.catalog.aliases.some(a=>a.label==='Alias B'));
+ const none=await f.batch.prepare(f.handle,{text:JSON.stringify(payload),selected:[],resolutions:choices,confirmed:true});assert.equal(none.result.code,'NO_CHANGE');
+ const renamed=structuredClone(payload);renamed.workouts[0].workout.sets[0].exercise='Changed A';assert.equal((await f.batch.review(f.handle,renamed,{resolutions:choices})).candidate,null);
+});
+
+test('#98 planned aliases share a frozen atomic request, replay idempotently, and reject stale catalog collisions',async()=>{
+ const f=await cloudBatchFixture(),a=f.create(),payload=workouts(f,2);payload.workouts[0].workout.sets[0].exercise='Planned cable A';payload.workouts[1].workout.sets[0].exercise='Explicit different grip B';
+ const input={batch:true,text:JSON.stringify(payload),confirmed:true,resolutions:[{label:'Planned cable A',kind:'create'},{label:'Explicit different grip B',kind:'map',plannedLabel:'Planned cable A'}]},before=f.getSaved();
+ f.fault('rollback');assert.equal((await a.execute('mergeHistoryBackup',input)).code,'VALIDATION_ERROR');assert.deepEqual(f.getSaved(),before);
+ f.fault('lost');assert.equal((await a.execute('mergeHistoryBackup',input)).code,'OUTCOME_UNKNOWN');const saved=f.getSaved();assert.equal(saved.document.catalog.exercises.length,before.document.catalog.exercises.length+1);
+ assert.equal((await a.retry()).code,'REPLAY');assert.deepEqual(f.getSaved(),saved);const packets=f.calls.filter(c=>c.args.packet).slice(-2).map(c=>c.args.packet);assert.deepEqual(packets[0],packets[1]);
+ assert.equal((await a.execute('mergeHistoryBackup',input)).code,'NO_CHANGE');assert.deepEqual(f.getSaved(),saved);
+ const fresh=await setupBatch(),collision=structuredClone(fresh.handle);collision.document.catalog=fresh.identity.createExercise(collision.document.catalog,{displayName:'Planned cable A',provenance:'user-created'});
+ assert.equal((await fresh.batch.review(collision,payload,{resolutions:input.resolutions})).candidate,null);
+ const differing=structuredClone(payload);differing.workouts[0].workout.sets[0].exercise=fresh.document.catalog.exercises[0].displayName;
+ assert.equal((await fresh.batch.review(fresh.handle,differing,{resolutions:[{label:differing.workouts[0].workout.sets[0].exercise,kind:'map',plannedLabel:'Explicit different grip B'},{label:'Explicit different grip B',kind:'create'}]})).candidate,null);
+});
+
+test('#98 planned mapping never retargets distinct supplied historical identities',async()=>{
+ const f=await setupBatch(),source=history(f);
+ for(const label of ['Supplied cable A','Supplied attachment B'])source.exerciseLibrary[label]={primary:'Uncategorized',secondary:[],pattern:'',type:'',status:'accessory'};
+ source.sets[0].exercise='Supplied cable A';source.sets[1].exercise='Supplied attachment B';
+ const document=await f.identity.migrateV2(source),cloud=f.lifecycle.backup({...f.handle,document,bodyweightIds:['identity-a','identity-b']});
+ const payload={format:'gymbro-workout-batch',formatVersion:1,workouts:[{importId:'supplied-distinct-identities',history:cloud}]};
+ const r=await f.batch.review(f.handle,payload,{resolutions:[{label:'Supplied cable A',kind:'create'},{label:'Supplied attachment B',kind:'map',plannedLabel:'Supplied cable A'}]});
+ assert.equal(r.candidate,null);assert.match(r.errors.join(' '),/cannot be retargeted/);
+});

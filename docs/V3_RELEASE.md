@@ -1,3 +1,13 @@
+# Issue #98 planned-target correction candidate
+
+Release status: **preparation**
+
+Application version: `3.18.11-20261108T034614Z`
+
+Data schema: `8`
+
+Bounded bug fix: allow explicit many-label mapping to one new exercise planned in this batch. Reuse #18/#82 resolver and checked atomic lifecycle/recovery. Pending human review; no merge, Production deployment or Production data operation.
+
 # Issue #75 integration candidate
 
 Release status: **preparation**

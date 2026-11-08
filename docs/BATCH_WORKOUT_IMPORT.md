@@ -30,6 +30,12 @@ The initial envelope is:
 
 Exact canonical IDs/names/aliases reuse #18. Explicit map/create/skip choices are shared across selected references; similar equipment/exercise names never imply equivalence. Supplied cloud exercise IDs cannot be retargeted. A conflicting canonical definition rejects the affected selection rather than rewriting it. A same-owner new identity can retain its supplied GymBro ID after explicit creation approval.
 
+## Planned exercise targets within a review — issue #98
+
+After choosing Create new exercise for an included label, other unresolved labels can explicitly choose **Planned in this import: [label]**. Saved targets remain separately labelled **Saved**. No similarity or equipment equivalence is inferred. Batch-only mapping decisions refer to the creation label (`plannedLabel`), not its temporary preview UUID. The shared resolver prepares valid explicit creations first in a detached candidate, then maps approved aliases, independent of reference/decision order. Single-workout resolution retains its existing contract.
+
+Only included, nonduplicate references can support a creation. Deselecting, relabelling, skipping or cancelling its creation invalidates dependent planned mappings; review resets those choices and requires an explicit resolution again. Excluded-only labels create no saved exercise or alias. Saved canonical/alias collisions and supplied historical IDs retain their existing rejection rules. Final preparation revalidates against acknowledged state, allocates the one identity into the existing frozen atomic packet, and uses unchanged #40 retry/receipt handling. No writes occur during review; no new persistence format, schema or RPC is introduced.
+
 ## Preservation, collisions and duplicates
 
 Rich history copies supplied IDs, local dates, set arrays and session setIds order, snapshots, planned/actual relationships, guidance/signature metadata, scoped session/occurrence/setup notes, pain/RPE/RIR, units, zero/null/omitted fields, complete:false and supported unknown record metadata. It does not replay create/finish-session actions. Whole-record/key collisions require equal content or reject; no rekeying, overwrite or concatenation. Conflicting setup context is an explicit error. Equal bodyweight date/value does not erase a distinct supplied identity; missing relational bodyweight keys derive from unit ID/occurrence position. Root/container/exercise-definition source context is retained in import provenance without changing current settings.

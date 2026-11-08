@@ -1,7 +1,7 @@
 // Exact canonical resolution only. Review is pure; allocation occurs at prepare.
 const ImportResolution = (() => {
   const clone = value => structuredClone(value);
-  function review(catalog, references, decisions = [], { materialize = false, createId } = {}) {
+  function review(catalog, references, decisions = [], { materialize = false, createId, allowPlanned = false } = {}) {
     ExerciseIdentity.validateCatalog(catalog);
     if (!Array.isArray(references) || !Array.isArray(decisions)) throw Error('Invalid import resolution input.');
     const choices = new Map();
@@ -11,6 +11,20 @@ const ImportResolution = (() => {
       choices.set(d.label, d);
     }
     let next = clone(catalog);
+    const planned = new Map();
+    function allocate(label) {
+      const temporary = { exerciseLibrary: {} }; ensureExercise(temporary, label);
+      const meta = temporary.exerciseLibrary[label];
+      next = ExerciseIdentity.createExercise(next, { id: createId?.(label), displayName: label, provenance: 'import-created', ...meta, metadata: meta });
+      return next.exercises.find(e => e.id === ExerciseIdentity.resolveLabel(next, label));
+    }
+    // Batch decisions refer to an explicit creation label, never a preview UUID.
+    // Allocate detached targets first so mapping is independent of row order.
+    if (allowPlanned && materialize) for (const [label, decision] of choices) {
+      if (decision.kind === 'create' && label.trim() && references.some(r => r.include && r.exercise === label) &&
+          !catalog.exercises.some(e => e.id === label) && !ExerciseIdentity.resolveLabel(catalog, label))
+        planned.set(label, allocate(label));
+    }
     const groups = new Map(), errors = [];
     const rows = references.map((input, index) => {
       const row = { ...clone(input), index, originalLabel: input.exercise, status: 'excluded' };
@@ -26,7 +40,8 @@ const ImportResolution = (() => {
         if (decision) {
           if (decision.kind === 'skip') group.status = 'skipped';
           else if (decision.kind === 'map') {
-            const target = catalog.exercises.find(e => e.id === decision.exerciseId);
+            const target = decision.plannedLabel === undefined ? catalog.exercises.find(e => e.id === decision.exerciseId) :
+              allowPlanned && decision.exerciseId === undefined ? planned.get(decision.plannedLabel) : null;
             if (!target || (id && id !== target.id)) group.error = 'Mapping conflicts with saved exercise identity. Review again.';
             else {
               group.exerciseId = target.id; group.displayName = target.displayName; group.status = 'mapped';
@@ -37,10 +52,7 @@ const ImportResolution = (() => {
           else {
             group.status = 'new'; group.displayName = label;
             if (materialize) {
-              const temporary = { exerciseLibrary: {} }; ensureExercise(temporary, label);
-              const meta = temporary.exerciseLibrary[label];
-              next = ExerciseIdentity.createExercise(next, { id: createId?.(label), displayName: label, provenance: 'import-created', ...meta, metadata: meta });
-              group.exerciseId = ExerciseIdentity.resolveLabel(next, label);
+              group.exerciseId = (planned.get(label) ?? allocate(label)).id;
             }
           }
         }
