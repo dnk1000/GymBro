@@ -1,3 +1,18 @@
+# Issue #74 integration candidate
+
+Release status: **preparation**
+
+Application version: `3.18.9-20261108T032746Z`
+
+Data schema: `8`
+
+Resolve shared release metadata against accepted main while retaining Dashboard and Workout styling/tests. Owner authorized commit/merge; verification recorded in PR #95. No schema/domain change.
+
+# Issue #74 presentation candidate
+
+Release status: **preparation**
+
+Application version: `3.18.5-20261108T030728Z`
 # Issue #73 presentation candidate
 
 Release status: **preparation**
