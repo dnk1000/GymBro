@@ -255,3 +255,20 @@ for(const width of [320,390,1280])test('#82 file upload, 10-workout consolidated
   fs.mkdirSync(path.join(root,'test-results'),{recursive:true});await p.screenshot({path:path.join(root,'test-results','issue82-'+width+'.png'),fullPage:true});
   await p.locator('#inboxFile').setInputFiles({name:'batch.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(payload))});await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).waitFor();await p.getByRole('checkbox',{name:'Select workout 10',exact:true}).uncheck();await p.waitForFunction(()=>document.getElementById('inboxStatus').textContent.includes('0 ready'));assert.deepEqual(f.saved(),committed);
 });
+
+for(const width of [320,390,1280])test('#98 planned batch targets, invalidation and retry at '+width+'px',async t=>{
+ const f=await open(t,width,{production:true}),p=f.page;await p.waitForFunction(()=>cloudReady);const before=structuredClone(f.saved());
+ const a='New cable pressdown A',b='New cable pushdown B',payload={format:'gymbro-workout-batch',formatVersion:1,workouts:[{importId:'planned-b-'+width,workout:{date:'2026-11-07',sets:[{exercise:b,weight:0,unit:'lb',reps:8,notes:'  exact B  '}]}},{importId:'planned-a-'+width,workout:{date:'2026-11-07',sets:[{exercise:a,weight:10,unit:'lb',reps:8}]}}]};
+ await p.locator('[data-view="inbox"]').click();await p.locator('#inboxFile').setInputFiles({name:'planned.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(payload))});
+ const selectA=()=>p.getByRole('combobox',{name:'Resolve batch exercise 2',exact:true}),selectB=()=>p.getByRole('combobox',{name:'Resolve batch exercise 1',exact:true});
+ await selectA().selectOption('create');await p.waitForFunction(()=>document.querySelector('[data-batch-resolution="0"] option[value^="planned:"]'));
+ assert.match(await selectB().textContent(),/Planned in this import: New cable pressdown A/);assert.match(await selectB().textContent(),/Saved:/);assert.deepEqual(f.saved(),before);
+ await selectB().selectOption('planned:'+a);await p.waitForFunction(()=>!document.getElementById('commitInboxBtn').disabled);
+ await p.getByRole('checkbox',{name:'Select workout 2',exact:true}).uncheck();await p.waitForFunction(()=>document.getElementById('commitInboxBtn').disabled);assert.equal(await selectB().inputValue(),'');assert.deepEqual(f.saved(),before);
+ await p.getByRole('checkbox',{name:'Select workout 2',exact:true}).check();await selectA().selectOption('create');await p.waitForFunction(()=>document.querySelector('[data-batch-resolution="0"] option[value^="planned:"]'));await selectB().selectOption('planned:'+a);await p.waitForFunction(()=>!document.getElementById('commitInboxBtn').disabled);
+ assert.deepEqual(f.saved(),before);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));fs.mkdirSync(path.join(root,'test-results'),{recursive:true});await p.evaluate(()=>scrollTo(0,0));await p.screenshot({path:path.join(root,'test-results','issue98-'+width+'.png'),fullPage:true});
+ f.loseAck();await p.locator('#commitInboxBtn').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');const committed=structuredClone(f.saved());
+ assert.equal(committed.document.catalog.exercises.length,before.document.catalog.exercises.length+1);const target=committed.document.catalog.exercises.find(e=>e.displayName===a);assert.equal(committed.document.catalog.aliases.find(x=>x.label===b).exerciseId,target.id);
+ const sets=committed.document.data.sets.filter(s=>s.exercise.exerciseId===target.id);assert.equal(sets.length,2);assert.equal(sets.find(s=>s.exercise.originalLabel===b).notes,'  exact B  ');
+ await p.locator('[data-view="data"]').click();await p.locator('#cloudRetry').click();await p.waitForFunction(()=>cloudController.getStatus().phase==='READY');assert.deepEqual(f.saved(),committed);
+});

@@ -87,7 +87,11 @@ const BatchImport = (() => {
       if(r.sourceId)forced.set(r.exercise,r.sourceId);
       if(!previewIds.has(r.exercise))previewIds.set(r.exercise,await stableId(['batch-preview-exercise-v1',parsed.batchId,r.exercise]));
     }
-    const resolution=ImportResolution.review(candidate.document.catalog,inputRefs,resolutions,{materialize:true,createId:label=>forced.get(label)??(materialize?crypto.randomUUID():previewIds.get(label))});
+    const activeLabels=new Set(inputRefs.filter(r=>r.include).map(r=>r.exercise));
+    const activeCreates=new Set(resolutions.filter(d=>d.kind==='create'&&activeLabels.has(d.label)).map(d=>d.label));
+    const activeResolutions=resolutions.filter(d=>(activeLabels.has(d.label)||d.kind==='skip'&&units.some(u=>chosen.has(u.index)&&u.kind==='history'&&u.refs?.some(r=>r.exercise===d.label)))&&
+      (d.plannedLabel===undefined||activeCreates.has(d.plannedLabel)));
+    const resolution=ImportResolution.review(candidate.document.catalog,inputRefs,activeResolutions,{materialize:true,allowPlanned:true,createId:label=>forced.get(label)??(materialize?crypto.randomUUID():previewIds.get(label))});
     for(const d of resolutions.filter(d=>d.kind==='skip'))if(!resolution.groups.some(g=>g.label===d.label)&&units.some(u=>chosen.has(u.index)&&u.kind==='history'&&u.refs?.some(r=>r.exercise===d.label)))resolution.groups.push({label:d.label,status:'skipped',count:0});
     for(const r of resolution.rows)if(r.include&&r.sourceId&&r.status!=='unresolved'&&r.exerciseId!==r.sourceId)block(r.unit,'A supplied canonical exercise ID cannot be retargeted.');
     candidate.document.catalog=resolution.catalog;
@@ -145,7 +149,7 @@ const BatchImport = (() => {
         WorkoutLifecycle.validatePayload(candidate,base.ownerId);u.status='ready';u.count=imported.setCount;
       }catch(error){u.status='blocked';u.errors=[error.message];errors.push(`Workout ${u.index+1}: ${error.message}`);}
     }
-    return { ...parsed,units,groups:resolution.groups,errors,candidate:errors.length?null:candidate,newCount:units.filter(u=>u.status==='ready').length };
+    return { ...parsed,units,groups:resolution.groups,resolutions:activeResolutions,errors,candidate:errors.length?null:candidate,newCount:units.filter(u=>u.status==='ready').length };
   }
   async function prepare(base,input,options={}) {
     check(input.confirmed===true,'Confirm the selected batch explicitly.');

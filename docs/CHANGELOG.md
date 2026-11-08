@@ -1,3 +1,7 @@
+## 3.18.11 — Planned batch exercise mapping fix candidate
+
+- Explicitly map incoming labels to a new exercise planned in the same review; create one identity atomically with approved aliases. Invalidate excluded/cancelled target choices.
+
 ## 3.18.10 — History integration candidate
 
 - Resolve #75 release metadata against accepted Workout/Dashboard main; retain all three presentation refinements and compact History headers.
