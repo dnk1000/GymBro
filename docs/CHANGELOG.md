@@ -1,10 +1,18 @@
-## 3.19.6 — Program catalog integration candidate
+## 3.19.10 — Program catalog integration candidate
 
 - Preserve #34 template/duration/classification clarity on the #17/#37 stack without changing workout definitions.
 
-## 3.19.5 — Mobile library catalog integration candidate
+## 3.19.9 — Mobile library catalog integration candidate
 
 - Integrate #37 phone rows with the #17 canonical detail/catalog surface; no new data semantics.
+
+## 3.19.8 — Catalog SQL identifier correction candidate
+
+- Disambiguate checked catalog source/destination variables from persisted workout columns.
+
+## 3.19.7 — Catalog date-validation correction candidate
+
+- Complete the checked catalog writer's date-validator dependency without exposing internal operation validation.
 
 ## 3.19.4 — Catalog isolation correction candidate
 

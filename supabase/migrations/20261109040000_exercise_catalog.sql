@@ -93,7 +93,7 @@ create function public.gymbro_catalog_mutate(packet jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare who uuid:=public.gymbro_request_owner(); snap jsonb; op jsonb:=packet->'operation'; action text:=packet->>'action';
   expected jsonb; saved jsonb; receipt public.gymbro_mutation_receipts; fingerprint text; answer jsonb; input jsonb:=packet#>'{args,0}';
-  source uuid; target uuid; e jsonb; a jsonb; stamp text; response_result jsonb;
+  catalog_source_id uuid; catalog_target_id uuid; e jsonb; a jsonb; stamp text; response_result jsonb;
 begin
   if who is null or public.gymbro_request_permanent() is not true then raise exception 'Permanent authenticated owner required' using errcode='42501'; end if;
   if packet->'protocolVersion' is distinct from '1'::jsonb or packet->>'ownerId' is distinct from who::text or
@@ -116,27 +116,27 @@ begin
     return jsonb_build_object('code','CONFLICT','operation',op,'snapshot',snap); end if;
   expected:=public.gymbro_catalog_candidate(snap->'rows',action,input,who,op,null);
   if public.gymbro_workout_normalize(expected) is distinct from public.gymbro_workout_normalize(packet->'next') then raise exception 'Catalog changed unrelated facts' using errcode='23514'; end if;
-  source:=(input->>'exerciseId')::uuid;
+  catalog_source_id:=(input->>'exerciseId')::uuid;
   response_result:=jsonb_build_object('changes',jsonb_build_array('catalog'),'exerciseId',coalesce(input->>'targetId',input->>'exerciseId'));
   set constraints all deferred;
   if action='mergeCatalogExercises' then
-    target:=(input->>'targetId')::uuid;
+    catalog_target_id:=(input->>'targetId')::uuid;
     stamp:=to_char(clock_timestamp() at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"');
     expected:=public.gymbro_catalog_candidate(snap->'rows',action,input,who,op,stamp);
     -- No deletes, snapshot rebuilding, broad replacement, or unchecked grants.
-    update public.gymbro_exercise_aliases set exercise_id=target where owner_id=who and exercise_id=source;
-    update public.gymbro_template_slots set exercise_id=target where owner_id=who and exercise_id=source;
-    update public.gymbro_snapshot_slots set exercise_id=target where owner_id=who and exercise_id=source;
-    update public.gymbro_sets set exercise_id=target where owner_id=who and exercise_id=source;
-    update public.gymbro_guided_slots set exercise_id=target where owner_id=who and exercise_id=source;
-    update public.gymbro_exercise_session_notes set exercise_id=target where owner_id=who and exercise_id=source;
-    update public.gymbro_exercise_setup_notes set exercise_id=target where owner_id=who and exercise_id=source;
+    update public.gymbro_exercise_aliases set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
+    update public.gymbro_template_slots set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
+    update public.gymbro_snapshot_slots set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
+    update public.gymbro_sets set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
+    update public.gymbro_guided_slots set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
+    update public.gymbro_exercise_session_notes set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
+    update public.gymbro_exercise_setup_notes set exercise_id=catalog_target_id where owner_id=who and exercise_id=catalog_source_id;
     response_result:=response_result||jsonb_build_object('mergedAt',stamp);
   end if;
-  select value into e from jsonb_array_elements(expected->'exercises') where value->>'exercise_id'=source::text;
+  select value into e from jsonb_array_elements(expected->'exercises') where value->>'exercise_id'=catalog_source_id::text;
   update public.gymbro_exercises set display_name=e->>'display_name',primary_muscle=e->>'primary_muscle',
     secondary_muscles=array(select jsonb_array_elements_text(e->'secondary_muscles')),movement_pattern=e->>'movement_pattern',
-    equipment=e->>'equipment',exercise_type=e->>'exercise_type',state=e->>'state',metadata=e->'metadata' where owner_id=who and exercise_id=source;
+    equipment=e->>'equipment',exercise_type=e->>'exercise_type',state=e->>'state',metadata=e->'metadata' where owner_id=who and exercise_id=catalog_source_id;
   for a in select * from jsonb_array_elements(expected->'aliases') loop
     insert into public.gymbro_exercise_aliases(owner_id,label,exercise_id,provenance) values(who,a->>'label',(a->>'exercise_id')::uuid,a->>'provenance') on conflict do nothing;
   end loop;
@@ -257,7 +257,7 @@ revoke all on function public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jso
   public.gymbro_catalog_audit_guard(),public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) from public,anon,authenticated;
 grant execute on function public.gymbro_request_owner(),public.gymbro_request_permanent(),public.gymbro_workout_tables(),public.gymbro_workout_keys(text),
   public.gymbro_workout_table(text),public.gymbro_workout_normalize(jsonb),public.gymbro_workout_read(),public.gymbro_lifecycle_snapshot(),public.gymbro_lifecycle_readable(jsonb),
-  public.gymbro_workout_snapshot(),
+  public.gymbro_workout_snapshot(),public.gymbro_valid_date(text),
   public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jsonb,text),public.gymbro_operation_valid(jsonb),public.gymbro_pre_catalog_operation_valid(jsonb),
   public.gymbro_domain_operation_valid(jsonb),public.gymbro_identity_v1_readable(jsonb),public.gymbro_lifecycle_timestamp(text) to gymbro_catalog_writer;
 grant execute on function public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) to gymbro_workout_writer,gymbro_lifecycle_writer;
