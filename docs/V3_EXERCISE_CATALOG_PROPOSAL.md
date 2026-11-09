@@ -1,5 +1,16 @@
 # Issue #17 — exercise catalog and merge proposal
 
+November 9, 2026 amendment: the owner explicitly approved **identity format v2**,
+backward reading of v1 backups, explicit merged-source/provenance handling and
+fail-closed rejection by older clients. This resolves the compatibility blocker
+reproduced at `c4126b3`. Keep provenance alias rows for historical foreign keys;
+v2 separately marks excluded labels as inactive matchers. Preserve archived
+source IDs and original labels. Upgrade only through an acknowledged checked
+catalog mutation; loading a v1 document must not write or upgrade it. Complete
+cloud backups report the actual payload identity version. The outer backup
+format and relational model/workout schema remain independently versioned.
+Latest execution authority forbids merging PRs and Production operations.
+
 Status: **approved design; implementation pending**. The owner accepted the exact
 proposal at `e048e81d2fefc332dab0d07b3b01ddf9085e7a6b` in this implementation
 chat on November 8, 2026 (America/New_York), including the recommended scoped

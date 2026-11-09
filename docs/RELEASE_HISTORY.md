@@ -1,3 +1,7 @@
+# Pending #17 exercise catalog candidate
+
+`3.19.0-20261109T112448Z`, schema 8, identity format 2 with v1 read compatibility. Verification and acceptance tracked in PR #100; not an accepted Production release.
+
 # Pending #98 planned-target correction candidate
 
 `3.18.11-20261108T034614Z`, schema 8. Focused bug fix under VERSION_POLICY.md; no new schema/RPC. Technical evidence and human-review status belong to its focused PR; not merged or deployed to Production.

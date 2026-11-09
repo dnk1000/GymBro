@@ -1,3 +1,7 @@
+## 3.19.0 — Exercise catalog candidate
+
+- Edit canonical names and metadata, add aliases, archive/restore and review explicit merges in the existing detail panel. Preserve original labels and workout facts with owner-scoped checked commits and durable merge provenance.
+
 ## 3.18.11 — Planned batch exercise mapping fix candidate
 
 - Explicitly map incoming labels to a new exercise planned in the same review; create one identity atomically with approved aliases. Invalidate excluded/cancelled target choices.

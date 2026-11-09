@@ -1,3 +1,13 @@
+# Issue #17 catalog candidate
+
+Release status: **preparation**
+
+Application version: `3.19.0-20261109T112448Z`
+
+Data schema: `8`
+
+Approved identity-v2 catalog/merge candidate. Backward reading of identity-v1 backups retained; v1 loads do not write. Additive catalog migration requires separate environment promotion. PR #100 owns actual verification and pending acceptance. No Production operation or merge.
+
 # Issue #98 planned-target correction candidate
 
 Release status: **preparation**

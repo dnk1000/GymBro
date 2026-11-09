@@ -17,7 +17,7 @@ const WorkoutLifecycle = (() => {
     check(handle.status==='healthy' && handle.initialized && uuid.test(handle.ownerId), 'A verified healthy cloud snapshot is required.');
     const payload=validatePayload({document:handle.document,bodyweightIds:handle.bodyweightIds,signatureSchemes:handle.signatureSchemes},handle.ownerId);
     return { format:'gymbro-cloud-backup',formatVersion:1,appVersion:APP_VERSION.version,
-      source:{ownerId:handle.ownerId,revision:handle.revision,modelVersion:1,identityVersion:1,workoutVersion:8,exportedAt:now()},payload };
+      source:{ownerId:handle.ownerId,revision:handle.revision,modelVersion:1,identityVersion:payload.document.identityVersion,workoutVersion:8,exportedAt:now()},payload };
   }
   async function parse(text, owner, {catalog,createBodyweightId=()=>crypto.randomUUID()} = {}) {
     check(uuid.test(owner),'Authenticated destination owner required.');
@@ -26,7 +26,7 @@ const WorkoutLifecycle = (() => {
       (!Array.isArray(file.sets) && (Object.hasOwn(file,'format') || Object.hasOwn(file,'formatVersion'))))) {
       check(file.format==='gymbro-cloud-backup' && file.formatVersion===1,'Unsupported cloud backup format. Keep the original file.');
       check(file.source?.ownerId===owner,'This cloud backup belongs to a different account. Cross-account restore is not supported.');
-      check(file.source.modelVersion===1 && file.source.identityVersion===1 && file.source.workoutVersion===8 &&
+      check(file.source.modelVersion===1 && [1,2].includes(file.source.identityVersion) && file.source.identityVersion===file.payload?.document?.identityVersion && file.source.workoutVersion===8 &&
         WorkoutConcurrency.revision(file.source.revision),'Unsupported cloud backup source version.');
       return { ...validatePayload(file.payload,owner),sourceOwnerId:file.source.ownerId,kind:'cloud' };
     }

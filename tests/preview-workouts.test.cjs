@@ -27,7 +27,13 @@ async function fixture(){
     else if(name==='gymbro_lifecycle_resolve')answer={code:'CANCELLED'};
     else if(args.packet.expectedRevision!==saved.revision)answer={code:'CONFLICT'};
     else {
-      const p=args.packet;saved={...saved,status:'healthy',rows:plain(p.next),revision:String(BigInt(saved.revision)+1n),fingerprint:'b'.repeat(64)};
+      const p=plain(args.packet);
+      if(p.action==='mergeCatalogExercises') {
+        const mergedAt='2026-11-09T12:00:00.000Z';
+        p.next.exercises.find(e=>e.exercise_id===p.args[0].exerciseId).metadata.gymbroMerge.mergedAt=mergedAt;
+        p.result={...p.result,mergedAt};
+      }
+      saved={...saved,status:'healthy',rows:plain(p.next),revision:String(BigInt(saved.revision)+1n),fingerprint:'b'.repeat(64)};
       receipts.set(key,{result:p.result,revision:saved.revision});answer={code:'OK',result:p.result,operationRevision:saved.revision};
       if(lost){lost=false;throw Error('lost response');}
     }
