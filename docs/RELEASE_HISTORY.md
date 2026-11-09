@@ -1,10 +1,14 @@
 # Pending #34 catalog integration candidate
 
-`3.19.3-20261109T113251Z`, schema 8. PR #102 owns evidence; not accepted or Production-verified.
+`3.19.6-20261109T113601Z`, schema 8. PR #102 owns evidence; not accepted or Production-verified.
 
 # Pending #37 catalog integration candidate
 
-`3.19.2-20261109T113158Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.
+`3.19.5-20261109T113527Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.
+
+# Pending #17 catalog isolation correction candidate
+
+`3.19.4-20261109T113434Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification and acceptance.
 
 # Pending #17 verification correction candidate
 

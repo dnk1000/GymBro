@@ -1,10 +1,14 @@
-## 3.19.3 — Program catalog integration candidate
+## 3.19.6 — Program catalog integration candidate
 
 - Preserve #34 template/duration/classification clarity on the #17/#37 stack without changing workout definitions.
 
-## 3.19.2 — Mobile library catalog integration candidate
+## 3.19.5 — Mobile library catalog integration candidate
 
 - Integrate #37 phone rows with the #17 canonical detail/catalog surface; no new data semantics.
+
+## 3.19.4 — Catalog isolation correction candidate
+
+- Preserve opaque legacy metadata, clear private drafts on account change and grant the checked catalog writer its required read helper.
 
 ## 3.19.1 — Catalog verification correction candidate
 

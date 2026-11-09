@@ -2,7 +2,7 @@
 
 Release status: **preparation**
 
-Application version: `3.19.3-20261109T113251Z`
+Application version: `3.19.6-20261109T113601Z`
 
 Data schema: `8`
 
@@ -12,11 +12,21 @@ Presentation-only PATCH on #17/#37: retain Program selection/editing improvement
 
 Release status: **preparation**
 
-Application version: `3.19.2-20261109T113158Z`
+Application version: `3.19.5-20261109T113527Z`
 
 Data schema: `8`
 
 Presentation-only PATCH on the approved #17 candidate. Preserve mobile library, desktop table and one canonical catalog/detail path. Existing initial #37 evidence remains historical; integrated verification belongs to PR #101. No Production operation or acceptance.
+
+# Issue #17 catalog isolation correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.4-20261109T113434Z`
+
+Data schema: `8`
+
+Scope fixes: catalog writer snapshot-helper grant; opaque legacy metadata discrimination; account-change draft clearing. Prior regression passes retained; initial database failures and corrected causes tracked in PR #100. Final fresh/replay verification pending. No live schema/data operation.
 
 # Issue #17 catalog verification correction candidate
 
