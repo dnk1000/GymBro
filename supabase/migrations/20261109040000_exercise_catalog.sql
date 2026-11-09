@@ -42,7 +42,7 @@ declare result jsonb:=rows; src jsonb; dst jsonb; changed jsonb; aliases jsonb; 
   t text; k text; col text; keys text[]; inventory jsonb; audit jsonb; name text;
 begin
   select e into src from jsonb_array_elements(rows->'exercises') e where e->>'exercise_id'=input->>'exerciseId';
-  if src is null or src#>'{metadata,gymbroMerge}' is not null then raise exception 'Select an unmerged source' using errcode='23514'; end if;
+  if src is null or src#>>'{metadata,gymbroMerge,kind}'='gymbro-catalog-merge-v2' then raise exception 'Select an unmerged source' using errcode='23514'; end if;
   result:=jsonb_set(result,'{workout_state,0,document_extra,identityVersion}','2'); changed:=src;
   if action='editCatalogExercise' then
     if exists(select 1 from jsonb_object_keys(input) k where k<>all(array['exerciseId','displayName','primary','secondary','pattern','equipment','type','state'])) then raise exception 'Unexpected catalog field' using errcode='23514'; end if;
@@ -59,8 +59,9 @@ begin
   elsif action='mergeCatalogExercises' then
     if (select count(*) from jsonb_object_keys(input))<>4 or not input ?& array['exerciseId','targetId','confirmed','keepNameAlias'] or
       input->'confirmed' is distinct from 'true'::jsonb or jsonb_typeof(input->'keepNameAlias') is distinct from 'boolean' then raise exception 'Explicit merge review required' using errcode='23514'; end if;
+    if src->'metadata' ? 'gymbroMerge' then raise exception 'Preserved merge namespace occupied' using errcode='23514'; end if;
     select e into dst from jsonb_array_elements(rows->'exercises') e where e->>'exercise_id'=input->>'targetId';
-    if dst is null or dst->'exercise_id'=src->'exercise_id' or dst#>'{metadata,gymbroMerge}' is not null then raise exception 'Invalid destination' using errcode='23514'; end if;
+    if dst is null or dst->'exercise_id'=src->'exercise_id' or dst#>>'{metadata,gymbroMerge,kind}'='gymbro-catalog-merge-v2' then raise exception 'Invalid destination' using errcode='23514'; end if;
     foreach t in array array['template_slots','snapshot_slots','sets','guided_slots','exercise_session_notes','exercise_setup_notes'] loop
       keys:=array_remove(public.gymbro_workout_keys(t),'owner_id');
       select coalesce(jsonb_agg(v order by v::text),'[]') into inventory from (
@@ -71,7 +72,7 @@ begin
       result:=jsonb_set(result,array[t],inventory);
     end loop;
     select coalesce(jsonb_agg(a order by a->>'label' collate "C"),'[]') into aliases from jsonb_array_elements(rows->'aliases') a where a->'exercise_id'=src->'exercise_id';
-    audit:=jsonb_build_object('sourceId',src->'exercise_id','targetId',dst->'exercise_id','sourceName',src->'display_name','targetName',dst->'display_name',
+    audit:=jsonb_build_object('kind','gymbro-catalog-merge-v2','sourceId',src->'exercise_id','targetId',dst->'exercise_id','sourceName',src->'display_name','targetName',dst->'display_name',
       'ownerId',who::text,'operation',operation,'mergedAt',stamp,'previous',src,'aliases',aliases,'affected',affected,
       'excludedLabel',case when input->'keepNameAlias'='true'::jsonb then 'null'::jsonb else src->'display_name' end);
     changed:=jsonb_set(jsonb_set(src,'{state}','"archived"'),'{metadata}',(src->'metadata')||jsonb_build_object('gymbroMerge',audit));
@@ -200,7 +201,7 @@ end; $$;
 create or replace function public.gymbro_register_exercise_name() returns trigger
 language plpgsql set search_path = '' as $$
 begin
-  if new.state='archived' and new.metadata#>>'{gymbroMerge,sourceId}'=new.exercise_id::text then return new; end if;
+  if new.state='archived' and new.metadata#>>'{gymbroMerge,kind}'='gymbro-catalog-merge-v2' and new.metadata#>>'{gymbroMerge,sourceId}'=new.exercise_id::text then return new; end if;
   insert into public.gymbro_exercise_aliases(owner_id, label, exercise_id, provenance)
     values (new.owner_id, new.display_name, new.exercise_id,
       case when tg_op = 'UPDATE' then 'user-created' else new.provenance end)
@@ -216,9 +217,8 @@ $$;
 create function public.gymbro_catalog_audit_guard() returns trigger language plpgsql set search_path='' as $$
 begin
   if current_user not in ('gymbro_catalog_writer','gymbro_lifecycle_writer') and
-    ((tg_op='INSERT' and new.metadata ? 'gymbroMerge') or
-     (tg_op='UPDATE' and (new.metadata->'gymbroMerge' is distinct from old.metadata->'gymbroMerge' or
-       (old.metadata ? 'gymbroMerge' and new is distinct from old)))) then
+    ((tg_op='INSERT' and new.metadata#>>'{gymbroMerge,kind}'='gymbro-catalog-merge-v2') or
+     (tg_op='UPDATE' and ((new.metadata#>>'{gymbroMerge,kind}'='gymbro-catalog-merge-v2' or old.metadata#>>'{gymbroMerge,kind}'='gymbro-catalog-merge-v2') and (new.metadata->'gymbroMerge' is distinct from old.metadata->'gymbroMerge' or new is distinct from old)))) then
     raise exception 'Merge audit is immutable outside checked catalog/restore' using errcode='23514'; end if;
   return new;
 end $$;
@@ -232,7 +232,7 @@ begin
   if rows#>'{workout_state,0,document_extra,identityVersion}' is distinct from '2'::jsonb then return false; end if;
   for exercise in select * from jsonb_array_elements(rows->'exercises') loop
     merge:=exercise#>'{metadata,gymbroMerge}';
-    if merge is not null then
+    if merge->>'kind'='gymbro-catalog-merge-v2' then
       if jsonb_typeof(merge) is distinct from 'object' or exercise->>'state'<>'archived' or
         merge->'sourceId' is distinct from exercise->'exercise_id' or merge->'sourceName' is distinct from exercise->'display_name' or
         merge->'sourceId'=merge->'targetId' or merge->>'ownerId' is distinct from exercise->>'owner_id' or
@@ -257,6 +257,7 @@ revoke all on function public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jso
   public.gymbro_catalog_audit_guard(),public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) from public,anon,authenticated;
 grant execute on function public.gymbro_request_owner(),public.gymbro_request_permanent(),public.gymbro_workout_tables(),public.gymbro_workout_keys(text),
   public.gymbro_workout_table(text),public.gymbro_workout_normalize(jsonb),public.gymbro_workout_read(),public.gymbro_lifecycle_snapshot(),public.gymbro_lifecycle_readable(jsonb),
+  public.gymbro_workout_snapshot(),
   public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jsonb,text),public.gymbro_operation_valid(jsonb),public.gymbro_pre_catalog_operation_valid(jsonb),
   public.gymbro_domain_operation_valid(jsonb),public.gymbro_identity_v1_readable(jsonb),public.gymbro_lifecycle_timestamp(text) to gymbro_catalog_writer;
 grant execute on function public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) to gymbro_workout_writer,gymbro_lifecycle_writer;

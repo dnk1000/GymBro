@@ -10,19 +10,20 @@ const ExerciseCatalog = (() => {
     const beforeRows = WorkoutRepository.project(base.document, base.ownerId, base.bodyweightIds, base.signatureSchemes);
     document.identityVersion = 2;
     const row = catalog.exercises.find(e => e.id === input.exerciseId);
-    check(row && !row.metadata.gymbroMerge, 'Select an unmerged exercise.');
+    check(row && !ExerciseIdentity.mergeRecord(row), 'Select an unmerged exercise.');
     if (action === 'editCatalogExercise') {
-      check(!catalog.exercises.some(e=>e.metadata.gymbroMerge?.excludedLabel===input.displayName),'This label is retained only as excluded historical provenance. Choose a different display name.');
+      check(!catalog.exercises.some(e=>ExerciseIdentity.mergeRecord(e)?.excludedLabel===input.displayName),'This label is retained only as excluded historical provenance. Choose a different display name.');
       document.catalog = ExerciseIdentity.renameExercise(catalog, row.id, input.displayName);
       const next = document.catalog.exercises.find(e => e.id === row.id);
       for (const key of editable) if (Object.hasOwn(input, key)) next[key] = clone(input[key]);
     } else if (action === 'addCatalogAlias') {
-      check(!catalog.exercises.some(e=>e.metadata.gymbroMerge?.excludedLabel===input.label),'This label was explicitly excluded from matching and remains historical provenance.');
+      check(!catalog.exercises.some(e=>ExerciseIdentity.mergeRecord(e)?.excludedLabel===input.label),'This label was explicitly excluded from matching and remains historical provenance.');
       document.catalog = ExerciseIdentity.addAlias(catalog, {exerciseId: row.id, label: input.label, provenance: 'user-created'});
     } else if (action === 'mergeCatalogExercises') {
+      check(!Object.hasOwn(row.metadata,'gymbroMerge'),'Preserved metadata occupies the merge namespace; no merge was prepared.');
       check(input.confirmed === true && typeof input.keepNameAlias === 'boolean', 'Review and confirm this merge.');
       const target = catalog.exercises.find(e => e.id === input.targetId);
-      check(target && target.id !== row.id && !target.metadata.gymbroMerge, 'Select a different unmerged destination.');
+      check(target && target.id !== row.id && !ExerciseIdentity.mergeRecord(target), 'Select a different unmerged destination.');
       for (const scope of ['exercise', 'exerciseSession']) {
         const keys = new Set();
         for (const note of document.data.noteScopes[scope]) {
@@ -50,7 +51,7 @@ const ExerciseCatalog = (() => {
       const previous = clone(beforeRows.exercises.find(e => e.exercise_id === row.id)), aliases = clone(beforeRows.aliases.filter(a => a.exercise_id === row.id)).sort((a,b)=>a.label<b.label?-1:a.label>b.label?1:0);
       catalog.aliases.forEach(a => { if (a.exerciseId === row.id) a.exerciseId = target.id; });
       row.state = 'archived';
-      row.metadata.gymbroMerge = {sourceId: row.id, targetId: target.id, sourceName: row.displayName,
+      row.metadata.gymbroMerge = {kind:'gymbro-catalog-merge-v2', sourceId: row.id, targetId: target.id, sourceName: row.displayName,
         targetName: target.displayName, ownerId: base.ownerId, operation: null, mergedAt: null,
         previous, aliases, affected:auditAffected, excludedLabel: input.keepNameAlias ? null : row.displayName};
     } else throw Error('Unsupported catalog operation.');
@@ -59,15 +60,15 @@ const ExerciseCatalog = (() => {
   }
   function suggestions(catalog, exerciseId) {
     const source = catalog.exercises.find(e => e.id === exerciseId);
-    if (!source || source.metadata.gymbroMerge) return [];
+    if (!source || ExerciseIdentity.mergeRecord(source)) return [];
     const words = name => new Set(name.toLocaleLowerCase('en').split(/[^\p{L}\p{N}]+/u).filter(Boolean));
     const a = words(source.displayName);
-    return catalog.exercises.filter(e => e.id !== exerciseId && !e.metadata.gymbroMerge && (() => {
+    return catalog.exercises.filter(e => e.id !== exerciseId && !ExerciseIdentity.mergeRecord(e) && (() => {
       const b = words(e.displayName), shared = [...a].filter(w => b.has(w)).length;
       return shared >= 2 && shared / Math.max(a.size, b.size) >= 0.6;
     })()).sort((a, b) => a.displayName.localeCompare(b.displayName));
   }
-  function selectable(catalog, id) { const row = catalog.exercises.find(e => e.id === id); return row?.state === 'active' && !row.metadata.gymbroMerge; }
+  function selectable(catalog, id) { const row = catalog.exercises.find(e => e.id === id); return row?.state === 'active' && !ExerciseIdentity.mergeRecord(row); }
   const actions = ['editCatalogExercise','addCatalogAlias','mergeCatalogExercises'];
   function createRepository({client,ownerId}) {
     const domain=WorkoutRepository.create({client,ownerId}), lifecycle=WorkoutLifecycle.createRepository({client,ownerId});

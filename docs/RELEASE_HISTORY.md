@@ -1,3 +1,7 @@
+# Pending #17 catalog isolation correction candidate
+
+`3.19.4-20261109T113434Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification and acceptance.
+
 # Pending #17 verification correction candidate
 
 `3.19.1-20261109T112954Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification/acceptance.

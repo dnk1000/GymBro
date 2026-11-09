@@ -4,14 +4,14 @@ function renderCatalogDetail(id) {
   if(!cloudMode || !cloudController)return '';
   const handle=cloudController.getSnapshot(),catalog=handle.document.catalog,row=catalog.exercises.find(e=>e.id===id);
   if(!row)return '';
-  if(row.metadata.gymbroMerge) {
-    const audit=row.metadata.gymbroMerge;
+  if(ExerciseIdentity.mergeRecord(row)) {
+    const audit=ExerciseIdentity.mergeRecord(row);
     return `<div class="notice">Merged into ${esc(audit.targetName)} on ${esc(audit.mergedAt || 'pending')}. Original identity and provenance retained.</div>`;
   }
   const draft=catalogDraft?.exerciseId===id?catalogDraft:null;
   const value=key=>esc(draft?.[key]??(key==='secondary'?row.secondary.join(', '):row[key]));
   const aliases=catalog.aliases.filter(a=>a.exerciseId===id).map(a=>a.label);
-  const options=catalog.exercises.filter(e=>e.id!==id&&!e.metadata.gymbroMerge);
+  const options=catalog.exercises.filter(e=>e.id!==id&&!ExerciseIdentity.mergeRecord(e));
   const suggestions=ExerciseCatalog.suggestions(catalog,id);
   return `<details class="catalog-editor"><summary>Manage exercise</summary>
     <p class="sub">Name, aliases and catalog metadata do not change recorded workout facts. Template roles and short-plan inclusion stay in Program.</p>

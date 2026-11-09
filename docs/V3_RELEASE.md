@@ -1,3 +1,13 @@
+# Issue #17 catalog isolation correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.4-20261109T113434Z`
+
+Data schema: `8`
+
+Scope fixes: catalog writer snapshot-helper grant; opaque legacy metadata discrimination; account-change draft clearing. Prior regression passes retained; initial database failures and corrected causes tracked in PR #100. Final fresh/replay verification pending. No live schema/data operation.
+
 # Issue #17 catalog verification correction candidate
 
 Release status: **preparation**

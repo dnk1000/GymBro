@@ -1,3 +1,7 @@
+## 3.19.4 — Catalog isolation correction candidate
+
+- Preserve opaque legacy metadata, clear private drafts on account change and grant the checked catalog writer its required read helper.
+
 ## 3.19.1 — Catalog verification correction candidate
 
 - Keep internal operation validation private and retain request replay comparison across explicit catalog merges; extend reviewed catalog browser and backup tests.

@@ -240,7 +240,7 @@ const WorkoutRepository = (() => {
                 // Only the private comparison view follows explicit catalog merges.
                 // The stored submitted signature/tombstone is restored below.
                 for(let i=0;i<document.catalog.exercises.length;i++) {
-                  const merge=document.catalog.exercises.find(e=>e.id===id)?.metadata.gymbroMerge;
+                  const merge=ExerciseIdentity.mergeRecord(document.catalog.exercises.find(e=>e.id===id));
                   if(!merge)break;
                   id=merge.targetId;
                 }

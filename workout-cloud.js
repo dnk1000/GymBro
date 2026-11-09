@@ -42,7 +42,7 @@ const WorkoutCloud = (() => {
       const resolve=(input,allowNew)=>{
         if(!input || typeof input.exercise!=='string')return;
         if(catalog().exercises.some(e=>e.id===input.exercise)) {
-          if(catalog().exercises.find(e=>e.id===input.exercise).metadata.gymbroMerge)throw Error('Select the merged destination exercise.');
+          if(ExerciseIdentity.mergeRecord(catalog().exercises.find(e=>e.id===input.exercise)))throw Error('Select the merged destination exercise.');
           return;
         }
         const label=input.exercise;let id=ExerciseIdentity.resolveLabel(catalog(),label);
