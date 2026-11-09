@@ -1,3 +1,7 @@
+# Catalog forward-repair candidate — not accepted or shipped
+
+`3.19.11-20261109T121127Z`, schema 8. PR #100. Original staging migration applied November 9 under explicit scope; signed tests exposed edit SQL error 42702. The forward repair is implemented with regression checks; applying it to Staging and enabling the corrected Preview build remain pending a revised scoped approval. Other-owner fingerprints across all 18 tables were unchanged; both synthetic owners were cleaned and passwords removed. No physical iPhone/Safari, merge or Production acceptance claimed.
+
 # Pending #17 SQL identifier correction
 
 `3.19.8-20261109T114128Z`, schema 8. Candidate only; PR #100 owns verification.

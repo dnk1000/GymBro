@@ -13,6 +13,35 @@ async function buildSql(){
   const packet=catalog.createRepository({client:{},ownerId:f.owner}).prepare(base,prepared.candidate,{action:'mergeCatalogExercises',args:[input],operation:['mergeCatalogExercises','catalog-merge'],result:prepared.result});
   const bad=structuredClone(packet);bad.operation=['mergeCatalogExercises','tamper'];bad.next.exercises.find(e=>e.exercise_id===source.id).metadata.gymbroMerge.operation=bad.operation;bad.next.sets[0].notes='tampered fact';
   const owner=f.owner,other='88888888-8888-4888-8888-999999999917';
+  // Exercise the edit branch against real PostgreSQL as well as reviewed merges.
+  // Independent JS candidates provide the expected complete rows for each action.
+  let editBase=structuredClone(base);editBase.ownerId=other;
+  editBase.rows=f.repository.project(editBase.document,other,editBase.bodyweightIds,editBase.signatureSchemes);
+  const editInit=f.repository.create({ownerId:other,client:{}}).prepare(null,editBase,{action:'initialize',args:[],operation:['initialize','catalog-edit-fixture'],result:{changes:['all']}});
+  let editEvidence=`select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}',true);
+select is(public.gymbro_workout_mutate(${literal(editInit)})->>'code','OK','initialize separate edit graph');\n`;
+  let firstEdit;
+  for(const [index,[action,input]] of [
+    ['editCatalogExercise',{exerciseId:source.id,displayName:'Rope Triceps Pressdown',primary:'Explicit category',secondary:['Explicit secondary'],pattern:'Explicit pattern',equipment:'Cable',type:source.type,state:'active'}],
+    ['addCatalogAlias',{exerciseId:source.id,label:'Explicit reviewed pressdown'}],
+    ['editCatalogExercise',{exerciseId:source.id,displayName:'Rope Triceps Pressdown',state:'archived'}],
+    ['editCatalogExercise',{exerciseId:source.id,displayName:'Rope Triceps Pressdown',state:'active'}],
+  ].entries()) {
+    const prepared=catalog.prepare(editBase,action,[input]);
+    const editPacket=catalog.createRepository({client:{},ownerId:other}).prepare(editBase,prepared.candidate,{action,args:[input],operation:[action,'catalog-edit-'+index],result:prepared.result});
+    firstEdit??=editPacket;
+    editEvidence+=`select is(public.gymbro_catalog_mutate(${literal(editPacket)})->>'code','OK','signed catalog ${action} ${index} succeeds');
+select is(public.gymbro_workout_normalize(public.gymbro_workout_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(editPacket.next)}),'${action} ${index} preserves every unrelated field and relationship');\n`;
+    editBase={...prepared.candidate,revision:String(BigInt(editBase.revision)+1n),rows:structuredClone(editPacket.next)};
+  }
+  editEvidence+=`select is((select exercise_id::text from public.gymbro_exercise_aliases where label='Bench Press'),'${source.id}','rename retains original matching identity');
+select is(public.gymbro_lifecycle_snapshot()->>'status','healthy','edited identity-v2 graph reconstructs');
+select is(public.gymbro_catalog_mutate(${literal(firstEdit)})->>'code','REPLAY','old-base edit retry replays');
+select is(public.gymbro_workout_snapshot()->>'revision','5','edit replay does not advance revision');\n`;
+  const rejected={...structuredClone(firstEdit),operation:['editCatalogExercise','unexpected-edit-field'],expectedRevision:'5',base:editBase.rows,next:editBase.rows};
+  rejected.args[0].unapprovedField=true;
+  editEvidence+=`select throws_ok($test$select public.gymbro_catalog_mutate(${literal(rejected)})$test$,'23514',null,'edit allowlist rejects extra fields');
+select is(public.gymbro_workout_normalize(public.gymbro_workout_snapshot()->'rows'),public.gymbro_workout_normalize(${literal(editBase.rows)}),'rejected edit leaves full graph unchanged');\n`;
   return `begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path=public,extensions;
@@ -68,6 +97,7 @@ select throws_ok($test$select public.gymbro_catalog_mutate((select packet from c
 select is_empty('select * from public.gymbro_sets','other owner cannot read facts');
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":true}',true);
 select throws_ok($test$select public.gymbro_catalog_mutate((select packet from catalog_packets where name='merge'))$test$,'42501',null,'anonymous authenticated session cannot use catalog mutation');
+${editEvidence}
 reset role;
 select * from finish();
 rollback;
