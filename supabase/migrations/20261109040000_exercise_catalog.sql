@@ -257,7 +257,7 @@ revoke all on function public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jso
   public.gymbro_catalog_audit_guard(),public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) from public,anon,authenticated;
 grant execute on function public.gymbro_request_owner(),public.gymbro_request_permanent(),public.gymbro_workout_tables(),public.gymbro_workout_keys(text),
   public.gymbro_workout_table(text),public.gymbro_workout_normalize(jsonb),public.gymbro_workout_read(),public.gymbro_lifecycle_snapshot(),public.gymbro_lifecycle_readable(jsonb),
-  public.gymbro_workout_snapshot(),
+  public.gymbro_workout_snapshot(),public.gymbro_valid_date(text),
   public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jsonb,text),public.gymbro_operation_valid(jsonb),public.gymbro_pre_catalog_operation_valid(jsonb),
   public.gymbro_domain_operation_valid(jsonb),public.gymbro_identity_v1_readable(jsonb),public.gymbro_lifecycle_timestamp(text) to gymbro_catalog_writer;
 grant execute on function public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) to gymbro_workout_writer,gymbro_lifecycle_writer;

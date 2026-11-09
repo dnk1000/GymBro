@@ -1,3 +1,7 @@
+## 3.19.7 — Catalog date-validation correction candidate
+
+- Complete the checked catalog writer's date-validator dependency without exposing internal operation validation.
+
 ## 3.19.4 — Catalog isolation correction candidate
 
 - Preserve opaque legacy metadata, clear private drafts on account change and grant the checked catalog writer its required read helper.

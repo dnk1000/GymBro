@@ -1,3 +1,7 @@
+# Pending #17 date-validation correction candidate
+
+`3.19.7-20261109T113844Z`, schema 8. PR #100 owns evidence; not accepted or Production-verified.
+
 # Pending #17 catalog isolation correction candidate
 
 `3.19.4-20261109T113434Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification and acceptance.

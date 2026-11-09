@@ -1,3 +1,13 @@
+# Issue #17 catalog date-validation correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.7-20261109T113844Z`
+
+Data schema: `8`
+
+Grant the checked catalog writer its existing date validator dependency. Catalog SQL now runs first after foundational checks to isolate failures before broad race/replay verification; all existing tests retained. Prior missing-read-helper failures remain recorded in PR #100. No hosted schema/data operation.
+
 # Issue #17 catalog isolation correction candidate
 
 Release status: **preparation**
