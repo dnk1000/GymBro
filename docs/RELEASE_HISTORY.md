@@ -1,3 +1,8 @@
+# Pending #37 catalog integration candidate
+
+`3.19.12-20261109T121600Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.
+
+
 # Catalog forward-repair candidate — not accepted or shipped
 
 `3.19.11-20261109T121127Z`, schema 8. PR #100. Original staging migration applied November 9 under explicit scope; signed tests exposed edit SQL error 42702. The owner separately approved the forward repair at `0f9570b`; only that additive migration was applied to Staging. Corrected signed domain checks and normal Preview UI at 320/390/1280 PASS with actual Staging RPCs, exact content/provenance/retry/backup/isolation evidence. CI 42615442004 passes 357 regressions and 43 catalog SQL checks on fresh/replayed databases; final combined stack passes 23 focused checks. Temporary branch settings were removed and the restored Preview verified disabled. Other-owner fingerprints across all 18 tables were unchanged; both synthetic owners were cleaned and passwords removed. No physical iPhone/Safari, merge or Production acceptance claimed.

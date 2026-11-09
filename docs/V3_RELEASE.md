@@ -1,3 +1,15 @@
+# Issue #37 catalog integration candidate
+
+Release status: **preparation**
+
+Application version: `3.19.12-20261109T121600Z`
+
+Data schema: `8`
+
+Presentation-only PATCH on the approved #17 candidate. Preserve mobile library, desktop table and one canonical catalog/detail path. Existing initial #37 evidence remains historical; integrated verification belongs to PR #101. No Production operation or acceptance.
+
+
+
 # Issue #17 catalog edit forward-repair candidate
 
 Release status: **preparation**
