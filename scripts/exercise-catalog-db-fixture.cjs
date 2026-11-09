@@ -33,6 +33,10 @@ select is(public.gymbro_lifecycle_snapshot()->>'status','healthy','v2 reconstruc
 select is(public.gymbro_lifecycle_snapshot()#>>'{rows,workout_state,0,document_extra,identityVersion}','2','identity upgraded only on acknowledged catalog mutation');
 select is(public.gymbro_catalog_mutate((select packet from catalog_packets where name='merge'))->>'code','REPLAY','exact old-base retry replays');
 select is(public.gymbro_workout_snapshot()->>'revision','2','replay never increments revision');
+select is(public.gymbro_workout_normalize(jsonb_set(public.gymbro_workout_snapshot()->'rows','{exercises}',
+  (select jsonb_agg(case when e->>'exercise_id'='${source.id}' then jsonb_set(e,'{metadata,gymbroMerge,mergedAt}','null') else e end)
+   from jsonb_array_elements(public.gymbro_workout_snapshot()#>'{rows,exercises}') e))),
+  public.gymbro_workout_normalize((select packet->'next' from catalog_packets where name='merge')),'every field and relationship matches reviewed candidate except authoritative server timestamp');
 select is((select count(*)::int from public.gymbro_sets),${base.rows.sets.length},'no duplicated sets');
 select is((select count(*)::int from public.gymbro_exercise_aliases where label='Bench Press' and exercise_id='${target.id}'),1,'old name resolves to destination');
 select is((select state from public.gymbro_exercises where exercise_id='${source.id}'),'archived','source retained archived');
@@ -44,10 +48,16 @@ select ok(not has_table_privilege('authenticated','public.gymbro_snapshot_slots'
 select ok(not has_table_privilege('gymbro_workout_writer','public.gymbro_exercise_aliases','UPDATE'),'ordinary writer still cannot reassign aliases');
 select ok(not has_table_privilege('gymbro_catalog_writer','public.gymbro_sets','DELETE'),'catalog cannot delete facts');
 select ok(not has_table_privilege('gymbro_catalog_writer','public.gymbro_mutation_receipts','UPDATE'),'catalog cannot rewrite receipts');
+select throws_ok($test$select public.gymbro_workout_mutate(jsonb_build_object('protocolVersion',1,'ownerId','${owner}','expectedRevision','2',
+  'action','editSet','operation',jsonb_build_array('editSet','forged-snapshot-edit'),'args','[]'::jsonb,'result','{}'::jsonb,
+  'base',public.gymbro_workout_snapshot()->'rows','next',jsonb_set(public.gymbro_workout_snapshot()->'rows','{snapshot_slots,0,role}',
+    case when public.gymbro_workout_snapshot()#>>'{rows,snapshot_slots,0,role}'='core' then '"accessory"'::jsonb else '"core"'::jsonb end)))$test$,'23514',null,'ordinary mutation cannot edit snapshot after merge');
 select set_config('request.jwt.claim.sub','${other}',true);
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}',true);
 select throws_ok($test$select public.gymbro_catalog_mutate((select packet from catalog_packets where name='merge'))$test$,'23514',null,'foreign-owner mutation rejected');
 select is_empty('select * from public.gymbro_sets','other owner cannot read facts');
+select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":true}',true);
+select throws_ok($test$select public.gymbro_catalog_mutate((select packet from catalog_packets where name='merge'))$test$,'42501',null,'anonymous authenticated session cannot use catalog mutation');
 reset role;
 select * from finish();
 rollback;

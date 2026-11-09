@@ -71,3 +71,16 @@ test('unrecognized metadata remains opaque and is never overwritten by merge aud
   assert.throws(()=>f.catalog.prepare(base,'mergeCatalogExercises',[{exerciseId:row.id,targetId:target.id,confirmed:true,keepNameAlias:true}]),/namespace/);
   equal(base,before);
 });
+test('Pressdown into Pushdown resolves all prior canonical references without duplicating recorded sets',async()=>{
+  const f=await fixture(),base=structuredClone(f.handle),source=base.document.catalog.exercises.find(e=>e.displayName==='Bench Press'),target=base.document.catalog.exercises.find(e=>e.displayName==='Smith Press');
+  base.document.catalog=f.identity.renameExercise(base.document.catalog,source.id,'Rope Triceps Pressdown');
+  base.document.catalog=f.identity.renameExercise(base.document.catalog,target.id,'Rope Triceps Pushdown');
+  const before=structuredClone(base.document),count=before.data.sets.filter(s=>[source.id,target.id].includes(s.exercise.exerciseId)).length;
+  const {candidate}=f.catalog.prepare(base,'mergeCatalogExercises',[{exerciseId:source.id,targetId:target.id,confirmed:true,keepNameAlias:true}]);
+  assert.equal(candidate.document.data.sets.filter(s=>s.exercise.exerciseId===target.id).length,count);
+  assert.equal(candidate.document.data.sets.length,before.data.sets.length);
+  assert.equal(f.identity.resolveLabel(candidate.document.catalog,'Rope Triceps Pressdown'),target.id);
+  assert.equal(f.identity.resolveLabel(candidate.document.catalog,'Rope Triceps Pushdown'),target.id);
+  equal(f.identity.restoreV2Source(candidate.document),f.identity.restoreV2Source(before));
+  assert.equal(f.identity.performanceContext(candidate.document,{exerciseId:target.id,asOfDate:'2026-11-09'}).exercise.exerciseId,target.id);
+});
