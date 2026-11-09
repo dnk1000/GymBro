@@ -1,3 +1,13 @@
+# Issue #34 Program presentation candidate
+
+Release status: **preparation**
+
+Application version: `3.18.13-20261109T031820Z`
+
+Data schema: `8`
+
+Presentation-only PATCH on #37: clarify template selection, selected plan duration, workout classification and empty/editor context. Existing actions and definitions remain. Pending Preview/device acceptance; no Production operation.
+
 # Issue #37 responsive exercise library candidate
 
 Release status: **preparation**

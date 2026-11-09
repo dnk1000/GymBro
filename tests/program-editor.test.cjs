@@ -1,0 +1,42 @@
+const {test,before,after}=require('node:test');const assert=require('node:assert/strict');
+const {chromium}=require('playwright-core');const {createServer}=require('../scripts/serve-probe.cjs');
+let browser,server,origin;
+before(async()=>{server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));origin='http://127.0.0.1:'+server.address().port;browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true});});
+after(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));});
+for(const width of [320,390,1280])test('Program selection, plan duration and existing edits at '+width+'px',async t=>{
+  const context=await browser.newContext({viewport:{width,height:900}});t.after(()=>context.close());const page=await context.newPage(),errors=[];page.setDefaultTimeout(5000);
+  page.on('pageerror',e=>errors.push(e.message));await context.route('**/api/**',r=>r.fulfill({json:{enabled:false}}));await page.goto(origin);
+  const before=await page.evaluate(()=>JSON.stringify(db));await page.locator('[data-view="program"]').click();
+  assert.match(await page.locator('#templateEditor').textContent(),/Select a workout to view or edit/);
+  const select=page.locator('.template-select').first();await select.focus();await page.keyboard.press('Enter');
+  assert.equal(await select.getAttribute('aria-pressed'),'true');
+  assert.match(await page.locator('#templateEditor').textContent(),/classification, not a set effort score/);
+  assert.equal(await page.evaluate(()=>JSON.stringify(db)),before,'browsing never saves or changes data');
+  const id=await page.evaluate(()=>selectedTemplateId);
+  const slots=await page.evaluate(id=>structuredClone(db.program.templates.find(t=>t.id===id).slots),id);
+  for(const duration of [30,60]){
+    await page.locator('.template-card').first().getByRole('button',{name:new RegExp('— '+duration+' min$')}).click();
+    await page.locator('[data-view="program"]').click();
+    assert.match(await page.locator('#templateEditorTitle').textContent(),new RegExp(duration+' min plan selected'));
+    assert.equal(await page.evaluate(()=>db.program.activeDuration),duration);
+    assert.equal(await page.locator('.template-card').first().getByRole('button',{name:new RegExp('— '+duration+' min$')}).getAttribute('aria-pressed'),'true');
+  }
+  assert.deepEqual(await page.evaluate(id=>db.program.templates.find(t=>t.id===id).slots,id),slots);
+  const short=page.locator('#templateEditor').getByRole('button',{name:'30m',exact:true}).first();
+  await short.click();assert.equal(await short.getAttribute('aria-pressed'),String(!slots[0].short));await short.click();
+  const role=page.locator('#templateEditor').getByRole('button',{name:'Role',exact:true}).first();
+  for(let i=0;i<3;i++)await role.click();
+  assert.deepEqual(await page.evaluate(id=>db.program.templates.find(t=>t.id===id).slots,id),slots);
+  await page.getByLabel('Exercise to add',{exact:true}).fill('Synthetic program test');
+  await page.getByRole('combobox',{name:'Role for added exercise'}).selectOption('accessory');
+  await page.locator('#templateEditor').getByRole('button',{name:'Add',exact:true}).click();
+  assert.equal(await page.locator('#templateEditor .item').count(),slots.length+1);
+  await page.locator('#templateEditor').getByRole('button',{name:'Remove',exact:true}).last().click();
+  assert.deepEqual(await page.evaluate(id=>db.program.templates.find(t=>t.id===id).slots,id),slots);
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  assert(await page.locator('.template-select').first().evaluate(el=>el.getBoundingClientRect().height>=44));
+  const after=await page.evaluate(()=>structuredClone(db));assert.deepEqual(after.sessions,JSON.parse(before).sessions);assert.deepEqual(after.sets,JSON.parse(before).sets);
+  await page.reload();await page.locator('[data-view="program"]').click();await page.locator('.template-select').first().click();
+  assert.match(await page.locator('#templateEditorTitle').textContent(),/60 min plan selected/);
+  assert.deepEqual(errors,[]);
+});

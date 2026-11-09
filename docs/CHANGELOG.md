@@ -1,3 +1,7 @@
+## 3.18.13 — Program editing clarity candidate
+
+- Clear selected template/duration, keyboard editing affordance and workout classification; preserve 30/60 definitions and existing edits.
+
 ## 3.18.12 — Mobile exercise library candidate
 
 - Full-width phone exercise names and compact usage metadata; preserve desktop table and existing detail path, with keyboard selection.

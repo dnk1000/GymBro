@@ -1,3 +1,7 @@
+# Pending #34 Program presentation candidate
+
+`3.18.13-20261109T031820Z`, schema 8. Presentation-only PATCH; not accepted, merged or Production-verified. Focused PR owns evidence.
+
 # Pending #37 responsive exercise library candidate
 
 `3.18.12-20261109T031348Z`, schema 8. Presentation-only PATCH under VERSION_POLICY.md; not accepted, merged or Production-verified. See the focused PR for actual evidence.
