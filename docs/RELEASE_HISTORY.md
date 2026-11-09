@@ -1,6 +1,14 @@
 # Pending #37 catalog integration candidate
 
-`3.19.5-20261109T113527Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.
+`3.19.9-20261109T114636Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.
+
+# Pending #17 SQL identifier correction
+
+`3.19.8-20261109T114128Z`, schema 8. Candidate only; PR #100 owns verification.
+
+# Pending #17 date-validation correction candidate
+
+`3.19.7-20261109T113844Z`, schema 8. PR #100 owns evidence; not accepted or Production-verified.
 
 # Pending #17 catalog isolation correction candidate
 

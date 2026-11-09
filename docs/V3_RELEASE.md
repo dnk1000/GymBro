@@ -2,11 +2,31 @@
 
 Release status: **preparation**
 
-Application version: `3.19.5-20261109T113527Z`
+Application version: `3.19.9-20261109T114636Z`
 
 Data schema: `8`
 
 Presentation-only PATCH on the approved #17 candidate. Preserve mobile library, desktop table and one canonical catalog/detail path. Existing initial #37 evidence remains historical; integrated verification belongs to PR #101. No Production operation or acceptance.
+
+# Issue #17 SQL identifier correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.8-20261109T114128Z`
+
+Data schema: `8`
+
+Qualify catalog source/destination variables to avoid collision with the persisted set source column. Focused SQL tests now reach the actual mutation; previous failure rolled back and is retained in PR #100. No hosted schema/data operation.
+
+# Issue #17 catalog date-validation correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.7-20261109T113844Z`
+
+Data schema: `8`
+
+Grant the checked catalog writer its existing date validator dependency. Catalog SQL now runs first after foundational checks to isolate failures before broad race/replay verification; all existing tests retained. Prior missing-read-helper failures remain recorded in PR #100. No hosted schema/data operation.
 
 # Issue #17 catalog isolation correction candidate
 
