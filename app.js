@@ -804,6 +804,7 @@ function showExercise(ex) {
   const meta = db.exerciseLibrary?.[ex] || {};
   exerciseDetail.innerHTML = `<div>${meta.primary ? `<span class="muscle-tag">Primary: ${esc(meta.primary)}</span>` : ""}${(meta.secondary || []).map((x) => `<span class="muscle-tag">${esc(x)}</span>`).join("")}${meta.pattern ? `<span class="muscle-tag">${esc(meta.pattern)}</span>` : ""}</div>${pref ? `<div class="notice" style="margin-top:8px"><strong>Existing exercise preference</strong><div class="note-text">${esc(pref)}</div></div>` : ""}<div class="grid cols2" style="margin-top:10px"><div><div class="label">Best comparable set-work</div><div><strong>${best ? fmt(best.weight) + " " + esc(best.unit) + " × " + fmt(best.reps) : "—"}</strong></div></div><div><div class="label">Latest</div><div><strong>${latest ? fmt(latest.weight) + " " + esc(latest.unit) + " × " + fmt(latest.reps) : "—"}</strong></div></div><div><div class="label">Pain events</div><div><strong>${pain.length}</strong></div></div><div><div class="label">Sessions</div><div><strong>${exerciseSessionCount(r)}</strong></div></div></div>`;
   exerciseDetail.insertAdjacentHTML("beforeend", exerciseScopedNotes(ex));
+  if(typeof renderCatalogDetail==='function')exerciseDetail.insertAdjacentHTML('beforeend',renderCatalogDetail(ex));
   lineChart(
     exerciseChart,
     bestByDate(ex).map((x) => ({ v: x.v, label: x.label })),

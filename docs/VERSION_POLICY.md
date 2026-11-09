@@ -45,6 +45,11 @@ The user explicitly approved **3.5.0 for #39 alone** on October 28, 2026. The ap
 
 ## When to change the version
 
+On November 8, 2026 (America/New_York), the owner accepted the #17 catalog
+proposal at `e048e81d2fefc332dab0d07b3b01ddf9085e7a6b`, approving **3.19.0
+for #17 alone and scoped PATCH fixes**. This records a candidate mapping,
+not final acceptance or a Production schema/data operation.
+
 The owner approved **3.12.0 for #41 alone** on October 30, 2026 by requesting completion against the exact [lifecycle design](V3_DATA_LIFECYCLE_PROPOSAL.md) at `75f2247`. This is a candidate mapping, not acceptance, merge, personal migration or Production cutover approval.
 
 On October 27, 2026 the user explicitly approved **`3.4.0` for #25 alone** in the #25 implementation conversation. Its independent workout schema is 8 for explicit note scopes; this mapping is not Production acceptance or merge approval.

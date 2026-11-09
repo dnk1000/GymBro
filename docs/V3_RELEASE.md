@@ -1,22 +1,42 @@
-# Issue #34 Program presentation candidate
+# Issue #34 catalog integration candidate
 
 Release status: **preparation**
 
-Application version: `3.18.13-20261109T031820Z`
+Application version: `3.19.3-20261109T113251Z`
 
 Data schema: `8`
 
-Presentation-only PATCH on #37: clarify template selection, selected plan duration, workout classification and empty/editor context. Existing actions and definitions remain. Pending Preview/device acceptance; no Production operation.
+Presentation-only PATCH on #17/#37: retain Program selection/editing improvements and align release metadata. Existing original #34 evidence is historical; integrated checks belong to PR #102. No Production operation or acceptance.
 
-# Issue #37 responsive exercise library candidate
+# Issue #37 catalog integration candidate
 
 Release status: **preparation**
 
-Application version: `3.18.12-20261109T031348Z`
+Application version: `3.19.2-20261109T113158Z`
 
 Data schema: `8`
 
-Presentation-only PATCH: stacked phone rows, existing desktop table/detail and canonical identities preserved. Verification and pending physical iPhone/Preview acceptance: focused #37 PR. No Production operation.
+Presentation-only PATCH on the approved #17 candidate. Preserve mobile library, desktop table and one canonical catalog/detail path. Existing initial #37 evidence remains historical; integrated verification belongs to PR #101. No Production operation or acceptance.
+
+# Issue #17 catalog verification correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.1-20261109T112954Z`
+
+Data schema: `8`
+
+Keep operation validation private, preserve original guided request signatures while comparing approved merges, and extend catalog browser/compatibility coverage. Initial regression PASS; initial database job found an unintended validator grant, corrected without weakening its test. Fresh/replay retest pending. No hosted schema apply or Production operation.
+
+# Issue #17 catalog candidate
+
+Release status: **preparation**
+
+Application version: `3.19.0-20261109T112448Z`
+
+Data schema: `8`
+
+Approved identity-v2 catalog/merge candidate. Backward reading of identity-v1 backups retained; v1 loads do not write. Additive catalog migration requires separate environment promotion. PR #100 owns actual verification and pending acceptance. No Production operation or merge.
 
 # Issue #98 planned-target correction candidate
 
