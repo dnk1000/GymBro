@@ -52,6 +52,16 @@ select throws_ok($test$select public.gymbro_workout_mutate(jsonb_build_object('p
   'action','editSet','operation',jsonb_build_array('editSet','forged-snapshot-edit'),'args','[]'::jsonb,'result','{}'::jsonb,
   'base',public.gymbro_workout_snapshot()->'rows','next',jsonb_set(public.gymbro_workout_snapshot()->'rows','{snapshot_slots,0,role}',
     case when public.gymbro_workout_snapshot()#>>'{rows,snapshot_slots,0,role}'='core' then '"accessory"'::jsonb else '"core"'::jsonb end)))$test$,'23514',null,'ordinary mutation cannot edit snapshot after merge');
+select is(public.gymbro_lifecycle_mutate(jsonb_build_object('protocolVersion',1,'ownerId','${owner}','action','restoreCompleteBackup',
+  'operation',jsonb_build_array('restoreCompleteBackup','catalog-v2-backup-restore'),'expectedRevision','2','sourceOwnerId','${owner}',
+  'fingerprint',public.gymbro_lifecycle_snapshot()->'fingerprint','status','healthy',
+  'safety',jsonb_build_object('ownerId','${owner}','revision','2','fingerprint',public.gymbro_lifecycle_snapshot()->'fingerprint'),
+  'base',public.gymbro_workout_snapshot()->'rows','next',public.gymbro_workout_snapshot()->'rows','result',jsonb_build_object('changes',jsonb_build_array('workoutData'))))->>'code','OK','complete lifecycle restore accepts the merged identity-v2 graph');
+select is(public.gymbro_lifecycle_snapshot()->>'status','healthy','restored merged graph reconstructs');
+select is(public.gymbro_workout_normalize(jsonb_set(public.gymbro_workout_snapshot()->'rows','{exercises}',
+  (select jsonb_agg(case when e->>'exercise_id'='${source.id}' then jsonb_set(e,'{metadata,gymbroMerge,mergedAt}','null') else e end)
+   from jsonb_array_elements(public.gymbro_workout_snapshot()#>'{rows,exercises}') e))),
+  public.gymbro_workout_normalize((select packet->'next' from catalog_packets where name='merge')),'complete restore retains every merged fact, alias and audit field');
 select set_config('request.jwt.claim.sub','${other}',true);
 select set_config('request.jwt.claims','{"sub":"${other}","is_anonymous":false}',true);
 select throws_ok($test$select public.gymbro_catalog_mutate((select packet from catalog_packets where name='merge'))$test$,'23514',null,'foreign-owner mutation rejected');
