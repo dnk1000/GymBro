@@ -1,7 +1,7 @@
 // V3 identity boundary. No DOM, storage, network, or automatic migration.
 // Call with a validated current source; #39/#28 own persistence and rollout.
 const ExerciseIdentity = (() => {
-  const VERSION = 1;
+  const VERSION = 2;
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   const origins = ["built-in", "user-created", "import-created", "legacy"];
   const clone = (value) => structuredClone(value);
@@ -11,7 +11,9 @@ const ExerciseIdentity = (() => {
   const label = (value) => typeof value === "string" && value.trim() !== "";
   const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
-  function validateCatalog(catalog) {
+  function mergeRecord(row) { return row?.metadata?.gymbroMerge?.kind === 'gymbro-catalog-merge-v2' ? row.metadata.gymbroMerge : null; }
+
+  function validateCatalog(catalog, identityVersion = VERSION) {
     check(object(catalog) && Array.isArray(catalog.exercises) && Array.isArray(catalog.aliases), "Invalid exercise catalog.");
     const ids = new Set(), labels = new Map();
     for (const row of catalog.exercises) {
@@ -26,8 +28,15 @@ const ExerciseIdentity = (() => {
         origins.includes(row.provenance), "Invalid, ambiguous or orphaned exercise alias.");
       labels.set(row.label, row.exerciseId);
     }
-    for (const row of catalog.exercises)
-      check(labels.get(row.displayName) === row.id, "Canonical display name must resolve to its immutable ID.");
+    for (const row of catalog.exercises) {
+      const merge = mergeRecord(row);
+      if (identityVersion === 2 && merge) {
+        check(object(merge) && merge.sourceId === row.id && uuid.test(merge.targetId) && merge.targetId !== row.id &&
+          ids.has(merge.targetId) && row.state === 'archived' && merge.sourceName === row.displayName &&
+          (merge.excludedLabel === null || merge.excludedLabel === row.displayName) &&
+          object(merge.previous) && Array.isArray(merge.aliases) && object(merge.affected), 'Invalid merged exercise provenance.');
+      } else check(labels.get(row.displayName) === row.id, "Canonical display name must resolve to its immutable ID.");
+    }
     return catalog;
   }
 
@@ -35,6 +44,7 @@ const ExerciseIdentity = (() => {
     validateCatalog(catalog);
     check(label(inputLabel), "Supply an exact label.");
     // Deliberately no trimming, case folding, similarity, or semantic equivalence.
+    if (catalog.exercises.some(row => mergeRecord(row)?.excludedLabel === inputLabel)) return null;
     return catalog.aliases.find((row) => row.label === inputLabel)?.exerciseId ?? null;
   }
 
@@ -144,24 +154,25 @@ const ExerciseIdentity = (() => {
       row[field] = { exerciseId: resolveLabel(nextCatalog, row[field]), originalLabel: row[field] };
     delete data.exerciseLibrary;
     delete data.version;
-    const document = { identityVersion: VERSION, sourceSchemaVersion: source.version, catalog: nextCatalog, legacyExerciseLibrary, data };
+    const document = { identityVersion: 1, sourceSchemaVersion: source.version, catalog: nextCatalog, legacyExerciseLibrary, data };
     verifyV2Migration(source, document);
     return document;
   }
 
   function restoreV2Source(document) {
-    check(object(document) && document.identityVersion === VERSION && [7, 8].includes(document.sourceSchemaVersion),
+    check(object(document) && [1, 2].includes(document.identityVersion) && [7, 8].includes(document.sourceSchemaVersion),
       "Unsupported exercise identity document.");
-    validateCatalog(document.catalog);
+    validateCatalog(document.catalog, document.identityVersion);
     check(object(document.legacyExerciseLibrary), "Missing legacy exercise definitions.");
     for (const name of Object.keys(document.legacyExerciseLibrary))
-      check(resolveLabel(document.catalog, name), "Legacy exercise definition lost its canonical identity.");
+      check(document.catalog.aliases.some(a => a.label === name), "Legacy exercise definition lost its canonical identity.");
     const data = clone(document.data);
     check(object(data) && !Object.hasOwn(data, "version") && !Object.hasOwn(data, "exerciseLibrary"), "Invalid identity document data.");
     for (const [row, field] of references(data, document.sourceSchemaVersion)) {
       const ref = row[field];
       check(object(ref) && Object.keys(ref).length === 2 && label(ref.originalLabel) && uuid.test(ref.exerciseId) &&
-        resolveLabel(document.catalog, ref.originalLabel) === ref.exerciseId, "Broken canonical exercise reference.");
+        document.catalog.aliases.some(a => a.label === ref.originalLabel && a.exerciseId === ref.exerciseId) &&
+        !mergeRecord(document.catalog.exercises.find(e => e.id === ref.exerciseId)), "Broken canonical exercise reference.");
       row[field] = ref.originalLabel;
     }
     data.exerciseLibrary = clone(document.legacyExerciseLibrary);
@@ -178,7 +189,7 @@ const ExerciseIdentity = (() => {
     else validateData(source);
     const restored = restoreV2Source(document);
     check(sameSessionData(source, restored), "Migration content/relationship mismatch; destination must not be committed.");
-    return { ok: true, identityVersion: VERSION, exercises: document.catalog.exercises.length,
+    return { ok: true, identityVersion: document.identityVersion, exercises: document.catalog.exercises.length,
       references: references(document.data, document.sourceSchemaVersion).length, sets: source.sets.length, sessions: source.sessions.length };
   }
 
@@ -236,6 +247,6 @@ const ExerciseIdentity = (() => {
     return { ok: true, exercises: rows.exercises.length, aliases: rows.aliases.length };
   }
 
-  return Object.freeze({ VERSION, validateCatalog, resolveLabel, createExercise, addAlias, renameExercise,
+  return Object.freeze({ VERSION, mergeRecord, validateCatalog, resolveLabel, createExercise, addAlias, renameExercise,
     migrateV2, restoreV2Source, verifyV2Migration, performanceContext, databaseRows, verifyDatabaseCatalog });
 })();

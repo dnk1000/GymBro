@@ -1,7 +1,10 @@
 // Staging remains synthetic-only. #84 adds a separately approved explicit rehearsal.
+let showArchivedExerciseChoices=false;
 function renderCloudExerciseInput() {
   const selected=fExercise.value;
-  fExercise.innerHTML='<option value="">Choose exercise</option>'+allExercises().map(id=>`<option value="${esc(id)}">${esc(exerciseName(id))}</option>`).join('')+'<option value="__new__">New exercise…</option>';
+  const catalog=cloudController?.getWorkoutState()?.catalog;
+  const choices=allExercises().filter(id=>!catalog || (!ExerciseIdentity.mergeRecord(catalog.exercises.find(e=>e.id===id)) && (ExerciseCatalog.selectable(catalog,id)||id===selected||showArchivedExerciseChoices)));
+  fExercise.innerHTML='<option value="">Choose exercise</option>'+choices.map(id=>`<option value="${esc(id)}">${esc(exerciseName(id))}${catalog?.exercises.find(e=>e.id===id)?.state==='archived'?' (archived)':''}</option>`).join('')+'<option value="__archived__">Browse archived exercises…</option><option value="__new__">New exercise…</option>';
   fExercise.value=[...fExercise.options].some(o=>o.value===selected)?selected:'';
 }
 (() => {
@@ -20,7 +23,7 @@ function renderCloudExerciseInput() {
   const select=document.createElement('select');select.id='fExercise';select.setAttribute('aria-label','Exercise');
   fExercise.replaceWith(select);fExercise=select;
   const label=document.createElement('input');label.id='newExerciseLabel';label.placeholder='Exact new exercise name';label.hidden=true;label.setAttribute('aria-label','New exercise name');select.after(label);
-  select.onchange=()=>{label.hidden=select.value!=='__new__';};
+  select.onchange=()=>{if(select.value==='__archived__'){showArchivedExerciseChoices=true;renderCloudExerciseInput();select.value='';}label.hidden=select.value!=='__new__';};
   host.innerHTML=`<h2>Synthetic staging cloud workouts</h2><p>Only dedicated test accounts and matching tagged synthetic sources are enabled. Personal backup and local-copy migration are disabled pending M0/#27 readiness. Production workouts remain local.</p>
     <p id="cloudStatus" role="status" aria-live="polite">Sign in through Account access, then connect.</p><button id="cloudConnect">Connect test account</button>
     <button id="cloudRefresh">Refresh saved data</button><button id="cloudRetry">Retry same request</button><button id="cloudResolve">Check result / cancel unresolved request</button>
@@ -80,6 +83,7 @@ function renderCloudExerciseInput() {
       s.diagnostic || s.phase==='LOAD_ERROR' || h.status!=='healthy' ? diagnosticMessage : parityBlocked&&h.status==='healthy'?'Import verification or recovery metadata is pending; editing is blocked.':s.message||(result?`Cloud request ${result.code}. Revision ${h.revision}.`:`Cloud state: ${h.status}. Revision ${h.revision}.`));
   }
   function invalidate(){
+    catalogDraft=null;showArchivedExerciseChoices=false;
     epoch++;controllerEpoch=null;panel?.dispose();panel=null;cloudController?.dispose();cloudController=null;cloudReady=false;
     db=emptyData();noteDrafts.clear();selectedNoteOccurrence=null;selectedExercise='';selectedTemplateId=null;
     clearForm();clearInbox();expandedHistoryGroups.clear();for(const f of fields){f.disabled=true;f.hidden=true;}

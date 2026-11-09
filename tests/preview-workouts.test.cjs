@@ -8,7 +8,9 @@ const env={VERCEL_ENV:'preview',GYMBRO_PREVIEW_WORKOUTS:'true',GYMBRO_CLOUD_ENV:
 test('Preview cloud capability refuses Production, privileged config, missing owners/tag and disabled environments',()=>{
   const base={...env,GYMBRO_PREVIEW_WORKOUT_OWNERS:'99999999-9999-4999-8999-999999999939'};
   assert.equal(workoutConfig(base).syntheticOnly,true);assert.equal(workoutConfig(base).configured,true);
-  for(const patch of [{VERCEL_ENV:'production'},{GYMBRO_PREVIEW_WORKOUTS:'false'},{SUPABASE_PROJECT_REF:'wrong'},{SUPABASE_PUBLISHABLE_KEY:'sb_secret_never_emit'},{GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'personal'},{GYMBRO_PREVIEW_WORKOUT_OWNERS:''}]){
+  const catalogScope=workoutConfig({...base,GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'gymbro-issue17-20261109-b96319a'});
+  assert.equal(catalogScope.configured,true);assert.equal(catalogScope.syntheticOnly,true);assert.deepEqual(catalogScope.allowedOwners,[base.GYMBRO_PREVIEW_WORKOUT_OWNERS]);
+  for(const patch of [{VERCEL_ENV:'production'},{GYMBRO_PREVIEW_WORKOUTS:'false'},{SUPABASE_PROJECT_REF:'wrong'},{SUPABASE_PUBLISHABLE_KEY:'sb_secret_never_emit'},{GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'personal'},{GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'gymbro-issue34-unapproved'},{GYMBRO_PREVIEW_WORKOUT_OWNERS:''}]){
     const c=workoutConfig({...base,...patch});assert.notEqual(c.configured,true);assert(!JSON.stringify(c).includes('never_emit'));
   }
 });
@@ -27,7 +29,13 @@ async function fixture(){
     else if(name==='gymbro_lifecycle_resolve')answer={code:'CANCELLED'};
     else if(args.packet.expectedRevision!==saved.revision)answer={code:'CONFLICT'};
     else {
-      const p=args.packet;saved={...saved,status:'healthy',rows:plain(p.next),revision:String(BigInt(saved.revision)+1n),fingerprint:'b'.repeat(64)};
+      const p=plain(args.packet);
+      if(p.action==='mergeCatalogExercises') {
+        const mergedAt='2026-11-09T12:00:00.000Z';
+        p.next.exercises.find(e=>e.exercise_id===p.args[0].exerciseId).metadata.gymbroMerge.mergedAt=mergedAt;
+        p.result={...p.result,mergedAt};
+      }
+      saved={...saved,status:'healthy',rows:plain(p.next),revision:String(BigInt(saved.revision)+1n),fingerprint:'b'.repeat(64)};
       receipts.set(key,{result:p.result,revision:saved.revision});answer={code:'OK',result:p.result,operationRevision:saved.revision};
       if(lost){lost=false;throw Error('lost response');}
     }
@@ -53,6 +61,34 @@ async function open(t,f,width,accountModule=false,failedLoad=false){
   t.after(()=>assert.deepEqual(errors,[],'uncaught normal-app browser errors'));
   return page;
 }
+for(const width of [320,390,1280])test('catalog detail edits, archive, reviewed merge and lost-ack retry at '+width+'px',async t=>{
+  const f=await fixture(),page=await open(t,f,width);page.on('dialog',d=>d.accept());
+  await page.locator('#migrationFile').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});
+  await page.locator('#migrationReview').click();await page.locator('#migrationCommit').click();await page.waitForFunction(()=>cloudReady);
+  await page.locator('[data-view="exercises"]').click();await page.locator('#exerciseTable .exercise-row').filter({hasText:'Bench Press'}).click();
+  const source=f.getSaved().rows.exercises.find(e=>e.display_name==='Bench Press'),target=f.getSaved().rows.exercises.find(e=>e.display_name==='Rope Triceps Pushdown');
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogName').fill('Reviewed bench '+width);
+  await page.getByRole('button',{name:'Save catalog changes',exact:true}).click();
+  await page.waitForFunction(name=>document.getElementById('exerciseDetailTitle').textContent===name,'Reviewed bench '+width);
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogAlias').fill('Explicit bench alias '+width);await page.getByRole('button',{name:'Add alias',exact:true}).click();
+  await page.waitForFunction(label=>cloudController.getWorkoutState().catalog.aliases.some(a=>a.label===label),'Explicit bench alias '+width);
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogState').selectOption('archived');await page.getByRole('button',{name:'Save catalog changes',exact:true}).click();
+  await page.waitForFunction(id=>cloudController.getWorkoutState().catalog.exercises.find(e=>e.id===id).state==='archived',source.exercise_id);
+  assert.equal(await page.locator('#fExercise option').evaluateAll((options,id)=>options.some(o=>o.value===id),source.exercise_id),false);
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogState').selectOption('active');await page.getByRole('button',{name:'Save catalog changes',exact:true}).click();
+  await page.waitForFunction(id=>cloudController.getWorkoutState().catalog.exercises.find(e=>e.id===id).state==='active',source.exercise_id);
+  const before=plain(f.getSaved().rows);
+  await page.locator('.catalog-editor > summary').click();await page.locator('.catalog-editor details > summary').click();await page.locator('#catalogTarget').selectOption(target.exercise_id);
+  f.lose();await page.getByRole('button',{name:'Review merge',exact:true}).click();await page.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');
+  const committed=plain(f.getSaved());await page.locator('[data-view="data"]').click();await page.locator('#cloudRetry').click();await page.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+  assert.equal(f.getSaved().revision,committed.revision);assert.deepEqual(plain(f.getSaved().rows),committed.rows);
+  const after=plain(f.getSaved().rows);
+  assert.deepEqual(after.sets,before.sets.map(s=>s.exercise_id===source.exercise_id?{...s,exercise_id:target.exercise_id}:s));
+  assert.deepEqual(after.guided_requests,before.guided_requests);
+  assert.equal(after.workout_state[0].document_extra.identityVersion,2);
+  assert(await page.evaluate(async()=>{const handle=cloudController.getSnapshot(),file=WorkoutLifecycle.backup(handle),parsed=await WorkoutLifecycle.parse(JSON.stringify(file),handle.ownerId);return file.source.identityVersion===2&&WorkoutLifecycle.equalRows(WorkoutRepository.project(parsed.document,handle.ownerId,parsed.bodyweightIds,parsed.signatureSchemes),handle.rows);}));
+  await page.locator('[data-view="exercises"]').click();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+});
 for(const width of [320,390,1280])test('normal seven-view cloud app migrates, preserves drafts under lost ack, reloads and exports at '+width+'px',async t=>{
   const f=await fixture(),page=await open(t,f,width);
   const upload=async source=>page.locator('#migrationFile').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(source))});

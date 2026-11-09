@@ -1,3 +1,67 @@
+# Issue #17 catalog edit forward-repair candidate
+
+Release status: **preparation**
+
+Application version: `3.19.11-20261109T121127Z`
+
+Data schema: `8`
+
+Forward-only repair of the edit field allowlist ambiguity found by signed Staging verification. The original migration remains unchanged. Focused local catalog/browser/release suite: 31 PASS, zero failures/skips; fresh/replay SQL coverage now includes actual edit actions. Permit issue17 fixture tags within the existing synthetic Preview capability. The owner approved and executed the exact follow-up scope at `0f9570bce66bde10f53daad2e03fbca533e93f7a` on November 9. Only migration `20261109121500_catalog_edit_field_guard.sql` was added to GymBro-Staging; the original applied migration is unchanged. Corrected signed rename/all metadata/alias/archive/restore, Pressdown→Pushdown merge, collision no-writes, lost-response identical retry, full graph/provenance/request comparison, reload/export/v2 complete restore and second-owner isolation PASS. Native Preview `gymbro-895twi710-dnk-9999.vercel.app` was verified against the exact SHA/branch/project/build; all served JS/CSS/SDK/image assets match source. Its normal UI used real signed Staging RPCs at 320/390/1280, with kept/excluded old-name matching and full-row comparisons PASS. Reloaded-page workout localStorage counters were [0,0], with no uncaught page errors or unexpected HTTP failures; the deliberate lost acknowledgement produced one expected console network error. The CLI buffer and select-locator harness failures were diagnosed and corrected without changing product code or integrity assertions.
+
+[Runtime CI 42615442004](https://github.com/dnk1000/GymBro/actions/runs/42615442004): 357 regressions and 43 catalog SQL checks on each fresh/replayed database PASS. Final combined stack: 23 focused checks PASS. All eight temporary branch overrides were removed and independently checked; restored Preview `gymbro-cmd7zj19o-dnk-9999.vercel.app` verifies the same source/build and disabled workout capability. Both exact tagged synthetic owners were deleted; independent Auth/all-18-table zero-remnant checks and other-owner full-row fingerprints PASS. Passwords removed, synthetic recoverable before/after material retained only in ignored operator artifacts. Additive Staging migrations remain. Original signed edit error 42702 remains historical FAIL; corrected rerun PASS does not rewrite it. Physical iPhone/Safari not performed; final Level 3/product acceptance, merge and Production remain pending. PR #100 is the canonical completion/AC report.
+
+# Issue #17 SQL identifier correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.8-20261109T114128Z`
+
+Data schema: `8`
+
+Qualify catalog source/destination variables to avoid collision with the persisted set source column. Focused SQL tests now reach the actual mutation; previous failure rolled back and is retained in PR #100. No hosted schema/data operation.
+
+# Issue #17 catalog date-validation correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.7-20261109T113844Z`
+
+Data schema: `8`
+
+Grant the checked catalog writer its existing date validator dependency. Catalog SQL now runs first after foundational checks to isolate failures before broad race/replay verification; all existing tests retained. Prior missing-read-helper failures remain recorded in PR #100. No hosted schema/data operation.
+
+# Issue #17 catalog isolation correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.4-20261109T113434Z`
+
+Data schema: `8`
+
+Scope fixes: catalog writer snapshot-helper grant; opaque legacy metadata discrimination; account-change draft clearing. Prior regression passes retained; initial database failures and corrected causes tracked in PR #100. Final fresh/replay verification pending. No live schema/data operation.
+
+# Issue #17 catalog verification correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.1-20261109T112954Z`
+
+Data schema: `8`
+
+Keep operation validation private, preserve original guided request signatures while comparing approved merges, and extend catalog browser/compatibility coverage. Initial regression PASS; initial database job found an unintended validator grant, corrected without weakening its test. Fresh/replay retest pending. No hosted schema apply or Production operation.
+
+# Issue #17 catalog candidate
+
+Release status: **preparation**
+
+Application version: `3.19.0-20261109T112448Z`
+
+Data schema: `8`
+
+Approved identity-v2 catalog/merge candidate. Backward reading of identity-v1 backups retained; v1 loads do not write. The owner approved the exact `9485513` staging scope on November 9; migration `20261109040000` was applied and signed alias/merge/collision/retry/isolation/backup checks passed. Signed edits failed atomically with SQL error `42702` (ambiguous field-allowlist alias). Both named synthetic owners were cleaned; independent checks found zero Auth/workout remnants and unchanged other-owner fingerprints across all 18 tables. Preview settings were never enabled because the old capability accepted only issue28 tags.
+
+Forward repair `20261109121500_catalog_edit_field_guard.sql` preserves the applied migration and only qualifies that field alias. Real SQL edit/metadata/alias/archive/restore/replay/full-row tests cover the previously missed branch. The existing synthetic Preview capability now also accepts issue17 tags, retaining every owner/environment/key guard. The owner subsequently approved the repair and signed Preview verification; the final evidence above records their passing execution and cleanup. PR #100 owns current evidence and final acceptance. No Production operation or merge.
+
 # Issue #98 planned-target correction candidate
 
 Release status: **preparation**

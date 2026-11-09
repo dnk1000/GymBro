@@ -34,6 +34,8 @@ jobs:
           npm run db:local:start
           npm run db:local:apply
           npm run db:local:test
+          node scripts/exercise-catalog-db-fixture.cjs
+          npx --no-install supabase test db --local test-results/exercise-catalog.test.sql
           node scripts/exercise-identity-db-fixture.cjs
           npx --no-install supabase test db --local test-results/exercise-identity-migration.test.sql
           node scripts/workout-repository-db-fixture.cjs
@@ -61,6 +63,7 @@ jobs:
           npx --no-install supabase test db --local test-results/workout-concurrency.test.sql
           npx --no-install supabase test db --local test-results/workout-lifecycle.test.sql
           npx --no-install supabase test db --local test-results/workout-migration.test.sql
+          npx --no-install supabase test db --local test-results/exercise-catalog.test.sql
           npx --no-install supabase db query --local --file supabase/verify-infrastructure.sql
           node scripts/verify-cutover-schema.cjs compare
       - name: Retain database evidence
