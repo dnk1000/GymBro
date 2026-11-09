@@ -8,7 +8,9 @@ const env={VERCEL_ENV:'preview',GYMBRO_PREVIEW_WORKOUTS:'true',GYMBRO_CLOUD_ENV:
 test('Preview cloud capability refuses Production, privileged config, missing owners/tag and disabled environments',()=>{
   const base={...env,GYMBRO_PREVIEW_WORKOUT_OWNERS:'99999999-9999-4999-8999-999999999939'};
   assert.equal(workoutConfig(base).syntheticOnly,true);assert.equal(workoutConfig(base).configured,true);
-  for(const patch of [{VERCEL_ENV:'production'},{GYMBRO_PREVIEW_WORKOUTS:'false'},{SUPABASE_PROJECT_REF:'wrong'},{SUPABASE_PUBLISHABLE_KEY:'sb_secret_never_emit'},{GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'personal'},{GYMBRO_PREVIEW_WORKOUT_OWNERS:''}]){
+  const catalogScope=workoutConfig({...base,GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'gymbro-issue17-20261109-b96319a'});
+  assert.equal(catalogScope.configured,true);assert.equal(catalogScope.syntheticOnly,true);assert.deepEqual(catalogScope.allowedOwners,[base.GYMBRO_PREVIEW_WORKOUT_OWNERS]);
+  for(const patch of [{VERCEL_ENV:'production'},{GYMBRO_PREVIEW_WORKOUTS:'false'},{SUPABASE_PROJECT_REF:'wrong'},{SUPABASE_PUBLISHABLE_KEY:'sb_secret_never_emit'},{GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'personal'},{GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG:'gymbro-issue34-unapproved'},{GYMBRO_PREVIEW_WORKOUT_OWNERS:''}]){
     const c=workoutConfig({...base,...patch});assert.notEqual(c.configured,true);assert(!JSON.stringify(c).includes('never_emit'));
   }
 });

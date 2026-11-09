@@ -2,21 +2,34 @@
 
 Release status: **preparation**
 
-Application version: `3.19.10-20261109T114711Z`
+Application version: `3.19.13-20261109T121700Z`
 
 Data schema: `8`
 
 Presentation-only PATCH on #17/#37: retain Program selection/editing improvements and align release metadata. Existing original #34 evidence is historical; integrated checks belong to PR #102. No Production operation or acceptance.
 
+
 # Issue #37 catalog integration candidate
 
 Release status: **preparation**
 
-Application version: `3.19.9-20261109T114636Z`
+Application version: `3.19.12-20261109T121600Z`
 
 Data schema: `8`
 
 Presentation-only PATCH on the approved #17 candidate. Preserve mobile library, desktop table and one canonical catalog/detail path. Existing initial #37 evidence remains historical; integrated verification belongs to PR #101. No Production operation or acceptance.
+
+
+
+# Issue #17 catalog edit forward-repair candidate
+
+Release status: **preparation**
+
+Application version: `3.19.11-20261109T121127Z`
+
+Data schema: `8`
+
+Forward-only repair of the edit field allowlist ambiguity found by signed Staging verification. The original migration remains unchanged. Focused local catalog/browser/release suite: 31 PASS, zero failures/skips; fresh/replay SQL coverage now includes actual edit actions. Permit issue17 fixture tags within the existing synthetic Preview capability. Revised hosted repair/Preview approval remains pending; no Production operation or merge.
 
 # Issue #17 SQL identifier correction candidate
 
@@ -66,7 +79,9 @@ Application version: `3.19.0-20261109T112448Z`
 
 Data schema: `8`
 
-Approved identity-v2 catalog/merge candidate. Backward reading of identity-v1 backups retained; v1 loads do not write. Additive catalog migration requires separate environment promotion. PR #100 owns actual verification and pending acceptance. No Production operation or merge.
+Approved identity-v2 catalog/merge candidate. Backward reading of identity-v1 backups retained; v1 loads do not write. The owner approved the exact `9485513` staging scope on November 9; migration `20261109040000` was applied and signed alias/merge/collision/retry/isolation/backup checks passed. Signed edits failed atomically with SQL error `42702` (ambiguous field-allowlist alias). Both named synthetic owners were cleaned; independent checks found zero Auth/workout remnants and unchanged other-owner fingerprints across all 18 tables. Preview settings were never enabled because the old capability accepted only issue28 tags.
+
+Forward repair `20261109121500_catalog_edit_field_guard.sql` preserves the applied migration and only qualifies that field alias. Real SQL edit/metadata/alias/archive/restore/replay/full-row tests cover the previously missed branch. The existing synthetic Preview capability now also accepts issue17 tags, retaining every owner/environment/key guard. Applying the repair and signed Preview verification of this new build require revised scoped operational approval. PR #100 owns current evidence and final acceptance. No Production operation or merge.
 
 # Issue #98 planned-target correction candidate
 
