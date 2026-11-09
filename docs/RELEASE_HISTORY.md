@@ -1,6 +1,14 @@
-# Pending #37 responsive exercise library candidate
+# Pending #37 catalog integration candidate
 
-`3.18.12-20261109T031348Z`, schema 8. Presentation-only PATCH under VERSION_POLICY.md; not accepted, merged or Production-verified. See the focused PR for actual evidence.
+`3.19.2-20261109T113158Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.
+
+# Pending #17 verification correction candidate
+
+`3.19.1-20261109T112954Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification/acceptance.
+
+# Pending #17 exercise catalog candidate
+
+`3.19.0-20261109T112448Z`, schema 8, identity format 2 with v1 read compatibility. Verification and acceptance tracked in PR #100; not an accepted Production release.
 
 # Pending #98 planned-target correction candidate
 

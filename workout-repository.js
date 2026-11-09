@@ -233,9 +233,18 @@ const WorkoutRepository = (() => {
           // The private candidate view compares their known exercise field by
           // canonical identity, just like every other domain reference.
           dto.sessions.forEach(s=>s.guided?.requests.forEach(r=> {
-            if(signatureSchemes[requestKey(s.id,r.id)]==="canonical-ids") return;
             try { const p=JSON.parse(r.signature); if(isObject(p) && typeof p.exercise==="string") {
-              const id=ExerciseIdentity.resolveLabel(document.catalog,p.exercise);
+              let id;
+              if(signatureSchemes[requestKey(s.id,r.id)]==='canonical-ids') {
+                id=p.exercise;
+                // Only the private comparison view follows explicit catalog merges.
+                // The stored submitted signature/tombstone is restored below.
+                for(let i=0;i<document.catalog.exercises.length;i++) {
+                  const merge=document.catalog.exercises.find(e=>e.id===id)?.metadata.gymbroMerge;
+                  if(!merge)break;
+                  id=merge.targetId;
+                }
+              } else id=ExerciseIdentity.resolveLabel(document.catalog,p.exercise) ?? document.catalog.aliases.find(a=>a.label===p.exercise)?.exerciseId;
               if(id && r.signature===guidedRequestSignature(p)) r.signature=guidedRequestSignature({...p,exercise:id});
             } } catch { /* Opaque historical signatures are never reinterpreted. */ }
           }));

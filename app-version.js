@@ -2,9 +2,9 @@
 // never from the browser clock. Persistence compatibility uses DATA_VERSION.
 const APP_VERSION = (() => {
   const major = 3;
-  const minor = 18;
-  const patch = 12;
-  const build = "20261109T031348Z";
+  const minor = 19;
+  const patch = 2;
+  const build = "20261109T113158Z";
   return Object.freeze({
     major,
     minor,

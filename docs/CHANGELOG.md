@@ -1,6 +1,14 @@
-## 3.18.12 — Mobile exercise library candidate
+## 3.19.2 — Mobile library catalog integration candidate
 
-- Full-width phone exercise names and compact usage metadata; preserve desktop table and existing detail path, with keyboard selection.
+- Integrate #37 phone rows with the #17 canonical detail/catalog surface; no new data semantics.
+
+## 3.19.1 — Catalog verification correction candidate
+
+- Keep internal operation validation private and retain request replay comparison across explicit catalog merges; extend reviewed catalog browser and backup tests.
+
+## 3.19.0 — Exercise catalog candidate
+
+- Edit canonical names and metadata, add aliases, archive/restore and review explicit merges in the existing detail panel. Preserve original labels and workout facts with owner-scoped checked commits and durable merge provenance.
 
 ## 3.18.11 — Planned batch exercise mapping fix candidate
 

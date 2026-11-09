@@ -385,6 +385,10 @@ canvas {
   .exercise-library td[data-label]::before { content: attr(data-label); display: block; color: var(--muted); font-size: 11px; }
   .exercise-select { font-size: 16px; }
 }
+.catalog-editor { margin-top: var(--space-4); overflow-wrap: anywhere; }
+.catalog-editor summary { cursor: pointer; min-height: 44px; padding-block: var(--space-3); }
+.catalog-editor label { display: block; margin-block: var(--space-2); }
+.catalog-editor button { margin-block: var(--space-2); }
 .role-core {
   border-left: 3px solid var(--good);
 }
