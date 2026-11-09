@@ -11,6 +11,8 @@ const ExerciseIdentity = (() => {
   const label = (value) => typeof value === "string" && value.trim() !== "";
   const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
+  function mergeRecord(row) { return row?.metadata?.gymbroMerge?.kind === 'gymbro-catalog-merge-v2' ? row.metadata.gymbroMerge : null; }
+
   function validateCatalog(catalog, identityVersion = VERSION) {
     check(object(catalog) && Array.isArray(catalog.exercises) && Array.isArray(catalog.aliases), "Invalid exercise catalog.");
     const ids = new Set(), labels = new Map();
@@ -27,7 +29,7 @@ const ExerciseIdentity = (() => {
       labels.set(row.label, row.exerciseId);
     }
     for (const row of catalog.exercises) {
-      const merge = row.metadata.gymbroMerge;
+      const merge = mergeRecord(row);
       if (identityVersion === 2 && merge) {
         check(object(merge) && merge.sourceId === row.id && uuid.test(merge.targetId) && merge.targetId !== row.id &&
           ids.has(merge.targetId) && row.state === 'archived' && merge.sourceName === row.displayName &&
@@ -42,7 +44,7 @@ const ExerciseIdentity = (() => {
     validateCatalog(catalog);
     check(label(inputLabel), "Supply an exact label.");
     // Deliberately no trimming, case folding, similarity, or semantic equivalence.
-    if (catalog.exercises.some(row => row.metadata.gymbroMerge?.excludedLabel === inputLabel)) return null;
+    if (catalog.exercises.some(row => mergeRecord(row)?.excludedLabel === inputLabel)) return null;
     return catalog.aliases.find((row) => row.label === inputLabel)?.exerciseId ?? null;
   }
 
@@ -170,7 +172,7 @@ const ExerciseIdentity = (() => {
       const ref = row[field];
       check(object(ref) && Object.keys(ref).length === 2 && label(ref.originalLabel) && uuid.test(ref.exerciseId) &&
         document.catalog.aliases.some(a => a.label === ref.originalLabel && a.exerciseId === ref.exerciseId) &&
-        !document.catalog.exercises.find(e => e.id === ref.exerciseId)?.metadata.gymbroMerge, "Broken canonical exercise reference.");
+        !mergeRecord(document.catalog.exercises.find(e => e.id === ref.exerciseId)), "Broken canonical exercise reference.");
       row[field] = ref.originalLabel;
     }
     data.exerciseLibrary = clone(document.legacyExerciseLibrary);
@@ -245,6 +247,6 @@ const ExerciseIdentity = (() => {
     return { ok: true, exercises: rows.exercises.length, aliases: rows.aliases.length };
   }
 
-  return Object.freeze({ VERSION, validateCatalog, resolveLabel, createExercise, addAlias, renameExercise,
+  return Object.freeze({ VERSION, mergeRecord, validateCatalog, resolveLabel, createExercise, addAlias, renameExercise,
     migrateV2, restoreV2Source, verifyV2Migration, performanceContext, databaseRows, verifyDatabaseCatalog });
 })();

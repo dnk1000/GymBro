@@ -60,3 +60,14 @@ test('note collision and unconfirmed/self merge reject before any mutation; sugg
   for(const input of [{exerciseId:source.id,targetId:source.id,confirmed:true,keepNameAlias:true},{exerciseId:source.id,targetId:target.id,confirmed:false,keepNameAlias:true}])assert.throws(()=>f.catalog.prepare(f.handle,'mergeCatalogExercises',[input]));
   const original=structuredClone(f.document.catalog);f.catalog.suggestions(f.document.catalog,source.id);equal(original,f.document.catalog);
 });
+test('unrecognized metadata remains opaque and is never overwritten by merge audit',async()=>{
+  const f=await fixture(),base=structuredClone(f.handle),row=base.document.catalog.exercises[0],target=base.document.catalog.exercises[1];
+  row.metadata.gymbroMerge={unknown:'legacy opaque bytes',excludedLabel:row.displayName};
+  const before=structuredClone(base);
+  f.identity.restoreV2Source(base.document);
+  assert.equal(f.identity.resolveLabel(base.document.catalog,row.displayName),row.id);
+  const changed=f.catalog.prepare(base,'editCatalogExercise',[{exerciseId:row.id,displayName:row.displayName,primary:'Explicit category'}]);
+  equal(changed.candidate.document.catalog.exercises[0].metadata,row.metadata);
+  assert.throws(()=>f.catalog.prepare(base,'mergeCatalogExercises',[{exerciseId:row.id,targetId:target.id,confirmed:true,keepNameAlias:true}]),/namespace/);
+  equal(base,before);
+});
