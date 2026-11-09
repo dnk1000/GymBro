@@ -1,3 +1,13 @@
+# Issue #17 SQL identifier correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.8-20261109T114128Z`
+
+Data schema: `8`
+
+Qualify catalog source/destination variables to avoid collision with the persisted set source column. Focused SQL tests now reach the actual mutation; previous failure rolled back and is retained in PR #100. No hosted schema/data operation.
+
 # Issue #17 catalog date-validation correction candidate
 
 Release status: **preparation**

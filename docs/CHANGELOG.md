@@ -1,3 +1,7 @@
+## 3.19.8 — Catalog SQL identifier correction candidate
+
+- Disambiguate checked catalog source/destination variables from persisted workout columns.
+
 ## 3.19.7 — Catalog date-validation correction candidate
 
 - Complete the checked catalog writer's date-validator dependency without exposing internal operation validation.
