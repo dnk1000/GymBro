@@ -1,8 +1,18 @@
-# Issue #17 SQL identifier correction candidate
+# Issue #17 catalog edit forward-repair candidate
 
 Release status: **preparation**
 
 Application version: `3.19.11-20261109T121127Z`
+
+Data schema: `8`
+
+Forward-only repair of the edit field allowlist ambiguity found by signed Staging verification. The original migration remains unchanged. Focused local catalog/browser/release suite: 31 PASS, zero failures/skips; fresh/replay SQL coverage now includes actual edit actions. Permit issue17 fixture tags within the existing synthetic Preview capability. Revised hosted repair/Preview approval remains pending; no Production operation or merge.
+
+# Issue #17 SQL identifier correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.8-20261109T114128Z`
 
 Data schema: `8`
 
