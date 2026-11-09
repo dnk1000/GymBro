@@ -36,6 +36,8 @@ stale facts. Reverting code must preserve acknowledged cloud data and receipts.
 Hosted staging apply and Production promotion remain separately scoped operator
 actions. No live user workout data is needed for verification.
 
+The owner approved separate exact scopes for the initial catalog migration and its forward-only edit-field repair on November 9. At `0f9570b`, disposable fresh/replay SQL checks and signed Staging domain/normal Preview UI checks at 320/390/1280 pass, including kept/excluded old-name provenance, exact graph/request comparisons, retry, restore and owner isolation. Both named synthetic owners and temporary branch settings were cleaned; independent Auth/all-18-table zero-remnant and other-owner fingerprint checks pass. See [PR #100](https://github.com/dnk1000/GymBro/pull/100) for exact source/build/deployment/migration hashes, negative evidence and remaining physical iPhone/Safari and final Level 3 acceptance. Neither this evidence nor the Staging schema is Production acceptance.
+
 The #18 candidate reuses these exact primitives for [Smart Import Resolution](SMART_IMPORT_RESOLUTION.md), including explicitly reviewed alias/new-exercise additions atomically with imported facts. It adds no identity schema, fuzzy equivalence or catalog merge. Existing foundation descriptions below retain their original scope and release context.
 
 Issue [#16](https://github.com/dnk1000/GymBro/issues/16), based on accepted main `b40156bd943d230bdfa2e636390b85f5be1fd639`. Branch `codex/issue-16-exercise-identity`. The user approved application `3.3.0` for this candidate on October 27, 2026. This foundation does not switch workout persistence or run a personal migration.

@@ -5,7 +5,7 @@
 
 ## 3.19.11 — Catalog edit forward-repair candidate
 
-Fix PostgreSQL catalog edit field-name ambiguity through an additive migration, retaining the already-applied migration and all identity/integrity rules. Add real SQL rename/metadata/alias/archive/restore/replay and full-row regression evidence. Permit issue17 synthetic Preview tags under the existing owner/project/permanent-account guards. Hosted repair and signed Preview verification remain pending scoped approval; no Production change.
+Fix PostgreSQL catalog edit field-name ambiguity through an additive migration, retaining the already-applied migration and all identity/integrity rules. Add real SQL rename/metadata/alias/archive/restore/replay and full-row regression evidence. Permit issue17 synthetic Preview tags under the existing owner/project/permanent-account guards. Owner-approved Staging repair and signed normal Preview verification at 320/390/1280 PASS; both synthetic owners and all eight temporary branch overrides cleaned, independent zero-remnant and unchanged other-owner fingerprints verified. Physical iPhone/Safari and final acceptance remain pending; no Production change.
 
 ## 3.19.8 — Catalog SQL identifier correction candidate
 
