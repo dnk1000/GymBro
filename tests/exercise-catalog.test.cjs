@@ -72,7 +72,7 @@ test('unrecognized metadata remains opaque and is never overwritten by merge aud
   equal(base,before);
 });
 test('Pressdown into Pushdown resolves all prior canonical references without duplicating recorded sets',async()=>{
-  const f=await fixture(),base=structuredClone(f.handle),source=base.document.catalog.exercises.find(e=>e.displayName==='Bench Press'),target=base.document.catalog.exercises.find(e=>e.displayName==='Smith Press');
+  const f=await fixture(),base=structuredClone(f.handle),source=base.document.catalog.exercises.find(e=>e.displayName==='Bench Press'),target=base.document.catalog.exercises.find(e=>e.displayName==='Rope Triceps Pushdown');
   base.document.catalog=f.identity.renameExercise(base.document.catalog,source.id,'Rope Triceps Pressdown');
   base.document.catalog=f.identity.renameExercise(base.document.catalog,target.id,'Rope Triceps Pushdown');
   const before=structuredClone(base.document),count=before.data.sets.filter(s=>[source.id,target.id].includes(s.exercise.exerciseId)).length;
