@@ -1,3 +1,8 @@
+# Pending #34 catalog integration candidate
+
+`3.19.13-20261109T121700Z`, schema 8. PR #102 owns evidence; not accepted or Production-verified.
+
+
 # Pending #37 catalog integration candidate
 
 `3.19.12-20261109T121600Z`, schema 8. PR #101 owns evidence; not accepted or Production-verified.

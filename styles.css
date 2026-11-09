@@ -413,6 +413,20 @@ canvas {
 .template-card:hover {
   border-color: var(--accent-text);
 }
+.template-card.selected { border-color: var(--focus); border-left-width: 4px; }
+.template-context { min-width: 0; overflow-wrap: anywhere; }
+.template-select {
+  display: block; width: 100%; background: transparent; color: var(--text);
+  padding: 0; border: 0; text-align: left; font: inherit; font-weight: 650;
+}
+.template-select .sub { display: block; font-weight: 400; }
+#program .plan-actions button[aria-pressed="true"] { outline: 2px solid var(--focus); outline-offset: 2px; }
+#program #templateEditorTitle { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  #program .template-card > .split, #templateEditor .item > .split { flex-wrap: wrap; }
+  #program .template-card .plan-actions { margin-top: 0; }
+  #templateEditor .item > .split > div { min-width: 0; overflow-wrap: anywhere; }
+}
 .plan-actions {
   display: flex;
   gap: 6px;

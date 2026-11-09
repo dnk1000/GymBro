@@ -620,7 +620,7 @@ async function startTemplate(id, duration = 60) {
   if (
     applyActionResult(await workoutActions.selectPlan({ templateId: id, duration }))
   )
-    document.querySelector('[data-view="workout"]').click();
+    { editTemplate(id); document.querySelector('[data-view="workout"]').click(); }
 }
 async function clearActivePlan() {
   applyActionResult(await workoutActions.clearPlan());
@@ -1006,9 +1006,10 @@ function renderProgram() {
   programTemplates.innerHTML = db.program.templates
     .map(
       (t) =>
-        `<div class="item template-card" onclick="editTemplate(${jsArg(t.id)})"><div class="split"><div><strong>${esc(t.name)}</strong><div class="sub">${esc(t.focus)} • ${esc(t.intensity)} • ${t.slots.filter((s) => s.role === "core").length} core</div></div><div class="plan-actions"><button class="btn small" onclick="event.stopPropagation();startTemplate(${jsArg(t.id)},60)">60 min</button><button class="btn small secondary" onclick="event.stopPropagation();startTemplate(${jsArg(t.id)},30)">30 min</button></div></div></div>`,
+        `<div class="item template-card" data-template="${esc(t.id)}" onclick="editTemplate(${jsArg(t.id)})"><div class="split"><div class="template-context"><button type="button" class="template-select" aria-controls="templateEditor" aria-pressed="${selectedTemplateId === t.id}">${esc(t.name)}<span class="sub">View / edit exercises</span></button><div class="sub">${esc(t.focus)} • Classification: ${esc(t.intensity)} • ${t.slots.filter((s) => s.role === "core").length} core</div></div><div class="plan-actions" aria-label="Load workout plan"><button class="btn small" aria-label="Load ${esc(t.name)} — 60 min" aria-pressed="${db.program.activeTemplateId === t.id && db.program.activeDuration === 60}" onclick="event.stopPropagation();startTemplate(${jsArg(t.id)},60)">60 min</button><button class="btn small secondary" aria-label="Load ${esc(t.name)} — 30 min" aria-pressed="${db.program.activeTemplateId === t.id && db.program.activeDuration === 30}" onclick="event.stopPropagation();startTemplate(${jsArg(t.id)},30)">30 min</button></div></div></div>`,
     )
     .join("");
+  updateTemplateSelection();
   const counts = Object.create(null);
   Object.entries(db.exerciseLibrary || {}).forEach(([ex, m]) =>
     (counts[m.primary || "Uncategorized"] ??= []).push(ex),
@@ -1029,18 +1030,27 @@ function editTemplate(id) {
   if (!t) {
     selectedTemplateId = null;
     templateEditorTitle.textContent = "Workout template";
-    templateEditor.textContent = "Select a workout.";
+    templateEditor.textContent = "Select a workout to view or edit its exercises. Choose 60 or 30 min to load that plan for logging.";
+    updateTemplateSelection();
     return;
   }
-  templateEditorTitle.textContent = t.name;
-  templateEditor.innerHTML = `<div class="sub">${esc(t.focus)} • ${esc(t.intensity)}</div><div class="list" style="margin-top:10px">${t.slots
+  updateTemplateSelection();
+  templateEditorTitle.textContent = `${t.name} · ${db.program.activeTemplateId === id ? db.program.activeDuration + ' min plan selected' : '30 / 60 min templates'}`;
+  templateEditor.innerHTML = `<div class="sub">${esc(t.focus)} • Workout classification: ${esc(t.intensity)}</div><p class="sub">Editing the full template. The 30m buttons control short-plan inclusion; Role controls core, accessory or substitute use. Hard / Light is the workout classification, not a set effort score.</p><div class="list" style="margin-top:10px">${t.slots
     .map((s, i) => {
       const m = db.exerciseLibrary?.[s.exercise] || {};
-      return `<div class="item role-${s.role}"><div class="split"><div><strong>${esc(exerciseName(s.exercise))}</strong><div class="sub">${roleLabel(s.role)} • ${s.short ? "30-min core • " : ""}${esc(m.primary || "Uncategorized")} • ${esc(m.pattern || "")}</div></div><div class="plan-actions"><button class="btn small secondary" onclick="toggleShort(${jsArg(id)},${i})">30m</button><button class="btn small secondary" onclick="cycleRole(${jsArg(id)},${i})">Role</button><button class="btn small danger" onclick="removeSlot(${jsArg(id)},${i})">Remove</button></div></div></div>`;
+      return `<div class="item role-${s.role}"><div class="split"><div><strong>${esc(exerciseName(s.exercise))}</strong><div class="sub">${roleLabel(s.role)} • ${s.short ? "30-min core • " : ""}${esc(m.primary || "Uncategorized")} • ${esc(m.pattern || "")}</div></div><div class="plan-actions"><button class="btn small secondary" aria-pressed="${s.short}" title="Include in the 30-minute plan" onclick="toggleShort(${jsArg(id)},${i})">30m</button><button class="btn small secondary" onclick="cycleRole(${jsArg(id)},${i})">Role</button><button class="btn small danger" onclick="removeSlot(${jsArg(id)},${i})">Remove</button></div></div></div>`;
     })
     .join(
       "",
-    )}</div><div style="margin-top:12px"><div class="label">Add exercise</div><div class="formgrid"><div class="span3"><input id="addEx_${esc(id)}" list="exerciseList" placeholder="Exercise"></div><div class="span2"><select id="addRole_${esc(id)}"><option value="accessory">Accessory</option><option value="core">Core</option><option value="substitute">Substitute</option></select></div><div><button onclick="addSlot(${jsArg(id)})">Add</button></div></div></div>`;
+    )}</div><div style="margin-top:12px"><div class="label">Add exercise</div><div class="formgrid"><div class="span3"><input id="addEx_${esc(id)}" list="exerciseList" placeholder="Exercise" aria-label="Exercise to add"></div><div class="span2"><select aria-label="Role for added exercise" id="addRole_${esc(id)}"><option value="accessory">Accessory</option><option value="core">Core</option><option value="substitute">Substitute</option></select></div><div><button onclick="addSlot(${jsArg(id)})">Add</button></div></div></div>`;
+}
+function updateTemplateSelection() {
+  programTemplates.querySelectorAll('.template-card').forEach(card => {
+    const selected = card.dataset.template === selectedTemplateId;
+    card.classList.toggle('selected', selected);
+    card.querySelector('.template-select').setAttribute('aria-pressed', String(selected));
+  });
 }
 async function toggleShort(id, i) {
   applyActionResult(

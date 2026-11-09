@@ -1,3 +1,14 @@
+# Issue #34 catalog integration candidate
+
+Release status: **preparation**
+
+Application version: `3.19.13-20261109T121700Z`
+
+Data schema: `8`
+
+Presentation-only PATCH on #17/#37: retain Program selection/editing improvements and align release metadata. Existing original #34 evidence is historical; integrated checks belong to PR #102. No Production operation or acceptance.
+
+
 # Issue #37 catalog integration candidate
 
 Release status: **preparation**

@@ -1,3 +1,8 @@
+## 3.19.13 — Program catalog integration candidate
+
+- Preserve #34 template/duration/classification clarity on the #17/#37 stack without changing workout definitions.
+
+
 ## 3.19.12 — Mobile library catalog integration candidate
 
 - Integrate #37 phone rows with the #17 canonical detail/catalog surface; no new data semantics.
