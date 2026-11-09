@@ -1,6 +1,14 @@
 # Issue #17 — exercise catalog and merge proposal
 
-Status: **proposed; not approved or implemented**. Prepared November 8, 2026
+Status: **approved design; implementation pending**. The owner accepted the exact
+proposal at `e048e81d2fefc332dab0d07b3b01ddf9085e7a6b` in this implementation
+chat on November 8, 2026 (America/New_York), including the recommended scoped
+identity/alias exception, collision/recovery contract and **3.19.0 for #17 alone
+with scoped PATCH fixes**. Existing commit/merge permission remains in effect.
+Final acceptance, hosted operations and actual verification remain separate.
+The preparation/gate descriptions below preserve the proposal as reviewed.
+
+Prepared November 8, 2026
 (America/New_York) from accepted `main`
 `df7e162bac9cee5cae0a1db32aa24fc5707e50c6`.
 
