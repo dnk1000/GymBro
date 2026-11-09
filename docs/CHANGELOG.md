@@ -1,3 +1,7 @@
+## 3.18.12 — Mobile exercise library candidate
+
+- Full-width phone exercise names and compact usage metadata; preserve desktop table and existing detail path, with keyboard selection.
+
 ## 3.18.11 — Planned batch exercise mapping fix candidate
 
 - Explicitly map incoming labels to a new exercise planned in the same review; create one identity atomically with approved aliases. Invalidate excluded/cancelled target choices.

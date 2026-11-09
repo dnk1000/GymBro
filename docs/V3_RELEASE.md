@@ -1,3 +1,13 @@
+# Issue #37 responsive exercise library candidate
+
+Release status: **preparation**
+
+Application version: `3.18.12-20261109T031348Z`
+
+Data schema: `8`
+
+Presentation-only PATCH: stacked phone rows, existing desktop table/detail and canonical identities preserved. Verification and pending physical iPhone/Preview acceptance: focused #37 PR. No Production operation.
+
 # Issue #98 planned-target correction candidate
 
 Release status: **preparation**

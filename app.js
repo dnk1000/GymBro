@@ -763,13 +763,13 @@ function exerciseSessionCount(records) {
 }
 function renderExercises() {
   const xs = allExercises();
-  exerciseTable.innerHTML = `<table><thead><tr><th>Exercise</th><th>Primary</th><th>Role</th><th>Sets</th><th style="white-space:nowrap"># Sessions</th><th>Last</th></tr></thead><tbody>${xs
+  exerciseTable.innerHTML = `<table class="exercise-library" role="table" aria-label="Exercise library"><thead role="rowgroup"><tr role="row"><th scope="col">Exercise</th><th scope="col">Primary</th><th scope="col">Role</th><th scope="col">Sets</th><th scope="col" style="white-space:nowrap"># Sessions</th><th scope="col">Last</th></tr></thead><tbody role="rowgroup">${xs
     .map((ex) => {
       const r = db.sets
         .filter((s) => s.exercise === ex)
         .sort((a, b) => b.date.localeCompare(a.date));
       const m = db.exerciseLibrary?.[ex] || {};
-      return `<tr class="exercise-row" onclick="showExercise(${jsArg(ex)})"><td>${esc(exerciseName(ex))}</td><td>${esc(m.primary || "Uncategorized")}</td><td>${esc(m.status || "")}</td><td>${r.length}</td><td>${exerciseSessionCount(r)}</td><td>${r[0]?.date || "—"}</td></tr>`;
+      return `<tr class="exercise-row" role="row" onclick="showExercise(${jsArg(ex)})"><td role="cell" class="exercise-name"><button type="button" class="exercise-select" data-exercise="${esc(ex)}" aria-controls="exerciseDetail" aria-pressed="false">${esc(exerciseName(ex))}</button></td><td role="cell" class="exercise-group">${esc(m.primary || "Uncategorized")}</td><td role="cell" class="exercise-role">${esc(m.status || "")}</td><td role="cell" data-label="Sets">${r.length}</td><td role="cell" data-label="Sessions">${exerciseSessionCount(r)}</td><td role="cell" data-label="Last used">${r[0]?.date || "—"}</td></tr>`;
     })
     .join(
       "",
@@ -784,6 +784,11 @@ function renderExercises() {
 }
 function showExercise(ex) {
   selectedExercise = ex;
+  exerciseTable.querySelectorAll('.exercise-select').forEach(button => {
+    const selected = button.dataset.exercise === ex;
+    button.setAttribute('aria-pressed', String(selected));
+    button.closest('tr').classList.toggle('selected', selected);
+  });
   exerciseDetailTitle.textContent = exerciseName(ex);
   const r = db.sets
     .filter((s) => s.exercise === ex)

@@ -1,3 +1,7 @@
+# Pending #37 responsive exercise library candidate
+
+`3.18.12-20261109T031348Z`, schema 8. Presentation-only PATCH under VERSION_POLICY.md; not accepted, merged or Production-verified. See the focused PR for actual evidence.
+
 # Pending #98 planned-target correction candidate
 
 `3.18.11-20261108T034614Z`, schema 8. Focused bug fix under VERSION_POLICY.md; no new schema/RPC. Technical evidence and human-review status belong to its focused PR; not merged or deployed to Production.
