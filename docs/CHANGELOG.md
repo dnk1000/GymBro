@@ -1,3 +1,7 @@
+## 3.19.1 — Catalog verification correction candidate
+
+- Keep internal operation validation private and retain request replay comparison across explicit catalog merges; extend reviewed catalog browser and backup tests.
+
 ## 3.19.0 — Exercise catalog candidate
 
 - Edit canonical names and metadata, add aliases, archive/restore and review explicit merges in the existing detail panel. Preserve original labels and workout facts with owner-scoped checked commits and durable merge provenance.

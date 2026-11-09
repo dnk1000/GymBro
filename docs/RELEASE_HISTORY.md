@@ -1,3 +1,7 @@
+# Pending #17 verification correction candidate
+
+`3.19.1-20261109T112954Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification/acceptance.
+
 # Pending #17 exercise catalog candidate
 
 `3.19.0-20261109T112448Z`, schema 8, identity format 2 with v1 read compatibility. Verification and acceptance tracked in PR #100; not an accepted Production release.

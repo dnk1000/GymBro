@@ -59,6 +59,34 @@ async function open(t,f,width,accountModule=false,failedLoad=false){
   t.after(()=>assert.deepEqual(errors,[],'uncaught normal-app browser errors'));
   return page;
 }
+for(const width of [320,390,1280])test('catalog detail edits, archive, reviewed merge and lost-ack retry at '+width+'px',async t=>{
+  const f=await fixture(),page=await open(t,f,width);page.on('dialog',d=>d.accept());
+  await page.locator('#migrationFile').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f.source))});
+  await page.locator('#migrationReview').click();await page.locator('#migrationCommit').click();await page.waitForFunction(()=>cloudReady);
+  await page.locator('[data-view="exercises"]').click();await page.locator('#exerciseTable .exercise-row').filter({hasText:'Bench Press'}).click();
+  const source=f.getSaved().rows.exercises.find(e=>e.display_name==='Bench Press'),target=f.getSaved().rows.exercises.find(e=>e.display_name==='Rope Triceps Pushdown');
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogName').fill('Reviewed bench '+width);
+  await page.getByRole('button',{name:'Save catalog changes',exact:true}).click();
+  await page.waitForFunction(name=>document.getElementById('exerciseDetailTitle').textContent===name,'Reviewed bench '+width);
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogAlias').fill('Explicit bench alias '+width);await page.getByRole('button',{name:'Add alias',exact:true}).click();
+  await page.waitForFunction(label=>cloudController.getWorkoutState().catalog.aliases.some(a=>a.label===label),'Explicit bench alias '+width);
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogState').selectOption('archived');await page.getByRole('button',{name:'Save catalog changes',exact:true}).click();
+  await page.waitForFunction(id=>cloudController.getWorkoutState().catalog.exercises.find(e=>e.id===id).state==='archived',source.exercise_id);
+  assert.equal(await page.locator('#fExercise option').evaluateAll((options,id)=>options.some(o=>o.value===id),source.exercise_id),false);
+  await page.locator('.catalog-editor > summary').click();await page.locator('#catalogState').selectOption('active');await page.getByRole('button',{name:'Save catalog changes',exact:true}).click();
+  await page.waitForFunction(id=>cloudController.getWorkoutState().catalog.exercises.find(e=>e.id===id).state==='active',source.exercise_id);
+  const before=plain(f.getSaved().rows);
+  await page.locator('.catalog-editor > summary').click();await page.locator('.catalog-editor details > summary').click();await page.locator('#catalogTarget').selectOption(target.exercise_id);
+  f.lose();await page.getByRole('button',{name:'Review merge',exact:true}).click();await page.waitForFunction(()=>cloudController.getStatus().phase==='OUTCOME_UNKNOWN');
+  const committed=plain(f.getSaved());await page.locator('[data-view="data"]').click();await page.locator('#cloudRetry').click();await page.waitForFunction(()=>cloudController.getStatus().phase==='READY');
+  assert.equal(f.getSaved().revision,committed.revision);assert.deepEqual(plain(f.getSaved().rows),committed.rows);
+  const after=plain(f.getSaved().rows);
+  assert.deepEqual(after.sets,before.sets.map(s=>s.exercise_id===source.exercise_id?{...s,exercise_id:target.exercise_id}:s));
+  assert.deepEqual(after.guided_requests,before.guided_requests);
+  assert.equal(after.workout_state[0].document_extra.identityVersion,2);
+  assert(await page.evaluate(async()=>{const handle=cloudController.getSnapshot(),file=WorkoutLifecycle.backup(handle),parsed=await WorkoutLifecycle.parse(JSON.stringify(file),handle.ownerId);return file.source.identityVersion===2&&WorkoutLifecycle.equalRows(WorkoutRepository.project(parsed.document,handle.ownerId,parsed.bodyweightIds,parsed.signatureSchemes),handle.rows);}));
+  await page.locator('[data-view="exercises"]').click();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+});
 for(const width of [320,390,1280])test('normal seven-view cloud app migrates, preserves drafts under lost ack, reloads and exports at '+width+'px',async t=>{
   const f=await fixture(),page=await open(t,f,width);
   const upload=async source=>page.locator('#migrationFile').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(source))});

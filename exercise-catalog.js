@@ -12,10 +12,12 @@ const ExerciseCatalog = (() => {
     const row = catalog.exercises.find(e => e.id === input.exerciseId);
     check(row && !row.metadata.gymbroMerge, 'Select an unmerged exercise.');
     if (action === 'editCatalogExercise') {
+      check(!catalog.exercises.some(e=>e.metadata.gymbroMerge?.excludedLabel===input.displayName),'This label is retained only as excluded historical provenance. Choose a different display name.');
       document.catalog = ExerciseIdentity.renameExercise(catalog, row.id, input.displayName);
       const next = document.catalog.exercises.find(e => e.id === row.id);
       for (const key of editable) if (Object.hasOwn(input, key)) next[key] = clone(input[key]);
     } else if (action === 'addCatalogAlias') {
+      check(!catalog.exercises.some(e=>e.metadata.gymbroMerge?.excludedLabel===input.label),'This label was explicitly excluded from matching and remains historical provenance.');
       document.catalog = ExerciseIdentity.addAlias(catalog, {exerciseId: row.id, label: input.label, provenance: 'user-created'});
     } else if (action === 'mergeCatalogExercises') {
       check(input.confirmed === true && typeof input.keepNameAlias === 'boolean', 'Review and confirm this merge.');

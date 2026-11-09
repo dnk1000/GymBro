@@ -38,3 +38,25 @@ test('approved identity-v2 merge retains the source and exact original facts; v1
   assert.throws(()=>f.identity.restoreV2Source({...result.candidate.document,identityVersion:1}),/Canonical display name/);
   equal(base,f.handle,'rejected candidate changes no committed or caller-owned data');
 });
+test('excluded matching label remains valid historical provenance and complete backups retain both formats',async()=>{
+  const f=await fixture(),source=f.document.catalog.exercises.find(e=>e.displayName==='Bench Press'),target=f.document.catalog.exercises.find(e=>e.displayName==='Smith Press');
+  const {candidate}=f.catalog.prepare(f.handle,'mergeCatalogExercises',[{exerciseId:source.id,targetId:target.id,confirmed:true,keepNameAlias:false}]);
+  assert.equal(f.identity.resolveLabel(candidate.document.catalog,source.displayName),null);
+  assert(candidate.document.catalog.aliases.some(a=>a.label===source.displayName&&a.exerciseId===target.id));
+  equal(f.identity.restoreV2Source(candidate.document),f.identity.restoreV2Source(f.document));
+  const audit=candidate.document.catalog.exercises.find(e=>e.id===source.id).metadata.gymbroMerge;
+  audit.operation=['mergeCatalogExercises','test-operation'];audit.mergedAt='2026-11-09T12:00:00.000Z';
+  const rows=f.repository.project(candidate.document,f.owner,f.bodyweightIds),handle={...f.handle,...candidate,rows};
+  const backup=f.lifecycle.backup(handle),parsed=await f.lifecycle.parse(JSON.stringify(backup),f.owner);
+  assert.equal(backup.source.identityVersion,2);equal(parsed.document,candidate.document);
+  const old=f.lifecycle.backup(f.handle);assert.equal(old.source.identityVersion,1);equal((await f.lifecycle.parse(JSON.stringify(old),f.owner)).document,f.document);
+  assert.throws(()=>f.catalog.prepare(handle,'addCatalogAlias',[{exerciseId:target.id,label:source.displayName}]),/excluded/);
+});
+test('note collision and unconfirmed/self merge reject before any mutation; suggestions only describe candidates',async()=>{
+  const f=await fixture(),source=f.document.catalog.exercises.find(e=>e.displayName==='Bench Press'),target=f.document.catalog.exercises.find(e=>e.displayName==='Smith Press');
+  const base=structuredClone(f.handle);base.document.data.noteScopes.exercise.push({exercise:{exerciseId:target.id,originalLabel:target.displayName},text:'Destination setup'});
+  const before=structuredClone(base);
+  assert.throws(()=>f.catalog.prepare(base,'mergeCatalogExercises',[{exerciseId:source.id,targetId:target.id,confirmed:true,keepNameAlias:true}]),/conflicting/);equal(base,before);
+  for(const input of [{exerciseId:source.id,targetId:source.id,confirmed:true,keepNameAlias:true},{exerciseId:source.id,targetId:target.id,confirmed:false,keepNameAlias:true}])assert.throws(()=>f.catalog.prepare(f.handle,'mergeCatalogExercises',[input]));
+  const original=structuredClone(f.document.catalog);f.catalog.suggestions(f.document.catalog,source.id);equal(original,f.document.catalog);
+});

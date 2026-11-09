@@ -187,7 +187,7 @@ const ExerciseIdentity = (() => {
     else validateData(source);
     const restored = restoreV2Source(document);
     check(sameSessionData(source, restored), "Migration content/relationship mismatch; destination must not be committed.");
-    return { ok: true, identityVersion: VERSION, exercises: document.catalog.exercises.length,
+    return { ok: true, identityVersion: document.identityVersion, exercises: document.catalog.exercises.length,
       references: references(document.data, document.sourceSchemaVersion).length, sets: source.sets.length, sessions: source.sessions.length };
   }
 

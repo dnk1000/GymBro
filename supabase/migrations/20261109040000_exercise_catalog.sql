@@ -237,7 +237,9 @@ begin
         merge->'sourceId' is distinct from exercise->'exercise_id' or merge->'sourceName' is distinct from exercise->'display_name' or
         merge->'sourceId'=merge->'targetId' or merge->>'ownerId' is distinct from exercise->>'owner_id' or
         jsonb_typeof(merge->'previous') is distinct from 'object' or jsonb_typeof(merge->'aliases') is distinct from 'array' or jsonb_typeof(merge->'affected') is distinct from 'object' or
-        not coalesce(public.gymbro_operation_valid(merge->'operation'),false) or merge#>>'{operation,0}'<>'mergeCatalogExercises' or
+        not coalesce(case when jsonb_typeof(merge->'operation')='array' then jsonb_array_length(merge->'operation')=2 and
+          not exists(select 1 from jsonb_array_elements(merge->'operation') v where jsonb_typeof(v)<>'string' or length(v#>>'{}')=0) else false end,false) or
+        merge#>>'{operation,0}' is distinct from 'mergeCatalogExercises' or
         not coalesce(public.gymbro_lifecycle_timestamp(merge->>'mergedAt'),false) or
         (merge->'excludedLabel' is distinct from 'null'::jsonb and merge->'excludedLabel' is distinct from exercise->'display_name') or
         not exists(select 1 from jsonb_array_elements(rows->'exercises') target where target->'exercise_id'=merge->'targetId') then return false; end if;
@@ -258,7 +260,7 @@ grant execute on function public.gymbro_request_owner(),public.gymbro_request_pe
   public.gymbro_catalog_candidate(jsonb,text,jsonb,uuid,jsonb,text),public.gymbro_operation_valid(jsonb),public.gymbro_pre_catalog_operation_valid(jsonb),
   public.gymbro_domain_operation_valid(jsonb),public.gymbro_identity_v1_readable(jsonb),public.gymbro_lifecycle_timestamp(text) to gymbro_catalog_writer;
 grant execute on function public.gymbro_operation_valid(jsonb),public.gymbro_lifecycle_readable(jsonb) to gymbro_workout_writer,gymbro_lifecycle_writer;
-grant execute on function public.gymbro_lifecycle_readable(jsonb),public.gymbro_operation_valid(jsonb),public.gymbro_pre_catalog_operation_valid(jsonb),public.gymbro_domain_operation_valid(jsonb) to authenticated;
+grant execute on function public.gymbro_lifecycle_readable(jsonb) to authenticated;
 grant execute on function public.gymbro_catalog_mutate(jsonb) to authenticated;
 grant create on schema public to gymbro_catalog_writer;
 alter function public.gymbro_catalog_mutate(jsonb) owner to gymbro_catalog_writer;

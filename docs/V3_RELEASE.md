@@ -1,3 +1,13 @@
+# Issue #17 catalog verification correction candidate
+
+Release status: **preparation**
+
+Application version: `3.19.1-20261109T112954Z`
+
+Data schema: `8`
+
+Keep operation validation private, preserve original guided request signatures while comparing approved merges, and extend catalog browser/compatibility coverage. Initial regression PASS; initial database job found an unintended validator grant, corrected without weakening its test. Fresh/replay retest pending. No hosted schema apply or Production operation.
+
 # Issue #17 catalog candidate
 
 Release status: **preparation**
