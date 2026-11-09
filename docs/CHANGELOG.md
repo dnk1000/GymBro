@@ -1,6 +1,11 @@
-## 3.19.9 — Mobile library catalog integration candidate
+## 3.19.12 — Mobile library catalog integration candidate
 
 - Integrate #37 phone rows with the #17 canonical detail/catalog surface; no new data semantics.
+
+
+## 3.19.11 — Catalog edit forward-repair candidate
+
+Fix PostgreSQL catalog edit field-name ambiguity through an additive migration, retaining the already-applied migration and all identity/integrity rules. Add real SQL rename/metadata/alias/archive/restore/replay and full-row regression evidence. Permit issue17 synthetic Preview tags under the existing owner/project/permanent-account guards. Hosted repair and signed Preview verification remain pending scoped approval; no Production change.
 
 ## 3.19.8 — Catalog SQL identifier correction candidate
 
