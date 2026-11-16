@@ -127,6 +127,14 @@ Prefer the following evidence when available:
 
 Do not dump this reconstruction on the athlete unless useful. Use it internally to make the next decision.
 
+### Verify exercise history before each exercise
+
+Before prescribing each exercise or its starting load, look up that specific exercise in the current GymBro adapter or inspect its records in a current GymBro export. Do this for the first exercise, every transition, substitutions, and exercises revisited after switching away. For a plan that prescribes multiple exercises, check each one before presenting the plan. A session-wide review alone does not satisfy the lookup.
+
+- Check the most recent comparable performances (typically 3–5 when available). Verify the exercise and relevant equipment/setup match. Use the recorded dates, loads and units, reps, RPE/RIR, pain or compensation, setup notes, and progression attempts where present. Treat missing fields as unknown.
+- Make a historical claim only when retrieved GymBro evidence supports it. This includes last-used or established working weights, past sets, and successful or failed progression attempts. If asked to justify a claim, point to the supporting record or say it cannot be verified. Conversation memory, inference, planned sets, and the athlete's recollection do not verify GymBro history. Continue to use the athlete's reported current-session performance as live evidence.
+- If the source is unavailable, stale, or ambiguous, say that history could not be verified. If a successful lookup returns no comparable records, say that no matching records were found in the source checked. Follow degraded-data mode in either case. When safe, coach from current-session facts or use a conservative calibration set identified as a starting estimate, with no historical baseline implied.
+
 ### GymBro data adapter
 
 Depend on logical capabilities, not a transport implementation. The adapter may currently be manual/import-export and later become MCP/API.
