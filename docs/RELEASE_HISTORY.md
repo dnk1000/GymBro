@@ -1,3 +1,27 @@
+# Catalog forward-repair candidate — not accepted or shipped
+
+`3.19.11-20261109T121127Z`, schema 8. PR #100. Original staging migration applied November 9 under explicit scope; signed tests exposed edit SQL error 42702. The owner separately approved the forward repair at `0f9570b`; only that additive migration was applied to Staging. Corrected signed domain checks and normal Preview UI at 320/390/1280 PASS with actual Staging RPCs, exact content/provenance/retry/backup/isolation evidence. CI 42615442004 passes 357 regressions and 43 catalog SQL checks on fresh/replayed databases; final combined stack passes 23 focused checks. Temporary branch settings were removed and the restored Preview verified disabled. Other-owner fingerprints across all 18 tables were unchanged; both synthetic owners were cleaned and passwords removed. No physical iPhone/Safari, merge or Production acceptance claimed.
+
+# Pending #17 SQL identifier correction
+
+`3.19.8-20261109T114128Z`, schema 8. Candidate only; PR #100 owns verification.
+
+# Pending #17 date-validation correction candidate
+
+`3.19.7-20261109T113844Z`, schema 8. PR #100 owns evidence; not accepted or Production-verified.
+
+# Pending #17 catalog isolation correction candidate
+
+`3.19.4-20261109T113434Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification and acceptance.
+
+# Pending #17 verification correction candidate
+
+`3.19.1-20261109T112954Z`, schema 8, identity-v2. Candidate only; PR #100 owns verification/acceptance.
+
+# Pending #17 exercise catalog candidate
+
+`3.19.0-20261109T112448Z`, schema 8, identity format 2 with v1 read compatibility. Verification and acceptance tracked in PR #100; not an accepted Production release.
+
 # Pending #98 planned-target correction candidate
 
 `3.18.11-20261108T034614Z`, schema 8. Focused bug fix under VERSION_POLICY.md; no new schema/RPC. Technical evidence and human-review status belong to its focused PR; not merged or deployed to Production.

@@ -7,7 +7,7 @@ function workoutConfig(env,host) {
   const base=probeConfig({...env,GYMBRO_SUPABASE_PROBE:'true'});
   if(!base.enabled||!base.configured)return base;
   const fixtureTag=env.GYMBRO_PREVIEW_WORKOUT_FIXTURE_TAG;
-  if(!/^gymbro-issue28-[a-z0-9-]+$/.test(fixtureTag??''))return {enabled:true,configured:false,message:'Synthetic fixture tag required.'};
+  if(!/^gymbro-issue(?:17|28)-[a-z0-9-]+$/.test(fixtureTag??''))return {enabled:true,configured:false,message:'Synthetic fixture tag required.'};
   const allowedOwners=(env.GYMBRO_PREVIEW_WORKOUT_OWNERS??'').split(',');
   if(allowedOwners.length<1||allowedOwners.length>4||!allowedOwners.every(x=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(x)))
     return {enabled:true,configured:false,message:'Explicit staging test owners required.'};

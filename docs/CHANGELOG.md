@@ -1,3 +1,27 @@
+## 3.19.11 — Catalog edit forward-repair candidate
+
+Fix PostgreSQL catalog edit field-name ambiguity through an additive migration, retaining the already-applied migration and all identity/integrity rules. Add real SQL rename/metadata/alias/archive/restore/replay and full-row regression evidence. Permit issue17 synthetic Preview tags under the existing owner/project/permanent-account guards. Owner-approved Staging repair and signed normal Preview verification at 320/390/1280 PASS; both synthetic owners and all eight temporary branch overrides cleaned, independent zero-remnant and unchanged other-owner fingerprints verified. Physical iPhone/Safari and final acceptance remain pending; no Production change.
+
+## 3.19.8 — Catalog SQL identifier correction candidate
+
+- Disambiguate checked catalog source/destination variables from persisted workout columns.
+
+## 3.19.7 — Catalog date-validation correction candidate
+
+- Complete the checked catalog writer's date-validator dependency without exposing internal operation validation.
+
+## 3.19.4 — Catalog isolation correction candidate
+
+- Preserve opaque legacy metadata, clear private drafts on account change and grant the checked catalog writer its required read helper.
+
+## 3.19.1 — Catalog verification correction candidate
+
+- Keep internal operation validation private and retain request replay comparison across explicit catalog merges; extend reviewed catalog browser and backup tests.
+
+## 3.19.0 — Exercise catalog candidate
+
+- Edit canonical names and metadata, add aliases, archive/restore and review explicit merges in the existing detail panel. Preserve original labels and workout facts with owner-scoped checked commits and durable merge provenance.
+
 ## 3.18.11 — Planned batch exercise mapping fix candidate
 
 - Explicitly map incoming labels to a new exercise planned in the same review; create one identity atomically with approved aliases. Invalidate excluded/cancelled target choices.

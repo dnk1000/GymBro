@@ -1,5 +1,43 @@
 # Canonical exercise identity — issue #16
 
+## Issue #17 identity-v2 catalog candidate
+
+The owner approved identity format **2** on November 9, 2026, in addition to
+the [catalog design](V3_EXERCISE_CATALOG_PROPOSAL.md). PR #100 tracks actual
+implementation and verification; this section is not Production acceptance.
+V1 documents/backups remain readable without startup writes. A checked catalog
+mutation upgrades its owner's document to v2. Complete cloud backups retain
+the existing outer format and report the payload's actual identity version;
+older applications reject v2 instead of silently interpreting merged identities.
+
+The existing exercise detail owns catalog name/metadata/alias additions,
+archive/restore and explicitly reviewed source-into-destination merge. A merge
+retains the source ID as archived audit provenance, moves only canonical
+references/aliases and preserves all original labels and recorded facts.
+The source's former display name may resolve to the destination; v2 explicitly
+separates that archived source from active identity. If the owner excludes the
+old name from matching, its alias row remains provenance for historical foreign
+keys but the matcher ignores it. An excluded provenance label cannot be reused
+for another identity. Conflicting scoped notes reject the entire merge; no note
+is guessed, concatenated or overwritten. Suggestions never establish equivalence.
+
+The dedicated catalog RPC uses the existing owner lock, revision, receipts,
+retry/resolution/cancellation protocol. It computes and validates the exact
+allowed transformation server-side. The non-login catalog writer may remap
+identity fields only; ordinary writers retain immutable snapshots/aliases and
+browser direct mutation stays denied. Audit includes the server time, operation,
+prior source record/aliases and affected relationship keys. Stored request
+signatures remain unchanged; their private comparison view follows explicit
+merge provenance when recognizing prior canonical-ID requests.
+
+Apply the new additive migration through the existing reviewed pipeline. Do not
+edit applied migrations, downgrade a v2 document or undo a merge by restoring
+stale facts. Reverting code must preserve acknowledged cloud data and receipts.
+Hosted staging apply and Production promotion remain separately scoped operator
+actions. No live user workout data is needed for verification.
+
+The owner approved separate exact scopes for the initial catalog migration and its forward-only edit-field repair on November 9. At `0f9570b`, disposable fresh/replay SQL checks and signed Staging domain/normal Preview UI checks at 320/390/1280 pass, including kept/excluded old-name provenance, exact graph/request comparisons, retry, restore and owner isolation. Both named synthetic owners and temporary branch settings were cleaned; independent Auth/all-18-table zero-remnant and other-owner fingerprint checks pass. See [PR #100](https://github.com/dnk1000/GymBro/pull/100) for exact source/build/deployment/migration hashes, negative evidence and remaining physical iPhone/Safari and final Level 3 acceptance. Neither this evidence nor the Staging schema is Production acceptance.
+
 The #18 candidate reuses these exact primitives for [Smart Import Resolution](SMART_IMPORT_RESOLUTION.md), including explicitly reviewed alias/new-exercise additions atomically with imported facts. It adds no identity schema, fuzzy equivalence or catalog merge. Existing foundation descriptions below retain their original scope and release context.
 
 Issue [#16](https://github.com/dnk1000/GymBro/issues/16), based on accepted main `b40156bd943d230bdfa2e636390b85f5be1fd639`. Branch `codex/issue-16-exercise-identity`. The user approved application `3.3.0` for this candidate on October 27, 2026. This foundation does not switch workout persistence or run a personal migration.

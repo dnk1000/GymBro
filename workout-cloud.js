@@ -6,11 +6,13 @@ const WorkoutCloud = (() => {
     const transport={rpc:(name,args)=>client.rpc(name==='gymbro_lifecycle_mutate' && args.packet.action==='initializeMigration'?
       'gymbro_migration_initialize':name,args)};
     const lifecycle=WorkoutLifecycle.createRepository({client:transport,ownerId});
+    const catalogActions=['editCatalogExercise','addCatalogAlias','mergeCatalogExercises'];
+    const catalogRepository=typeof ExerciseCatalog==='undefined'?null:ExerciseCatalog.createRepository({client,ownerId});
     const repository={ownerId,load:lifecycle.load,resolve:lifecycle.resolve,
-      prepare:(base,next,context)=>['initializeMigration','restoreCompleteBackup','mergeHistoryBackup'].includes(context.action)?
+      prepare:(base,next,context)=>catalogActions.includes(context.action)?catalogRepository.prepare(base,next,context):['initializeMigration','restoreCompleteBackup','mergeHistoryBackup'].includes(context.action)?
         lifecycle.prepare(base,next,context):domain.prepare(base,next,context),
       submit:async packet=>{
-        const reply=await (['initializeMigration','restoreCompleteBackup','mergeHistoryBackup'].includes(packet.action)?lifecycle:domain).submit(packet);
+        const reply=await (catalogActions.includes(packet.action)?catalogRepository:['initializeMigration','restoreCompleteBackup','mergeHistoryBackup'].includes(packet.action)?lifecycle:domain).submit(packet);
         // An ordinary acknowledgement is protocol-compatible; qualify it through
         // the same authoritative lifecycle read before publishing a healthy view.
         if(reply.saved && !reply.saved.status) {
@@ -22,6 +24,7 @@ const WorkoutCloud = (() => {
       }};
     let controller;
     async function prepare(base,name,args) {
+      if(catalogActions.includes(name))return ExerciseCatalog.prepare(base,name,args);
       if(name==='mergeHistoryBackup' && args[0]?.batch===true) {
         if(sourceGuard)throw Error('Batch import is unavailable in a source-pinned migration rehearsal.');
         return BatchImport.prepare(base,args[0],{fixtureTag});
@@ -38,7 +41,10 @@ const WorkoutCloud = (() => {
       const working=structuredClone(base),catalog=()=>working.document.catalog;
       const resolve=(input,allowNew)=>{
         if(!input || typeof input.exercise!=='string')return;
-        if(catalog().exercises.some(e=>e.id===input.exercise))return;
+        if(catalog().exercises.some(e=>e.id===input.exercise)) {
+          if(ExerciseIdentity.mergeRecord(catalog().exercises.find(e=>e.id===input.exercise)))throw Error('Select the merged destination exercise.');
+          return;
+        }
         const label=input.exercise;let id=ExerciseIdentity.resolveLabel(catalog(),label);
         if(!id && allowNew) {
           const temporary={exerciseLibrary:{}};ensureExercise(temporary,label);const meta=temporary.exerciseLibrary[label];
